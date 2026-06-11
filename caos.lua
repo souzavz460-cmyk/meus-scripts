@@ -1,51 +1,86 @@
--- [[ SELENIUM HUB v10 - RAYFIELD EDITION ]]
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Selenium Hub v10 | Admin Chaos",
-   LoadingTitle = "Carregando o Caos...",
-   LoadingSubtitle = "by Selenium Dev",
+   Name = "Selenium Hub v11 | GOD MODE",
+   LoadingTitle = "Carregando bypass...",
    Theme = "Default",
-   DisableRayfieldPrompts = false,
 })
 
-local Tab = Window:CreateTab("Admin Tools", nil)
+-- [[ ADMIN TAB ]]
+local AdminTab = Window:CreateTab("Admin Chaos", nil)
 
--- Função: Puxar Players
-Tab:CreateButton({
-   Name = "Puxar Todos os Jogadores",
+AdminTab:CreateButton({
+   Name = "Puxar Players (Forçado)",
    Callback = function()
-      local LocalPlayer = game.Players.LocalPlayer
       for _, p in pairs(game.Players:GetPlayers()) do
-         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            p.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+         if p ~= game.Players.LocalPlayer and p.Character then
+            -- Tenta setar a propriedade de rede para o seu cliente
+            p.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
          end
       end
    end,
 })
 
--- Função: Puxar Carros
-Tab:CreateButton({
-   Name = "Puxar Todos os Carros",
+AdminTab:CreateButton({
+   Name = "Coletar Todas as Armas",
    Callback = function()
-      for _, v in pairs(workspace:GetChildren()) do
-         if v.Name == "Prison_Car" or v.Name == "Sedan" then
-            v:MoveTo(game.Players.LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 5, 0))
+      for _, i in pairs(workspace.Prison_ITEMS.giver:GetChildren()) do
+         if i:FindFirstChild("ITEMPICKUP") then
+            local p = game.Players.LocalPlayer.Character.HumanoidRootPart
+            firetouchinterest(p, i.ITEMPICKUP, 0)
+            firetouchinterest(p, i.ITEMPICKUP, 1)
          end
       end
    end,
 })
 
--- Função: Pegar Armas
-Tab:CreateButton({
-   Name = "Pegar Todas as Armas",
-   Callback = function()
-      for _, item in pairs(workspace.Prison_ITEMS.giver:GetChildren()) do
-         if item:FindFirstChild("ITEMPICKUP") then
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, item.ITEMPICKUP, 0)
-            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, item.ITEMPICKUP, 1)
+-- [[ FÍSICA E MOVIMENTO (BYPASS) ]]
+local PhysicsTab = Window:CreateTab("Física & Caos", nil)
+
+PhysicsTab:CreateToggle({
+   Name = "Ghost Walk (Atravessar)",
+   Callback = function(state)
+      _G.Noclip = state
+      game:GetService("RunService").Stepped:Connect(function()
+         if _G.Noclip then
+            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+               if v:IsA("BasePart") then v.CanCollide = false end
+            end
          end
-      end
+      end)
+   end,
+})
+
+PhysicsTab:CreateToggle({
+   Name = "Speed Física (Bypass)",
+   Callback = function(state)
+      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = state and 50 or 16
+   end,
+})
+
+-- [[ COMBATE E SEGURANÇA ]]
+local CombatTab = Window:CreateTab("Combate", nil)
+
+CombatTab:CreateToggle({
+   Name = "Soco One-Shot (Local)",
+   Callback = function(state)
+      _G.OneShot = state
+      game.Players.LocalPlayer:GetMouse().Button1Down:Connect(function()
+         if _G.OneShot then
+            local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if tool and tool:FindFirstChild("Damage") then tool.Damage.Value = 9999 end
+         end
+      end)
+   end,
+})
+
+CombatTab:CreateButton({
+   Name = "Resetar Anti-Cheat (Lag Switch)",
+   Callback = function()
+      -- Esse botão força o jogo a recalcular sua posição
+      game.Players.LocalPlayer.Character.HumanoidRootPart.Anchored = true
+      task.wait(0.2)
+      game.Players.LocalPlayer.Character.HumanoidRootPart.Anchored = false
    end,
 })
 
