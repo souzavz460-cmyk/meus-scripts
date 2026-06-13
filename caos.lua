@@ -1,189 +1,139 @@
---[[
-    Apkmod SZ | by Souza mods — Final
-    Interface Roxa, FOV sem círculo, Antena no braço
-]]
-
+local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 -- Configurações
-local AimbotEnabled = false
-local AimbotTarget = "Head"
-local AimbotLegit = false
-local HitChestFirst = false
-local AutoShot = false
-local TargetTeam = "Todos"
-local ESPEnabled = false
-local ESPNameEnabled = false
-local AntennaEnabled = false
-local ModColor = Color3.fromRGB(150, 0, 255)
-local ESPColor = Color3.fromRGB(150, 0, 255)
-local FovDistance = 200  -- FOV em pixels (sem círculo)
+local aimbot = false
+local parteAlvo = "Head"
+local suavidade = 0.15
+local fov = 200
+local autoShot = false
+local timeAlvo = "Todos"
+local silentAim = false
+local wallShot = false
+local espAtivo = false
+local espNome = false
+local antena = false
+local flyAtivo = false
+local corUI = Color3.fromRGB(150, 0, 255)
+local corESP = Color3.fromRGB(150, 0, 255)
 
-local Teams = {
+local Times = {
     ["Todos"] = nil,
     ["Criminal"] = BrickColor.new("Bright red").Color,
     ["Polícia"] = BrickColor.new("Bright blue").Color,
     ["Ladrão"] = BrickColor.new("Bright green").Color
 }
 
--- ========== FUNÇÕES DE VALIDAÇÃO ==========
-local function isValidTarget(player)
-    if TargetTeam == "Todos" then return true end
-    return player.Team and player.Team.TeamColor.Color == Teams[TargetTeam]
-end
-
--- ========== INTERFACE ==========
+-- Interface
 local UI = Instance.new("ScreenGui")
-UI.Name = "ApkmodSZ"
 UI.ResetOnSpawn = false
 UI.Parent = CoreGui
 
--- Animação de abertura
-local intro = Instance.new("Frame")
-intro.Size = UDim2.new(1, 0, 1, 0)
-intro.BackgroundColor3 = Color3.new(0, 0, 0)
-intro.BackgroundTransparency = 1
-intro.Parent = UI
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 260, 0, 380)
+main.Position = UDim2.new(0.5, -130, 0.5, -190)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+main.BorderSizePixel = 0
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 8)
+main.Parent = UI
 
-local introText = Instance.new("TextLabel")
-introText.Size = UDim2.new(0, 300, 0, 50)
-introText.Position = UDim2.new(0.5, -150, 0.5, -25)
-introText.BackgroundTransparency = 1
-introText.Text = "Apkmod SZ | by Souza mods"
-introText.TextColor3 = ModColor
-introText.Font = Enum.Font.GothamBold
-introText.TextSize = 24
-introText.Parent = intro
-
-coroutine.wrap(function()
-    for i = 1, 10 do
-        intro.BackgroundTransparency = 1 - (i / 10)
-        introText.TextTransparency = 1 - (i / 10)
-        task.wait(0.03)
-    end
-    task.wait(1)
-    for i = 1, 10 do
-        intro.BackgroundTransparency = i / 10
-        introText.TextTransparency = i / 10
-        task.wait(0.03)
-    end
-    intro:Destroy()
-end)()
-
--- Janela principal
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 330)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -165)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = UI
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
-
--- Título
-local titleBar = Instance.new("TextButton")
-titleBar.Size = UDim2.new(1, -40, 0, 35)
-titleBar.BackgroundColor3 = ModColor
-titleBar.Text = "Apkmod SZ | by Souza mods"
-titleBar.TextColor3 = Color3.new(1, 1, 1)
-titleBar.Font = Enum.Font.GothamBold
-titleBar.TextSize = 14
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
-Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 8)
+local titulo = Instance.new("TextButton")
+titulo.Size = UDim2.new(1, -40, 0, 35)
+titulo.BackgroundColor3 = corUI
+titulo.Text = "Apkmod SZ"
+titulo.TextColor3 = Color3.new(1, 1, 1)
+titulo.Font = Enum.Font.GothamBold
+titulo.TextSize = 14
+titulo.BorderSizePixel = 0
+Instance.new("UICorner", titulo).CornerRadius = UDim.new(0, 8)
+titulo.Parent = main
 
 -- Arrasto
-local dragging, dragStart, frameStart
-titleBar.InputBegan:Connect(function(input)
+local arrastando = false
+local inicioToque, inicioPosicao
+titulo.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        frameStart = mainFrame.Position
+        arrastando = true
+        inicioToque = input.Position
+        inicioPosicao = main.Position
     end
 end)
-titleBar.InputEnded:Connect(function(input)
+titulo.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
+        arrastando = false
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + delta.X, frameStart.Y.Scale, frameStart.Y.Offset + delta.Y)
+    if arrastando and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position - inicioToque
+        main.Position = UDim2.new(inicioPosicao.X.Scale, inicioPosicao.X.Offset + delta.X, inicioPosicao.Y.Scale, inicioPosicao.Y.Offset + delta.Y)
     end
 end)
 
 -- Minimizar
-local minimized = false
-local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, 0, 1, -35)
-contentFrame.Position = UDim2.new(0, 0, 0, 35)
-contentFrame.BackgroundTransparency = 1
-contentFrame.Parent = mainFrame
+local minimizado = false
+local conteudo = Instance.new("Frame")
+conteudo.Size = UDim2.new(1, 0, 1, -35)
+conteudo.Position = UDim2.new(0, 0, 0, 35)
+conteudo.BackgroundTransparency = 1
+conteudo.Parent = main
 
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 40, 0, 35)
-minimizeBtn.Position = UDim2.new(1, -40, 0, 0)
-minimizeBtn.BackgroundColor3 = ModColor
-minimizeBtn.Text = "–"
-minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 20
-minimizeBtn.BorderSizePixel = 0
-minimizeBtn.Parent = mainFrame
-Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(0, 8)
-
-minimizeBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    contentFrame.Visible = not minimized
-    minimizeBtn.Text = minimized and "+" or "–"
-    mainFrame.Size = minimized and UDim2.new(0, 250, 0, 35) or UDim2.new(0, 250, 0, 330)
+local btnMin = Instance.new("TextButton")
+btnMin.Size = UDim2.new(0, 40, 0, 35)
+btnMin.Position = UDim2.new(1, -40, 0, 0)
+btnMin.BackgroundColor3 = corUI
+btnMin.Text = "–"
+btnMin.TextColor3 = Color3.new(1, 1, 1)
+btnMin.Font = Enum.Font.GothamBold
+btnMin.TextSize = 20
+btnMin.BorderSizePixel = 0
+Instance.new("UICorner", btnMin).CornerRadius = UDim.new(0, 8)
+btnMin.Parent = main
+btnMin.MouseButton1Click:Connect(function()
+    minimizado = not minimizado
+    conteudo.Visible = not minimizado
+    btnMin.Text = minimizado and "+" or "–"
+    main.Size = minimizado and UDim2.new(0, 260, 0, 35) or UDim2.new(0, 260, 0, 380)
 end)
 
 -- Abas
-local tabBar = Instance.new("Frame")
-tabBar.Size = UDim2.new(1, 0, 0, 30)
-tabBar.Position = UDim2.new(0, 0, 0, 0)
-tabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-tabBar.BorderSizePixel = 0
-tabBar.Parent = contentFrame
+local barraAbas = Instance.new("Frame")
+barraAbas.Size = UDim2.new(1, 0, 0, 30)
+barraAbas.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+barraAbas.BorderSizePixel = 0
+barraAbas.Parent = conteudo
 
-local tabs = {}
-local tabButtons = {}
-local currentTab = nil
+local abas = {}
+local botoesAbas = {}
+local abaAtual = nil
 
-local function switchTab(tabName)
-    for _, tab in pairs(tabs) do
-        tab.Visible = false
+local function TrocarAba(nome)
+    for _, aba in pairs(abas) do aba.Visible = false end
+    if abas[nome] then
+        abas[nome].Visible = true
+        abaAtual = nome
     end
-    if tabs[tabName] then
-        tabs[tabName].Visible = true
-        currentTab = tabName
-    end
-    for _, btn in pairs(tabButtons) do
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    end
-    if tabButtons[tabName] then
-        tabButtons[tabName].BackgroundColor3 = ModColor
-    end
+    for _, btn in pairs(botoesAbas) do btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) end
+    if botoesAbas[nome] then botoesAbas[nome].BackgroundColor3 = corUI end
 end
 
-local function createTab(name, position)
+local function CriarAba(nome, posicao)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 80, 1, 0)
-    btn.Position = UDim2.new(0, position * 80, 0, 0)
+    btn.Size = UDim2.new(0, 52, 1, 0)
+    btn.Position = UDim2.new(0, posicao * 52, 0, 0)
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = name
+    btn.Text = nome
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
+    btn.TextSize = 11
     btn.BorderSizePixel = 0
-    btn.Parent = tabBar
-    tabButtons[name] = btn
+    btn.Parent = barraAbas
+    botoesAbas[nome] = btn
 
     local scroll = Instance.new("ScrollingFrame")
     scroll.Size = UDim2.new(1, 0, 1, -30)
@@ -191,24 +141,24 @@ local function createTab(name, position)
     scroll.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 4
-    scroll.CanvasSize = UDim2.new(0, 0, 0, 300)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 330)
     scroll.Visible = false
-    scroll.Parent = contentFrame
-    tabs[name] = scroll
+    scroll.Parent = conteudo
+    abas[nome] = scroll
 
-    btn.MouseButton1Click:Connect(function()
-        switchTab(name)
-    end)
+    btn.MouseButton1Click:Connect(function() TrocarAba(nome) end)
     return scroll
 end
 
-local exploitTab = createTab("Exploit", 0)
-local espTab = createTab("ESP", 1)
-local miscTab = createTab("Misc", 2)
-switchTab("Exploit")
+local abaAimbot = CriarAba("Aimbot", 0)
+local abaSilent = CriarAba("Silent", 1)
+local abaESP = CriarAba("ESP", 2)
+local abaFly = CriarAba("Fly", 3)
+local abaMisc = CriarAba("Misc", 4)
+TrocarAba("Aimbot")
 
--- Controles genéricos
-local function createToggle(parent, text, y, default, callback)
+-- Controles
+local function Toggle(parent, texto, y, padrao, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 35)
     frame.Position = UDim2.new(0, 5, 0, y)
@@ -217,38 +167,38 @@ local function createToggle(parent, text, y, default, callback)
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
     frame.Parent = parent
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 13
-    label.Parent = frame
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.65, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = texto
+    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12
+    lbl.Parent = frame
 
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 45, 0, 22)
-    btn.Position = UDim2.new(0.75, 0, 0.5, -11)
-    btn.BackgroundColor3 = default and ModColor or Color3.fromRGB(80, 80, 80)
-    btn.Text = default and "ON" or "OFF"
+    btn.Position = UDim2.new(0.73, 0, 0.5, -11)
+    btn.BackgroundColor3 = padrao and corUI or Color3.fromRGB(80, 80, 80)
+    btn.Text = padrao and "ON" or "OFF"
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
+    btn.TextSize = 11
     btn.BorderSizePixel = 0
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
     btn.Parent = frame
 
-    local state = default
+    local estado = padrao
     btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.Text = state and "ON" or "OFF"
-        btn.BackgroundColor3 = state and ModColor or Color3.fromRGB(80, 80, 80)
-        callback(state)
+        estado = not estado
+        btn.Text = estado and "ON" or "OFF"
+        btn.BackgroundColor3 = estado and corUI or Color3.fromRGB(80, 80, 80)
+        callback(estado)
     end)
 end
 
-local function createDropdown(parent, name, options, default, y, callback)
+local function Dropdown(parent, texto, opcoes, padrao, y, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 35)
     frame.Position = UDim2.new(0, 5, 0, y)
@@ -257,39 +207,39 @@ local function createDropdown(parent, name, options, default, y, callback)
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
     frame.Parent = parent
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.4, 0, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 13
-    label.Parent = frame
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.4, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = texto
+    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12
+    lbl.Parent = frame
 
-    local idx = table.find(options, default) or 1
-    local currentOption = options[idx]
-    local displayBtn = Instance.new("TextButton")
-    displayBtn.Size = UDim2.new(0, 80, 0, 22)
-    displayBtn.Position = UDim2.new(0.45, 0, 0.5, -11)
-    displayBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    displayBtn.Text = currentOption
-    displayBtn.TextColor3 = Color3.new(1, 1, 1)
-    displayBtn.Font = Enum.Font.GothamBold
-    displayBtn.TextSize = 12
-    displayBtn.BorderSizePixel = 0
-    Instance.new("UICorner", displayBtn).CornerRadius = UDim.new(0, 4)
-    displayBtn.Parent = frame
+    local idx = table.find(opcoes, padrao) or 1
+    local atual = opcoes[idx]
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 85, 0, 22)
+    btn.Position = UDim2.new(0.45, 0, 0.5, -11)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.Text = atual
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    btn.Parent = frame
 
-    displayBtn.MouseButton1Click:Connect(function()
-        idx = idx % #options + 1
-        currentOption = options[idx]
-        displayBtn.Text = currentOption
-        callback(currentOption)
+    btn.MouseButton1Click:Connect(function()
+        idx = idx % #opcoes + 1
+        atual = opcoes[idx]
+        btn.Text = atual
+        callback(atual)
     end)
 end
 
-local function createSlider(parent, name, min, max, default, y, callback)
+local function Slider(parent, texto, min, max, padrao, y, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 35)
     frame.Position = UDim2.new(0, 5, 0, y)
@@ -298,136 +248,241 @@ local function createSlider(parent, name, min, max, default, y, callback)
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
     frame.Parent = parent
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.5, 0, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = name .. ": " .. default
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 13
-    label.Parent = frame
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.5, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = texto .. ": " .. padrao
+    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 11
+    lbl.Parent = frame
 
-    local minusBtn = Instance.new("TextButton")
-    minusBtn.Size = UDim2.new(0, 30, 0, 22)
-    minusBtn.Position = UDim2.new(0.6, 0, 0.5, -11)
-    minusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    minusBtn.Text = "-"
-    minusBtn.TextColor3 = Color3.new(1, 1, 1)
-    minusBtn.Font = Enum.Font.GothamBold
-    minusBtn.TextSize = 14
-    minusBtn.BorderSizePixel = 0
-    Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0, 4)
-    minusBtn.Parent = frame
+    local menos = Instance.new("TextButton")
+    menos.Size = UDim2.new(0, 28, 0, 22)
+    menos.Position = UDim2.new(0.58, 0, 0.5, -11)
+    menos.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    menos.Text = "-"
+    menos.TextColor3 = Color3.new(1, 1, 1)
+    menos.Font = Enum.Font.GothamBold
+    menos.TextSize = 14
+    menos.BorderSizePixel = 0
+    Instance.new("UICorner", menos).CornerRadius = UDim.new(0, 4)
+    menos.Parent = frame
 
-    local plusBtn = Instance.new("TextButton")
-    plusBtn.Size = UDim2.new(0, 30, 0, 22)
-    plusBtn.Position = UDim2.new(0.75, 0, 0.5, -11)
-    plusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    plusBtn.Text = "+"
-    plusBtn.TextColor3 = Color3.new(1, 1, 1)
-    plusBtn.Font = Enum.Font.GothamBold
-    plusBtn.TextSize = 14
-    plusBtn.BorderSizePixel = 0
-    Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0, 4)
-    plusBtn.Parent = frame
+    local mais = Instance.new("TextButton")
+    mais.Size = UDim2.new(0, 28, 0, 22)
+    mais.Position = UDim2.new(0.75, 0, 0.5, -11)
+    mais.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    mais.Text = "+"
+    mais.TextColor3 = Color3.new(1, 1, 1)
+    mais.Font = Enum.Font.GothamBold
+    mais.TextSize = 14
+    mais.BorderSizePixel = 0
+    Instance.new("UICorner", mais).CornerRadius = UDim.new(0, 4)
+    mais.Parent = frame
 
-    local currentValue = default
-    minusBtn.MouseButton1Click:Connect(function()
-        currentValue = math.max(min, currentValue - 5)
-        label.Text = name .. ": " .. currentValue
-        callback(currentValue)
+    local valor = padrao
+    menos.MouseButton1Click:Connect(function()
+        valor = math.max(min, valor - 5)
+        lbl.Text = texto .. ": " .. valor
+        callback(valor)
     end)
-    plusBtn.MouseButton1Click:Connect(function()
-        currentValue = math.min(max, currentValue + 5)
-        label.Text = name .. ": " .. currentValue
-        callback(currentValue)
+    mais.MouseButton1Click:Connect(function()
+        valor = math.min(max, valor + 5)
+        lbl.Text = texto .. ": " .. valor
+        callback(valor)
     end)
 end
 
--- Preencher Exploit
-createToggle(exploitTab, "Aimbot", 10, false, function(v) AimbotEnabled = v end)
-createDropdown(exploitTab, "Alvo", {"Head", "Neck", "Chest"}, "Head", 50, function(v) AimbotTarget = v end)
-createToggle(exploitTab, "Aimbot Legit", 90, false, function(v) AimbotLegit = v end)
-createToggle(exploitTab, "Hit no Peito", 130, false, function(v) HitChestFirst = v end)
-createSlider(exploitTab, "FOV Distance", 50, 400, 200, 170, function(v) FovDistance = v end)
-createToggle(exploitTab, "Auto Shot", 210, false, function(v) AutoShot = v end)
-createDropdown(exploitTab, "Time", {"Todos", "Criminal", "Polícia", "Ladrão"}, "Todos", 250, function(v) TargetTeam = v end)
+-- Preencher abas
+Toggle(abaAimbot, "Aimbot", 10, false, function(v) aimbot = v end)
+Dropdown(abaAimbot, "Alvo", {"Head", "Neck", "Chest"}, "Head", 50, function(v) parteAlvo = v end)
+Slider(abaAimbot, "Suavidade", 5, 100, 15, 90, function(v) suavidade = v/100 end)
+Slider(abaAimbot, "FOV", 50, 400, 200, 130, function(v) fov = v end)
+Toggle(abaAimbot, "Auto Shot", 170, false, function(v) autoShot = v end)
+Dropdown(abaAimbot, "Time", {"Todos", "Criminal", "Polícia", "Ladrão"}, "Todos", 210, function(v) timeAlvo = v end)
 
--- ESP
-createToggle(espTab, "ESP Player", 10, false, function(v) ESPEnabled = v end)
-createToggle(espTab, "ESP Name", 50, false, function(v) ESPNameEnabled = v end)
-createToggle(espTab, "Antena (Braço)", 90, false, function(v) AntennaEnabled = v end)
-
--- Misc
-createDropdown(miscTab, "Cor do Mod", {"Roxo", "Vermelho", "Verde"}, "Roxo", 10, function(v)
-    if v == "Roxo" then ModColor = Color3.fromRGB(150, 0, 255)
-    elseif v == "Vermelho" then ModColor = Color3.fromRGB(255, 0, 0)
-    elseif v == "Verde" then ModColor = Color3.fromRGB(0, 255, 0) end
-    titleBar.BackgroundColor3 = ModColor
-    minimizeBtn.BackgroundColor3 = ModColor
-    if tabButtons[currentTab] then tabButtons[currentTab].BackgroundColor3 = ModColor end
+Toggle(abaSilent, "Silent Aim", 10, false, function(v)
+    silentAim = v
+    if v or wallShot then ConfigurarInterceptador() end
 end)
-createDropdown(miscTab, "Cor da ESP", {"Roxo", "Vermelho", "Verde"}, "Roxo", 50, function(v)
-    if v == "Roxo" then ESPColor = Color3.fromRGB(150, 0, 255)
-    elseif v == "Vermelho" then ESPColor = Color3.fromRGB(255, 0, 0)
-    elseif v == "Verde" then ESPColor = Color3.fromRGB(0, 255, 0) end
+Toggle(abaSilent, "WallShot", 50, false, function(v)
+    wallShot = v
+    if v or silentAim then ConfigurarInterceptador() end
 end)
 
--- Anti-remoção
-UI.Destroying:Connect(function()
-    pcall(function()
-        local newUI = Instance.new("ScreenGui")
-        newUI.Name = "ApkmodSZ"
-        newUI.Parent = CoreGui
-        mainFrame.Parent = newUI
-    end)
+Toggle(abaESP, "ESP Player", 10, false, function(v) espAtivo = v end)
+Toggle(abaESP, "ESP Name", 50, false, function(v) espNome = v end)
+Toggle(abaESP, "Antena", 90, false, function(v) antena = v end)
+
+local flyConnection
+Toggle(abaFly, "Fly", 10, false, function(v)
+    flyAtivo = v
+    if v then
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local bv = Instance.new("BodyVelocity")
+                bv.Velocity = Vector3.new(0, 0, 0)
+                bv.MaxForce = Vector3.new(40000, 40000, 40000)
+                bv.P = 3000
+                bv.Parent = hrp
+                local bg = Instance.new("BodyGyro")
+                bg.MaxTorque = Vector3.new(40000, 40000, 40000)
+                bg.CFrame = hrp.CFrame
+                bg.P = 3000
+                bg.Parent = hrp
+                flyConnection = RunService.RenderStepped:Connect(function()
+                    if not flyAtivo then return end
+                    local moveDir = Vector3.new(0, 0, 0)
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+                    bv.Velocity = moveDir * 50
+                    bg.CFrame = Camera.CFrame
+                end)
+            end
+        end
+    else
+        if flyConnection then flyConnection:Disconnect() end
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                for _, obj in ipairs(hrp:GetChildren()) do
+                    if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then obj:Destroy() end
+                end
+            end
+        end
+    end
 end)
 
--- ========== AIMBOT ==========
-coroutine.wrap(function()
-    while true do
-        if AimbotEnabled then
-            local center = Camera.ViewportSize / 2
-            local nearestDist = FovDistance
-            local targetChar = nil
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and isValidTarget(player) then
-                    local head = player.Character:FindFirstChild("Head")
-                    local hum = player.Character:FindFirstChildOfClass("Humanoid")
-                    if head and hum and hum.Health > 0 then
-                        local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                        if onScreen then
-                            local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                            if dist < nearestDist then
-                                nearestDist = dist
-                                targetChar = player.Character
+Dropdown(abaMisc, "Cor UI", {"Roxo", "Vermelho", "Verde"}, "Roxo", 10, function(v)
+    if v == "Roxo" then corUI = Color3.fromRGB(150, 0, 255)
+    elseif v == "Vermelho" then corUI = Color3.fromRGB(255, 0, 0)
+    else corUI = Color3.fromRGB(0, 255, 0) end
+    titulo.BackgroundColor3 = corUI
+    btnMin.BackgroundColor3 = corUI
+    if botoesAbas[abaAtual] then botoesAbas[abaAtual].BackgroundColor3 = corUI end
+end)
+Dropdown(abaMisc, "Cor ESP", {"Roxo", "Vermelho", "Verde"}, "Roxo", 50, function(v)
+    if v == "Roxo" then corESP = Color3.fromRGB(150, 0, 255)
+    elseif v == "Vermelho" then corESP = Color3.fromRGB(255, 0, 0)
+    else corESP = Color3.fromRGB(0, 255, 0) end
+end)
+
+-- Lógica de mira
+local function AlvoValido(plr)
+    if timeAlvo == "Todos" then return true end
+    return plr.Team and plr.Team.TeamColor.Color == Times[timeAlvo]
+end
+
+local function ObterAlvo()
+    local centro = Camera.ViewportSize / 2
+    local maisProximo = nil
+    local menorDist = wallShot and 9999 or fov
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and AlvoValido(plr) then
+            local cabeca = plr.Character:FindFirstChild("Head")
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            if cabeca and hum and hum.Health > 0 then
+                local posTela, naTela = Camera:WorldToViewportPoint(cabeca.Position)
+                local dist = naTela and (Vector2.new(posTela.X, posTela.Y) - centro).Magnitude or 9999
+                if wallShot or dist < menorDist then
+                    menorDist = dist
+                    maisProximo = plr.Character
+                end
+            end
+        end
+    end
+    return maisProximo
+end
+
+local function ObterParte(char, parte)
+    if parte == "Head" then return char:FindFirstChild("Head")
+    elseif parte == "Neck" then
+        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        local cabeca = char:FindFirstChild("Head")
+        if torso and cabeca then return {Position = (torso.Position + cabeca.Position) / 2} end
+    elseif parte == "Chest" then return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") end
+    return char:FindFirstChild("Head")
+end
+
+-- Interceptador de tiro
+local ultimoEvento, ultimoOriginal
+function ConfigurarInterceptador()
+    if ultimoEvento and ultimoOriginal then
+        ultimoEvento.FireServer = ultimoOriginal
+        ultimoEvento = nil
+        ultimoOriginal = nil
+    end
+    if not silentAim and not wallShot then return end
+    coroutine.wrap(function()
+        while silentAim or wallShot do
+            local ferramenta = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if ferramenta then
+                local evento = ferramenta:FindFirstChild("RemoteEvent") or
+                              ferramenta:FindFirstChild("Shoot") or
+                              ferramenta:FindFirstChild("FireServer") or
+                              ferramenta:FindFirstChild("Server")
+                if evento and evento:IsA("RemoteEvent") and evento ~= ultimoEvento then
+                    ultimoEvento = evento
+                    ultimoOriginal = evento.FireServer
+                    evento.FireServer = function(self, ...)
+                        local alvo = ObterAlvo()
+                        if alvo then
+                            local parte = ObterParte(alvo, "Head")
+                            if parte then
+                                return ultimoOriginal(self, parte.Position)
                             end
                         end
+                        return ultimoOriginal(self, ...)
                     end
                 end
             end
-            if targetChar then
-                local part
-                if HitChestFirst then
-                    part = targetChar:FindFirstChild("UpperTorso") or targetChar:FindFirstChild("Torso")
-                elseif AimbotTarget == "Head" then
-                    part = targetChar:FindFirstChild("Head")
-                elseif AimbotTarget == "Neck" then
-                    local torso = targetChar:FindFirstChild("UpperTorso") or targetChar:FindFirstChild("Torso")
-                    local head = targetChar:FindFirstChild("Head")
-                    if torso and head then
-                        part = {Position = (torso.Position + head.Position) / 2}
-                    end
-                elseif AimbotTarget == "Chest" then
-                    part = targetChar:FindFirstChild("UpperTorso") or targetChar:FindFirstChild("Torso")
-                end
-                if part then
-                    local lookAt = CFrame.new(Camera.CFrame.Position, part.Position)
-                    Camera.CFrame = AimbotLegit and Camera.CFrame:Lerp(lookAt, 0.2) or lookAt
-                    if AutoShot then
-                        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                        if tool then tool:Activate() end
+            task.wait(0.1)
+        end
+        if ultimoEvento and ultimoOriginal then
+            ultimoEvento.FireServer = ultimoOriginal
+            ultimoEvento = nil
+            ultimoOriginal = nil
+        end
+    end)()
+end
+
+-- Aimbot suave
+coroutine.wrap(function()
+    while true do
+        if aimbot and not silentAim then
+            local alvo = ObterAlvo()
+            if alvo then
+                local parte = ObterParte(alvo, parteAlvo)
+                if parte then
+                    local objetivo = CFrame.new(Camera.CFrame.Position, parte.Position)
+                    Camera.CFrame = Camera.CFrame:Lerp(objetivo, suavidade)
+                    if autoShot then
+                        local ferramenta = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if ferramenta then
+                            ferramenta:Activate()
+                            pcall(function()
+                                VirtualInputManager:SendMouseButtonEvent(
+                                    Camera.ViewportSize.X / 2,
+                                    Camera.ViewportSize.Y / 2,
+                                    0, true, nil, 0
+                                )
+                                task.wait(0.05)
+                                VirtualInputManager:SendMouseButtonEvent(
+                                    Camera.ViewportSize.X / 2,
+                                    Camera.ViewportSize.Y / 2,
+                                    0, false, nil, 0
+                                )
+                            end)
+                        end
                     end
                 end
             end
@@ -436,78 +491,39 @@ coroutine.wrap(function()
     end
 end)()
 
--- ========== ESP E ANTENA ==========
+-- ESP
 local drawings = {}
-local useDrawing = pcall(function() return Drawing.new end)
+local podeDesenhar = pcall(function() return Drawing.new end)
 
-local function clearESP()
+local function LimparESP()
     for _, d in pairs(drawings) do
         pcall(function() d:Remove() end)
     end
     drawings = {}
 end
 
-local function updateESP()
-    clearESP()
-    if not (ESPEnabled or ESPNameEnabled or AntennaEnabled) then return end
-    if not useDrawing then return end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and isValidTarget(player) then
-            local char = player.Character
-            local head = char:FindFirstChild("Head")
-            local root = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if head and root and hum and hum.Health > 0 then
-                local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    if ESPEnabled then
-                        local rootPos = Camera:WorldToViewportPoint(root.Position)
+local function AtualizarESP()
+    LimparESP()
+    if not (espAtivo or espNome or antena) or not podeDesenhar then return end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and AlvoValido(plr) then
+            local cabeca = plr.Character:FindFirstChild("Head")
+            local raiz = plr.Character:FindFirstChild("HumanoidRootPart")
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            if cabeca and raiz and hum and hum.Health > 0 then
+                local posCab, naTela = Camera:WorldToViewportPoint(cabeca.Position)
+                if naTela then
+                    if espAtivo then
+                        local posRaiz = Camera:WorldToViewportPoint(raiz.Position)
                         local box = Drawing.new("Square")
                         box.Visible = true
-                        box.Color = ESPColor
+                        box.Color = corESP
                         box.Thickness = 1.5
                         box.Filled = false
                         box.Size = Vector2.new(40, 60)
-                        box.Position = Vector2.new(rootPos.X - 20, rootPos.Y - 60)
+                        box.Position = Vector2.new(posRaiz.X - 20, posRaiz.Y - 60)
                         table.insert(drawings, box)
                     end
-                    if ESPNameEnabled then
-                        local nameText = Drawing.new("Text")
-                        nameText.Visible = true
-                        nameText.Color = ESPColor
-                        nameText.Size = 13
-                        nameText.Position = Vector2.new(headPos.X, headPos.Y - 40)
-                        nameText.Text = player.Name
-                        nameText.Center = true
-                        table.insert(drawings, nameText)
-                    end
-                    if AntennaEnabled then
-                        local rightArm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
-                        if rightArm then
-                            local armPos, armOnScreen = Camera:WorldToViewportPoint(rightArm.Position)
-                            if armOnScreen then
-                                local line = Drawing.new("Line")
-                                line.Visible = true
-                                line.Color = ESPColor
-                                line.Thickness = 2
-                                line.From = Vector2.new(armPos.X, armPos.Y)
-                                line.To = Vector2.new(armPos.X, armPos.Y - 250)
-                                table.insert(drawings, line)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-RunService.RenderStepped:Connect(updateESP)
-
--- Respawn
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.5)
-end)
-
-print("Apkmod SZ | by Souza mods — Pronto! FOV interno, antena no braço.")
+                    if espNome then
+                        local txt = Drawing.new("Text")
+                        txt.Visible = 
