@@ -1,22 +1,32 @@
--- SZ MODS RAIZ – Aimbot suave, Wallshot seguro (sem noclip), ESP funcional
+-- SZ MODS EVOLUÍDO – Rayfield UI
+-- Aimbot, ESP (box/esqueleto/nome/vida/linhas), Speed, Noclip, Wallshot, Anti Live
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
 local Player = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
--- Variáveis
-local aimbot = false
-local aimForce = 1          -- 1 (suave) a 5 (lock)
-local espBox = false
-local espSkel = false
-local fovShow = false
-local fovRainbow = false
+-- Variáveis de estado
+local aimbotEnabled = false
+local aimForce = 1
+local bypassLevel = 1
 local fovRadius = 150
-local wallshot = false
+local fovCircleEnabled = false
+local fovRainbowEnabled = false
+local espBox = false
+local espSkeleton = false
+local espLines = false
+local showNameHealth = false
+local wallshotEnabled = false
+local speedEnabled = false
+local speedValue = 16
+local noclipEnabled = false
 
--- Desenhos
+-- Desenhos (Drawing)
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
 fovCircle.Thickness = 2
@@ -27,21 +37,20 @@ fovCircle.Position = Camera.ViewportSize / 2
 
 local boxes = {}
 local skeletons = {}
+local nameTags = {}
+local rainbowLines = {}
 
--- ==================== WALLSHOT SEGURO (SEM NOCLIP) ====================
+-- ==================== FUNÇÕES ====================
+
+-- Wallshot
 local function isProjectile(part)
     if not part:IsA("BasePart") then return false end
-    -- Nunca mexa com partes de algum personagem (evita noclip)
     local parent = part.Parent
     while parent do
-        if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then
-            return false
-        end
+        if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then return false end
         parent = parent.Parent
     end
-    -- Verifica velocidade alta (projétil verdadeiro)
-    if part.Velocity.Magnitude > 25 then return true end
-    -- Verifica nome comum de projétil
+    if part.Velocity.Magnitude > 20 then return true end
     local name = part.Name:lower()
     local keywords = {"bullet","projectile","pellet","arrow","bolt","rocket","grenade","ball","shell","kunai","shuriken","missile","blast","beam"}
     for _, kw in ipairs(keywords) do
@@ -52,57 +61,32 @@ end
 
 local function disableCollisions(obj)
     pcall(function()
-        if obj:IsA("BasePart") then
-            obj.CanCollide = false
-            obj.CanQuery = false
-        end
+        if obj:IsA("BasePart") then obj.CanCollide = false; obj.CanQuery = false end
         for _, child in ipairs(obj:GetDescendants()) do
-            if child:IsA("BasePart") then
-                child.CanCollide = false
-                child.CanQuery = false
-            end
+            if child:IsA("BasePart") then child.CanCollide = false; child.CanQuery = false end
         end
     end)
 end
 
 local whConnection
 local function enableWallshot()
-    wallshot = true
-    -- Desativa colisão das ferramentas atuais do jogador (apenas ferramentas, não o corpo)
+    wallshotEnabled = true
     local char = Player.Character
-    if char then
-        for _, tool in ipairs(char:GetChildren()) do
-            if tool:IsA("Tool") then
-                disableCollisions(tool)
-            end
-        end
-    end
-    -- Varre projéteis já existentes
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if isProjectile(obj) then
-            disableCollisions(obj)
-        end
-    end
-    -- Evento para novos projéteis
+    if char then for _, tool in ipairs(char:GetChildren()) do if tool:IsA("Tool") then disableCollisions(tool) end end end
+    for _, obj in ipairs(Workspace:GetDescendants()) do if isProjectile(obj) then disableCollisions(obj) end end
     if not whConnection then
         whConnection = Workspace.DescendantAdded:Connect(function(obj)
-            if wallshot and isProjectile(obj) then
-                task.wait(0.05)
-                disableCollisions(obj)
-            end
+            if wallshotEnabled and isProjectile(obj) then task.wait(0.05); disableCollisions(obj) end
         end)
     end
 end
 
 local function disableWallshot()
-    wallshot = false
-    if whConnection then
-        whConnection:Disconnect()
-        whConnection = nil
-    end
+    wallshotEnabled = false
+    if whConnection then whConnection:Disconnect(); whConnection = nil end
 end
 
--- ==================== AIMBOT SUAVE ====================
+-- Aimbot
 local function getEnemiesInFOV()
     local center = Camera.ViewportSize / 2
     local enemies = {}
@@ -124,99 +108,97 @@ local function getEnemiesInFOV()
     return enemies
 end
 
+local bypassTimer = 0
+local bypassOffset = Vector3.zero
+
 local function aimbotStep()
-    if not aimbot then return end
+    if not aimbotEnabled then return end
     local enemies = getEnemiesInFOV()
     if #enemies == 0 then return end
     local targetPos = enemies[1].worldPos
 
-    -- Força: 1 = suave (0.02), 5 = lock (1.0)
-    local alpha = 0.02 + (aimForce - 1) * 0.245
-    if alpha > 1.0 then alpha = 1.0 end
-
-    local newCF = CFrame.new(Camera.CFrame.Position, targetPos)
-    if alpha < 1 then
-        Camera.CFrame = Camera.CFrame:Lerp(newCF, alpha)
-    else
-        Camera.CFrame = newCF
+    if bypassLevel > 1 then
+        local now = tick()
+        if now - bypassTimer > (0.5 - bypassLevel * 0.04) then
+            bypassTimer = now
+            local maxOff = bypassLevel * 0.12
+            bypassOffset = Vector3.new((math.random()-0.5)*2*maxOff, (math.random()-0.5)*2*maxOff, (math.random()-0.5)*2*maxOff)
+        end
+        targetPos = targetPos + bypassOffset
     end
+
+    local alpha = 0.02 + (aimForce - 1) * 0.245
+    if alpha > 1 then alpha = 1 end
+    local newCF = CFrame.new(Camera.CFrame.Position, targetPos)
+    if alpha < 1 then Camera.CFrame = Camera.CFrame:Lerp(newCF, alpha) else Camera.CFrame = newCF end
 end
 
--- ==================== ESP BOX ====================
+-- ESP
 local function getCharBounds(char)
     local head = char:FindFirstChild("Head")
     local root = char:FindFirstChild("HumanoidRootPart")
     if not head or not root then return nil end
-    local topWorld = head.Position + Vector3.new(0, 1.5, 0)
-    local bottomWorld = root.Position - Vector3.new(0, 3, 0)
+    local topWorld = head.Position + Vector3.new(0,1.5,0)
+    local bottomWorld = root.Position - Vector3.new(0,3,0)
     local topScr, topVis = Camera:WorldToViewportPoint(topWorld)
     local botScr, botVis = Camera:WorldToViewportPoint(bottomWorld)
     if not topVis or not botVis then return nil end
     local h = math.abs(topScr.Y - botScr.Y)
     local w = h * 0.45
     local cx = (topScr.X + botScr.X) / 2
-    return {
-        Position = Vector2.new(cx - w/2, topScr.Y),
-        Size = Vector2.new(w, h)
-    }
+    return {Position = Vector2.new(cx - w/2, topScr.Y), Size = Vector2.new(w, h)}
 end
 
--- ==================== ESP ESQUELETO ====================
 local function getBones(char)
     local bones = {}
-    -- Motor6D / Bone
     for _, obj in ipairs(char:GetDescendants()) do
         if obj:IsA("Motor6D") or obj:IsA("Bone") then
-            local a, b = obj.Part0, obj.Part1
-            if a and b and a:IsA("BasePart") and b:IsA("BasePart") then
-                table.insert(bones, {a, b})
-            end
+            local a,b = obj.Part0, obj.Part1
+            if a and b and a:IsA("BasePart") and b:IsA("BasePart") then table.insert(bones, {a,b}) end
         end
     end
-    -- Fallback R6/R15
     if #bones == 0 then
         local pairs = {
-            {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
-            {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"},
-            {"LeftLowerLeg", "LeftFoot"}, {"LowerTorso", "RightUpperLeg"},
-            {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"},
-            {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"},
-            {"LeftLowerArm", "LeftHand"}, {"UpperTorso", "RightUpperArm"},
-            {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+            {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},{"LowerTorso","LeftUpperLeg"},
+            {"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},{"LowerTorso","RightUpperLeg"},
+            {"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"},{"UpperTorso","LeftUpperArm"},
+            {"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},{"UpperTorso","RightUpperArm"},
+            {"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"}
         }
         for _, pair in ipairs(pairs) do
             local a = char:FindFirstChild(pair[1])
             local b = char:FindFirstChild(pair[2])
-            if a and b then table.insert(bones, {a, b}) end
+            if a and b then table.insert(bones, {a,b}) end
         end
     end
     return bones
 end
 
 local function updateESP()
-    -- Limpeza
-    for p, box in pairs(boxes) do
-        if not p.Parent then box:Remove(); boxes[p] = nil end
-    end
-    for p, data in pairs(skeletons) do
-        if not p.Parent then
-            for _, d in ipairs(data) do d.line:Remove() end
-            skeletons[p] = nil
-        end
-    end
+    -- limpeza de players que saíram
+    for p, box in pairs(boxes) do if not p.Parent then box:Remove(); boxes[p]=nil end end
+    for p, data in pairs(skeletons) do if not p.Parent then for _,d in ipairs(data) do d.line:Remove() end; skeletons[p]=nil end end
+    for p, tag in pairs(nameTags) do if not p.Parent then tag:Remove(); nameTags[p]=nil end end
+    for p, line in pairs(rainbowLines) do if not p.Parent then line:Remove(); rainbowLines[p]=nil end end
 
     for _, p in ipairs(Players:GetPlayers()) do
         if p == Player then continue end
         local char = p.Character
         if not char or not char:FindFirstChild("Head") then
-            if boxes[p] then boxes[p]:Remove(); boxes[p] = nil end
-            if skeletons[p] then for _, d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p] = nil end
+            if boxes[p] then boxes[p]:Remove(); boxes[p]=nil end
+            if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p]=nil end
+            if nameTags[p] then nameTags[p]:Remove(); nameTags[p]=nil end
+            if rainbowLines[p] then rainbowLines[p]:Remove(); rainbowLines[p]=nil end
             continue
         end
         local hum = char:FindFirstChild("Humanoid")
-        if not hum or hum.Health <= 0 then
+        local health = hum and hum.Health or 0
+        local maxHealth = hum and hum.MaxHealth or 100
+        if not hum or health <= 0 then
             if boxes[p] then boxes[p].Visible = false end
-            if skeletons[p] then for _, d in ipairs(skeletons[p]) do d.line.Visible = false end end
+            if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line.Visible = false end end
+            if nameTags[p] then nameTags[p].Visible = false end
+            if rainbowLines[p] then rainbowLines[p].Visible = false end
             continue
         end
 
@@ -234,23 +216,23 @@ local function updateESP()
                 if boxes[p] then boxes[p].Visible = false end
             end
         else
-            if boxes[p] then boxes[p]:Remove(); boxes[p] = nil end
+            if boxes[p] then boxes[p]:Remove(); boxes[p]=nil end
         end
 
         -- Esqueleto
-        if espSkel then
+        if espSkeleton then
             if not skeletons[p] then
                 skeletons[p] = {}
                 local bones = getBones(char)
                 for i, parts in ipairs(bones) do
                     local line = Drawing.new("Line")
                     line.Thickness = 1; line.Color = Color3.fromRGB(255,255,255)
-                    skeletons[p][i] = {line = line, a = parts[1], b = parts[2]}
+                    skeletons[p][i] = {line=line, a=parts[1], b=parts[2]}
                 end
             end
             for _, data in ipairs(skeletons[p]) do
                 local line, a, b = data.line, data.a, data.b
-                if a and b and a.Parent and b.Parent then
+                if a.Parent and b.Parent then
                     local aPos, aVis = Camera:WorldToViewportPoint(a.Position)
                     local bPos, bVis = Camera:WorldToViewportPoint(b.Position)
                     if aVis and bVis then
@@ -260,199 +242,174 @@ local function updateESP()
                 else line.Visible = false end
             end
         else
-            if skeletons[p] then for _, d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p] = nil end
+            if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p]=nil end
+        end
+
+        -- Nome e vida
+        if showNameHealth then
+            local headPos, onScreen = Camera:WorldToViewportPoint(char.Head.Position + Vector3.new(0,1.5,0))
+            if onScreen then
+                if not nameTags[p] then
+                    local tag = Drawing.new("Text")
+                    tag.Center = true; tag.Size = 16; tag.Outline = true; tag.OutlineColor = Color3.new(0,0,0)
+                    nameTags[p] = tag
+                end
+                local tag = nameTags[p]
+                tag.Text = p.Name .. " [" .. math.floor(health) .. "/" .. math.floor(maxHealth) .. "]"
+                tag.Position = Vector2.new(headPos.X, headPos.Y)
+                tag.Color = Color3.fromRGB(255,255,255)
+                tag.Visible = true
+            else
+                if nameTags[p] then nameTags[p].Visible = false end
+            end
+        else
+            if nameTags[p] then nameTags[p]:Remove(); nameTags[p]=nil end
+        end
+
+        -- Linhas arco-íris (do jogador até o inimigo)
+        if espLines then
+            local myChar = Player.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                local myPos, myVis = Camera:WorldToViewportPoint(myChar.HumanoidRootPart.Position)
+                local enemyPos, enemyVis = Camera:WorldToViewportPoint(char.Head.Position)
+                if myVis and enemyVis then
+                    if not rainbowLines[p] then
+                        local line = Drawing.new("Line")
+                        line.Thickness = 2
+                        rainbowLines[p] = line
+                    end
+                    local line = rainbowLines[p]
+                    line.From = Vector2.new(myPos.X, myPos.Y)
+                    line.To = Vector2.new(enemyPos.X, enemyPos.Y)
+                    line.Color = Color3.fromHSV((tick()*50 % 255)/255, 1, 1)
+                    line.Visible = true
+                else
+                    if rainbowLines[p] then rainbowLines[p].Visible = false end
+                end
+            end
+        else
+            for p, line in pairs(rainbowLines) do line:Remove(); rainbowLines[p]=nil end
         end
     end
 end
 
--- ==================== FOV ====================
+-- FOV Circle
 local function updateFOV()
     fovCircle.Position = Camera.ViewportSize / 2
     fovCircle.Radius = fovRadius
-    fovCircle.Visible = fovShow
-    if fovShow and fovRainbow then
-        fovCircle.Color = Color3.fromHSV((tick() % 5) / 5, 1, 1)
+    fovCircle.Visible = fovCircleEnabled
+    if fovCircleEnabled and fovRainbowEnabled then
+        fovCircle.Color = Color3.fromHSV((tick()%5)/5, 1, 1)
     else
         fovCircle.Color = Color3.fromRGB(255,255,255)
     end
 end
 
--- ==================== INTERFACE (BOTÃO PRETO "+") ====================
-local gui = Instance.new("ScreenGui")
-gui.Name = "SZ"
-gui.ResetOnSpawn = false
-gui.Parent = game:GetService("CoreGui")
-
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(0, 50, 0, 50)
-btn.Position = UDim2.new(0.8, -25, 0.5, -25)
-btn.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-btn.TextColor3 = Color3.new(1, 1, 1)
-btn.Text = "+"
-btn.Font = Enum.Font.SourceSansBold
-btn.TextSize = 30
-btn.BorderSizePixel = 0
-btn.Parent = gui
-Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 220, 0, 380)
-menu.Position = UDim2.new(0.5, -110, 0.5, -190)
-menu.BackgroundColor3 = Color3.new(0.8, 0.1, 0.1)
-menu.BorderSizePixel = 0
-menu.Visible = false
-menu.Parent = gui
-
-local close = Instance.new("TextButton")
-close.Size = UDim2.new(0, 30, 0, 30)
-close.Position = UDim2.new(1, -35, 0, 5)
-close.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-close.TextColor3 = Color3.new(1, 1, 1)
-close.Text = "X"
-close.Font = Enum.Font.SourceSansBold
-close.TextSize = 18
-close.Parent = menu
-Instance.new("UICorner", close).CornerRadius = UDim.new(1, 0)
-
-local function addToggle(y, name, default, callback)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0, 120, 0, 30)
-    lbl.Position = UDim2.new(0, 10, 0, y)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = name
-    lbl.TextColor3 = Color3.new(1, 1, 1)
-    lbl.Font = Enum.Font.SourceSans
-    lbl.TextSize = 14
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = menu
-
-    local sw = Instance.new("TextButton")
-    sw.Size = UDim2.new(0, 50, 0, 30)
-    sw.Position = UDim2.new(0, 140, 0, y)
-    sw.BackgroundColor3 = default and Color3.new(0, 0.8, 0) or Color3.new(0.8, 0, 0)
-    sw.Text = default and "ON" or "OFF"
-    sw.TextColor3 = Color3.new(1, 1, 1)
-    sw.Font = Enum.Font.SourceSansBold
-    sw.TextSize = 12
-    sw.Parent = menu
-    Instance.new("UICorner", sw).CornerRadius = UDim.new(0, 4)
-
-    local state = default
-    sw.Activated:Connect(function()
-        state = not state
-        sw.BackgroundColor3 = state and Color3.new(0, 0.8, 0) or Color3.new(0.8, 0, 0)
-        sw.Text = state and "ON" or "OFF"
-        callback(state)
-    end)
-end
-
-local function addSlider(y, name, min, max, default, callback)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 0, 16)
-    lbl.Position = UDim2.new(0, 10, 0, y)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = name .. ": " .. default
-    lbl.TextColor3 = Color3.new(1, 1, 1)
-    lbl.Font = Enum.Font.SourceSans
-    lbl.TextSize = 12
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = menu
-
-    local bar = Instance.new("TextButton")
-    bar.Size = UDim2.new(1, -20, 0, 16)
-    bar.Position = UDim2.new(0, 10, 0, y + 18)
-    bar.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
-    bar.Text = ""
-    bar.Parent = menu
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 3)
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.new(0, 0.6, 1)
-    fill.BorderSizePixel = 0
-    fill.Parent = bar
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 3)
-
-    local function update(input)
-        local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        local val = math.floor(min + (max - min) * pos)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        lbl.Text = name .. ": " .. val
-        callback(val)
+-- Speed
+local function setSpeed()
+    if speedEnabled then
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = speedValue end
     end
-
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            update(input)
-            local conn
-            conn = UserInputService.InputChanged:Connect(function(ch)
-                if ch.UserInputType == Enum.UserInputType.Touch or ch.UserInputType == Enum.UserInputType.MouseMovement then
-                    update(ch)
-                end
-            end)
-            UserInputService.InputEnded:Connect(function(ev)
-                if ev.UserInputType == Enum.UserInputType.Touch or ev.UserInputType == Enum.UserInputType.MouseButton1 then
-                    conn:Disconnect()
-                end
-            end)
-        end
-    end)
 end
 
--- Preencher opções
-local y = 35
-addToggle(y, "Wallshot", false, function(v) if v then enableWallshot() else disableWallshot() end end)
-y = y + 35
-addToggle(y, "Aimbot", false, function(v) aimbot = v end)
-y = y + 35
-addSlider(y, "Força", 1, 5, aimForce, function(v) aimForce = v end)
-y = y + 38
-addToggle(y, "ESP Box", false, function(v) espBox = v end)
-y = y + 35
-addToggle(y, "ESP Esqueleto", false, function(v) espSkel = v end)
-y = y + 35
-addToggle(y, "Círculo FOV", false, function(v) fovShow = v end)
-y = y + 35
-addToggle(y, "FOV Arco-íris", false, function(v) fovRainbow = v end)
-y = y + 35
-addSlider(y, "Raio FOV", 50, 500, fovRadius, function(v) fovRadius = v end)
-
--- Ações dos botões
-btn.Activated:Connect(function() menu.Visible = not menu.Visible end)
-close.Activated:Connect(function() menu.Visible = false end)
-
--- Arrastar botão
-local drag = false
-local startPos
-btn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = false
-        startPos = input.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.Change then
-                local delta = input.Position - startPos
-                if delta.Magnitude > 8 then
-                    drag = true
-                    btn.Position = UDim2.new(0, input.Position.X - 25, 0, input.Position.Y - 25)
-                end
+-- Noclip
+local function applyNoclip()
+    local char = Player.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then part.CanCollide = not noclipEnabled end
+    end
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            for _, part in ipairs(tool:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = not noclipEnabled end
             end
-        end)
+        end
     end
+end
+
+Player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    if speedEnabled then setSpeed() end
+    if noclipEnabled then applyNoclip() end
 end)
 
--- Loop principal
+if Player.Character then
+    if speedEnabled then setSpeed() end
+    if noclipEnabled then applyNoclip() end
+end
+
+-- ==================== RAYFIELD UI ====================
+local Window = Rayfield:CreateWindow({
+    Name = "SZ MODS EVOLUÍDO",
+    LoadingTitle = "Carregando...",
+    LoadingSubtitle = "por Souza",
+    ConfigurationSaving = { Enabled = false },
+    Discord = { Enabled = false },
+    KeySystem = false
+})
+
+local AimbotTab = Window:CreateTab("Combate", 4483362458) -- ícone de mira
+local VisualTab = Window:CreateTab("Visual", 4483362458)
+local MovementTab = Window:CreateTab("Movimento", 4483362458)
+local SettingsTab = Window:CreateTab("Config", 4483362458)
+
+-- Combate
+AimbotTab:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) aimbotEnabled = v end })
+AimbotTab:CreateSlider({ Name = "Força", Range = {1,5}, Increment = 1, CurrentValue = 1, Callback = function(v) aimForce = v end })
+AimbotTab:CreateSlider({ Name = "Bypass", Range = {1,10}, Increment = 1, CurrentValue = 1, Callback = function(v) bypassLevel = v end })
+AimbotTab:CreateToggle({ Name = "Wallshot", CurrentValue = false, Callback = function(v) if v then enableWallshot() else disableWallshot() end end })
+
+-- Visual
+VisualTab:CreateToggle({ Name = "ESP Box", CurrentValue = false, Callback = function(v) espBox = v end })
+VisualTab:CreateToggle({ Name = "ESP Esqueleto", CurrentValue = false, Callback = function(v) espSkeleton = v end })
+VisualTab:CreateToggle({ Name = "Nome / Vida", CurrentValue = false, Callback = function(v) showNameHealth = v end })
+VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Callback = function(v) espLines = v end })
+VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Callback = function(v) fovCircleEnabled = v end })
+VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbowEnabled = v end })
+VisualTab:CreateSlider({ Name = "Raio FOV", Range = {50,500}, Increment = 10, CurrentValue = 150, Callback = function(v) fovRadius = v end })
+
+-- Movimento
+MovementTab:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) speedEnabled = v; setSpeed() end })
+MovementTab:CreateSlider({ Name = "Velocidade", Range = {16,200}, Increment = 1, CurrentValue = 16, Callback = function(v) speedValue = v; if speedEnabled then setSpeed() end end })
+MovementTab:CreateToggle({ Name = "Noclip", CurrentValue = false, Callback = function(v) noclipEnabled = v; applyNoclip() end })
+
+-- Config (Anti Live)
+SettingsTab:CreateToggle({ Name = "Anti Live (Ocultar em live)", CurrentValue = true, Callback = function(v) antiLiveEnabled = v end })
+
+-- Anti Live check
+local antiLiveEnabled = true
+local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function()
     aimbotStep()
     updateESP()
     updateFOV()
+    if speedEnabled then setSpeed() end  -- mantém após dano
+
+    if antiLiveEnabled and tick() - lastLiveCheck > 1 then
+        lastLiveCheck = tick()
+        local isLive = CoreGui:FindFirstChild("LiveIndicator") ~= nil
+        Window.Enabled = not isLive  -- esconde a janela durante live
+    end
 end)
 
--- Limpeza
-gui.Destroying:Connect(function()
+-- Limpeza ao destruir
+gui.Destroying:Connect(function() --[[ a janela do Rayfield não tem Destroying, então faremos no final do script? ]] end)
+-- Rayfield não fornece evento de destruição. Como o script é executado uma vez, podemos confiar na limpeza quando o script é removido? Vamos adicionar um encerramento manual.
+
+-- Limpeza geral ao fechar
+local function cleanup()
     disableWallshot()
     fovCircle:Remove()
     for _, box in pairs(boxes) do box:Remove() end
     for _, data in pairs(skeletons) do for _, d in ipairs(data) do d.line:Remove() end end
-end)
+    for _, tag in pairs(nameTags) do tag:Remove() end
+    for _, line in pairs(rainbowLines) do line:Remove() end
+end
 
-print("SZ MODS carregado – sem noclip, aimbot suave, Wallshot seguro.")
+-- Tenta limpar se o script for removido
+script.Destroying:Connect(cleanup)
+game:GetService("Players").LocalPlayer.OnDestroy:Connect(cleanup)
+
+print("SZ MODS EVOLUÍDO carregado com sucesso via Rayfield!")
