@@ -1,4 +1,4 @@
--- SZ MODS COMPLETO – Versão Sirius ULTRA PRO
+-- SZ MODS COMPLETO – Versão Sirius SUPREMA CORES & FÍSICA Fix
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
@@ -21,7 +21,7 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false
 })
 
--- Serviços do Roblox
+-- Serviços principais do Roblox
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -56,7 +56,7 @@ function parseColor(input)
     return nil
 end
 
--- ========== CRIAÇÃO DAS ABAS (Formatado com Ícones) ==========
+-- ========== CRIAÇÃO DAS ABAS ==========
 local CombatTab = Window:CreateTab("Combate", 4483362458)
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 local CoresTab = Window:CreateTab("Cores ESP", 4483362458)
@@ -64,14 +64,6 @@ local VeiculosTab = Window:CreateTab("Veículos", 4483362458)
 local ArmasTab = Window:CreateTab("Armas", 4483362458)
 local MovementTab = Window:CreateTab("Movimento", 4483362458)
 local ConfigTab = Window:CreateTab("Config", 4483362458)
-
--- Botão de Verificação Inicial
-CombatTab:CreateButton({
-    Name = "Teste de Inicialização",
-    Callback = function()
-        Rayfield:Notify({ Title = "SOUZA MODS", Content = "Sistemas operando em 100%", Duration = 2 })
-    end
-})
 
 -- ========== ABA COMBATE ==========
 CombatTab:CreateToggle({ Name = "Aimbot", CurrentValue = false, Flag = "Aimbot_Toggle", Callback = function(v) aimbot = v end })
@@ -120,9 +112,9 @@ VisualTab:CreateSlider({
 CoresTab:CreateInput({ Name = "Cor da Box (ex: vermelho)", PlaceholderText = "vermelho", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then boxColor = c end end })
 CoresTab:CreateInput({ Name = "Cor do Esqueleto (ex: azul)", PlaceholderText = "branco", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then skelColor = c end end })
 
--- ========== ABA VEÍCULOS (FLING PRO & DESTRANCAR SYSTEM V2) ==========
+-- ========== ABA VEÍCULOS (FÍSICA DE FLING ATUALIZADA & AUTO-SIT UNLOCK) ==========
 VeiculosTab:CreateButton({
-    Name = "🧲 Pegar Carro Mais Próximo",
+    Name = "🧲 Grudar Carro Próximo na Mão",
     Callback = function()
         if holdingCar then return end
         local char = Player.Character
@@ -157,27 +149,26 @@ VeiculosTab:CreateButton({
                         pcall(function()
                             part.CanCollide = false
                             part.Anchored = false
-                            -- Força propriedade física no cliente para herdar rede
-                            part.AssemblyLinearVelocity = Vector3.new(0, 0.1, 0)
-                            part.AssemblyAngularVelocity = Vector3.zero
+                            part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
                         end)
                     end
                 end
                 local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
                 if prim then
-                    -- Mantém o veículo grudado na frente para carregar o peso físico
-                    prim.CFrame = r.CFrame * CFrame.new(0, 1.5, -7)
+                    -- Fixa rigidamente o CFrame do carro na frente do seu boneco para forçar a sincronização de rede
+                    prim.CFrame = r.CFrame * CFrame.new(0, 1.5, -8)
                 end
             end)
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "✅ Veículo fixado! Use 'Jogar Carro' para arremessar.", Duration = 3 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "✅ Veículo preso na mão! Olhe para o alvo e use 'Jogar Carro'.", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhum veículo encontrado.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhum veículo por perto.", Duration = 2 })
         end
     end
 })
 
 VeiculosTab:CreateButton({
-    Name = "💥 Jogar Carro (Fling com Loop de Replicação)",
+    Name = "💥 Jogar Carro (Arremesso Físico Violento)",
     Callback = function()
         if not holdingCar then 
             Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Você não está segurando um veículo.", Duration = 2 })
@@ -185,38 +176,44 @@ VeiculosTab:CreateButton({
         end
         if holdingConn then holdingConn:Disconnect() end
 
-        local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
-        local throwDirection = Camera.CFrame.LookVector
+        local targetVehicle = holdingCar
+        holdingCar = nil
+
+        local prim = targetVehicle.PrimaryPart or targetVehicle:FindFirstChildWhichIsA("BasePart")
+        local dir = Camera.CFrame.LookVector
 
         if prim then
-            -- Ativa colisões novamente antes do arremesso
-            for _, part in ipairs(holdingCar:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = true end
-            end
-
-            -- Solução Profissional: Loop de frames para o servidor processar a velocidade e não resetar o carro no mesmo lugar
+            -- Loop forçado para o servidor validar o deslocamento e não "travar" o carro no ar
             task.spawn(function()
-                for i = 1, 45 do
+                for i = 1, 40 do
                     if prim and prim.Parent then
-                        prim.AssemblyLinearVelocity = throwDirection * 9999
-                        prim.AssemblyAngularVelocity = Vector3.new(8000, 8000, 8000)
+                        pcall(function()
+                            for _, part in ipairs(targetVehicle:GetDescendants()) do
+                                if part:IsA("BasePart") then 
+                                    part.CanCollide = true 
+                                    part.Anchored = false
+                                    -- Aplica força de desancoragem extrema
+                                    part.AssemblyLinearVelocity = dir * 18000
+                                    part.AssemblyAngularVelocity = Vector3.new(4000, 4000, 4000)
+                                end
+                            end
+                        end)
                     end
-                    task.wait()
+                    RunService.Heartbeat:Wait()
                 end
             end)
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "🚀 Veículo arremessado!", Duration = 2 })
         end
-        
-        holdingCar = nil
-        Rayfield:Notify({ Title = "SOUZA MODS", Content = "🚀 Veículo ejetado com força máxima!", Duration = 2 })
     end
 })
 
 VeiculosTab:CreateButton({
-    Name = "🔓 Destrancar Todos os Sistemas do Veículo",
+    Name = "🔓 Destrancar e Entrar no Carro Mais Próximo",
     Callback = function()
         local char = Player.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
-        if not root then return end
+        local hum = char and char:FindFirstChild("Humanoid")
+        if not root or not hum then return end
         
         local nearest, nearestDist = nil, math.huge
         for _, obj in ipairs(Workspace:GetDescendants()) do
@@ -233,118 +230,116 @@ VeiculosTab:CreateButton({
         end
 
         if nearest then
+            local targetSeat = nil
             pcall(function()
                 for _, obj in ipairs(nearest:GetDescendants()) do
-                    -- Destranca bancos padrões e avançados
                     if obj:IsA("VehicleSeat") or obj:IsA("Seat") then
                         obj.Disabled = false
                         obj.CanTouch = true
                         obj:SetAttribute("Locked", false)
                         obj:SetAttribute("Occupied", false)
                         obj:SetAttribute("Owner", "")
-                    -- Ativa cliques e interações por ProximityPrompt
+                        targetSeat = obj
                     elseif obj:IsA("ProximityPrompt") then
                         obj.Enabled = true
-                        obj.MaxActivationDistance = 25
-                    -- Quebra configurações de A-Chassis e Scripts proprietários
+                        obj.MaxActivationDistance = 30
                     elseif obj:IsA("ValueBase") then
                         local n = obj.Name:lower()
-                        if n:find("owner") or n:find("dono") or n:find("proprietario") then
-                            obj.Value = ""
-                        elseif n:find("lock") or n:find("tranca") or n:find("preso") then
-                            if obj:IsA("BoolValue") then obj.Value = false else obj.Value = 0 end
-                        end
-                    elseif obj.Name:lower():find("lock") or obj.Name:lower():find("tranca") then
-                        obj:Destroy()
+                        if n:find("owner") or n:find("dono") or n:find("proprietario") then obj.Value = "" end
+                        if n:find("lock") or n:find("tranca") then if obj:IsA("BoolValue") then obj.Value = false else obj.Value = 0 end end
                     end
                 end
+                
+                -- Se encontrar o assento, força o teleporte do boneco e executa a função nativa de sentar
+                if targetSeat then
+                    root.CFrame = targetSeat.CFrame * CFrame.new(0, 1, 0)
+                    task.wait(0.1)
+                    targetSeat:Sit(hum)
+                end
             end)
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "🔓 Segurança e propriedade do veículo limpas!", Duration = 3 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "🔓 Ignorando travas e assumindo o controle!", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhum veículo detectado no raio de ação.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhum veículo encontrado.", Duration = 2 })
         end
     end
 })
 
--- ========== ABA ARMAS (BUSCA INTELIGENTE POR APROXIMAÇÃO) ==========
+-- ========== ABA ARMAS (PULLING FÍSICO VIA TELEPORTE DE HANDLE) ==========
 ArmasTab:CreateInput({
     Name = "Nome da Arma (Completo ou Parte)",
-    PlaceholderText = "Ex: AK ou M4",
+    PlaceholderText = "Ex: Gun ou AK-47",
     RemoveTextAfterFocusLost = false,
     Callback = function(v) toolGrabName = v end
 })
 
 ArmasTab:CreateButton({
-    Name = "🔫 Puxar Arma Pro Inventário (Fuzzy Search)",
+    Name = "🔫 Puxar Arma Real por Simulação de Toque",
     Callback = function()
         local name = toolGrabName
         if name == "" then 
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Digite um nome válido.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Digite um nome para pesquisar.", Duration = 2 })
             return 
         end
         
-        local backpack = Player:FindFirstChild("Backpack")
-        if not backpack then return end
+        local char = Player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
 
-        local targets = {}
-        local searchContainers = {
-            Workspace, game:GetService("ReplicatedStorage"), game:GetService("ServerStorage"),
-            game:GetService("Lighting"), game:GetService("StarterPack"), game:GetService("StarterGear")
-        }
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= Player then
-                if plr.Character then table.insert(searchContainers, plr.Character) end
-                local bp = plr:FindFirstChild("Backpack")
-                if bp then table.insert(searchContainers, bp) end
+        local toolsFound = {}
+        
+        -- Escaneia o Workspace à procura de armas soltas
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Tool") and string.find(obj.Name:lower(), name:lower()) then
+                table.insert(toolsFound, obj)
             end
         end
 
-        -- Varredura profissional com string.find (acha mesmo digitando errado/metade do nome)
-        for _, container in ipairs(searchContainers) do
+        -- Escaneia outros containers permitidos
+        local alternativeContainers = {game:GetService("Lighting"), game:GetService("ReplicatedStorage"), game:GetService("StarterPack")}
+        for _, container in ipairs(alternativeContainers) do
             pcall(function()
-                for _, item in ipairs(container:GetDescendants()) do
-                    if item:IsA("Tool") and string.find(item.Name:lower(), name:lower()) then
-                        table.insert(targets, item)
+                for _, obj in ipairs(container:GetDescendants()) do
+                    if obj:IsA("Tool") and string.find(obj.Name:lower(), name:lower()) then
+                        table.insert(toolsFound, obj)
                     end
                 end
             end)
         end
 
-        if #targets == 0 then
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhuma arma compatível encontrada.", Duration = 2 })
+        if #toolsFound == 0 then
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhuma arma com esse nome foi achada.", Duration = 2 })
             return
         end
 
-        local successCount = 0
-        for _, tool in ipairs(targets) do
+        local totalGrabbed = 0
+        for _, tool in ipairs(toolsFound) do
             pcall(function()
-                for _, child in ipairs(tool:GetDescendants()) do
-                    if child:IsA("LocalScript") and (child.Name:lower():find("anti") or child.Name:lower():find("check") or child.Name:lower():find("protect")) then
-                        child.Disabled = true
-                        child:Destroy()
-                    end
-                end
-                
-                tool.Parent = backpack
-                if tool.Parent == backpack then
-                    successCount = successCount + 1
-                else
-                    local clone = tool:Clone()
-                    clone.Parent = backpack
-                    if clone.Parent == backpack then successCount = successCount + 1 end
+                -- Localiza a parte física principal da arma (geralmente chamada Handle)
+                local physicalPart = tool:FindFirstChild("Handle") or tool:FindFirstChildWhichIsA("BasePart")
+                if physicalPart then
+                    -- TELEPORTE FÍSICO DO OBJETO PARA O SEU BONECO
+                    -- Isso aciona o coletor automático do motor do servidor (TouchInterest)
+                    local oldCFrame = physicalPart.CFrame
+                    physicalPart.CanCollide = false
+                    physicalPart.Anchored = false
+                    physicalPart.CFrame = root.CFrame
+                    
+                    -- Também tenta forçar a injeção local caso o mapa permita
+                    tool.Parent = Player:FindFirstChild("Backpack")
+                    totalGrabbed = totalGrabbed + 1
                 end
             end)
         end
 
-        if successCount > 0 then
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "✅ " .. successCount .. " item(ns) puxado(s) com sucesso!", Duration = 3 })
+        if totalGrabbed > 0 then
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "✅ " .. totalGrabbed .. " tentativa(s) de indução executada(s)!", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Protegido pela infraestrutura do Servidor.", Duration = 3 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Falha crítica: O servidor bloqueia fisicamente a arma.", Duration = 3 })
         end
     end
 })
 
--- ========== ABA MOVIMENTO (FLY ELITE ATUALIZADO) ==========
+-- ========== ABA MOVIMENTO ==========
 MovementTab:CreateToggle({ Name = "Pulo Infinito", CurrentValue = false, Flag = "InfJump_Toggle", Callback = function(v) infJump = v end })
 MovementTab:CreateToggle({ Name = "Fly Suave (Estabilizado)", CurrentValue = false, Flag = "Fly_Toggle", Callback = function(v) flyEnabled = v end })
 
@@ -373,7 +368,7 @@ MovementTab:CreateSlider({
 -- ========== ABA CONFIG ==========
 ConfigTab:CreateToggle({ Name = "Anti Live", CurrentValue = false, Flag = "AntiLive_Toggle", Callback = function(v) antiLive = v end })
 
--- ========== MOTORES DE EXECUÇÃO INTERNA DE ALTA PERFORMANCE ==========
+-- ========== MOTORES DE EXECUÇÃO INTERNA INTERMEDIÁRIA ==========
 local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
 local fovCircleObj
 if useDrawing then
@@ -621,7 +616,7 @@ local function updateESP()
     end
 end
 
--- ========== ENGINE DO FLY ATUALIZADA (Suave e Anti-Bypass de Gravidade) ==========
+-- ========== ENGINE DO FLY ATUALIZADA ==========
 local function flyStep()
     if not flyEnabled then return end
     local char = Player.Character
@@ -644,13 +639,11 @@ local function flyStep()
     if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) moving = true end
     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) moving = true end
 
-    -- Trava o estado do boneco para não sofrer queda livre
     hum:ChangeState(Enum.HumanoidStateType.Physics)
 
     if moving and moveDir.Magnitude > 0 then
         root.CFrame = root.CFrame + (moveDir.Unit * (flySpeed * 0.016))
     else
-        -- Mantém estático no ar se não houver comandos ativos
         root.CFrame = CFrame.new(root.CFrame.Position) * CFrame.Angles(0, math.rad(root.Rotation.Y), 0)
     end
 end
