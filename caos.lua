@@ -1,4 +1,4 @@
--- SZ MODS FINAL – Rayfield funcional + Correção de Sliders + Speed Anti-Cheat
+-- SZ MODS V3 – Correção Definitiva dos Sliders (Flags Únicas) + Stealth Speed
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 -- Serviços
@@ -28,9 +28,9 @@ local antiLive = false
 local boxColor = Color3.fromRGB(255,0,0)
 local skelColor = Color3.fromRGB(255,255,255)
 
--- Variáveis do Novo Speed Diferenciado
+-- Variáveis do Speed Diferenciado (Que você curtiu!)
 local stealthSpeed = false
-local stealthSpeedValue = 20
+local stealthSpeedValue = 25
 
 -- Tabelas e Objetos de Desenho
 local boxes, skeletons, nameTags, healthBars, rainbowLines = {}, {}, {}, {}, {}
@@ -55,14 +55,14 @@ local function parseColor(input)
     return nil
 end
 
--- CRIAÇÃO DA JANELA CORRIGIDA (Força limpeza de arquivos temporários corrompidos das fotos)
+-- Janela configurada para IGNORAR o cache corrompido de 750 studs das fotos
 local Window = Rayfield:CreateWindow({
-   Name = "SZ MODS V2", 
+   Name = "SZ MODS V3", 
    LoadingTitle = "SZ MODS",
    LoadingSubtitle = "by Souza",
    ConfigurationSaving = { 
-      Enabled = false,
-      FolderName = "SZModsCleanCache" 
+      Enabled = false, -- Desativa salvamento antigo para limpar o bug
+      FolderName = "SZModsResetFix" 
    },
    KeySystem = false
 })
@@ -84,8 +84,8 @@ local function safeToggle(tab, name, default, callback)
     if tab then pcall(function() tab:CreateToggle({ Name = name, CurrentValue = default, Callback = callback }) end) end
 end
 
--- Função de Slider modificada para aceitar Sufixos dinâmicos e isolados
-local function safeSlider(tab, name, min, max, default, suffix, callback)
+-- Função modificada: Agora exige uma "flagKey" única para nunca misturar os valores das barras
+local function safeSlider(tab, name, min, max, default, suffix, flagKey, callback)
     if tab then 
         pcall(function() 
             tab:CreateSlider({ 
@@ -94,7 +94,8 @@ local function safeSlider(tab, name, min, max, default, suffix, callback)
                 Max = max, 
                 Increment = 1, 
                 CurrentValue = default, 
-                Suffix = suffix, 
+                Suffix = suffix,
+                Flag = flagKey, -- ESSA LINHA CORRIGE O REARRANJO E DESTRAVA O CLIQUE
                 Callback = callback 
             }) 
         end) 
@@ -109,10 +110,11 @@ local function safeButton(tab, name, callback)
     if tab then pcall(function() tab:CreateButton({ Name = name, Callback = callback }) end) end
 end
 
--- ==================== CONTROLES RE CONFIGURADOS (SEM BUG DE ARRASTAR) ====================
+-- ==================== INTERFACE CORRIGIDA E DESTRAVADA ====================
 safeToggle(CombatTab, "Aimbot", false, function(v) aimbot = v end)
-safeSlider(CombatTab, "Força (1-Suave, 5-Portão)", 1, 5, 1, "/5", function(v) aimForce = v end)
-safeSlider(CombatTab, "Bypass Anti-Cheat (10-Seguro)", 1, 10, 1, "/10", function(v) bypass = v end)
+-- Sliders com IDs totalmente novos para quebrar o bug dos 750 studs
+safeSlider(CombatTab, "Força (1-Suave, 5-Portão)", 1, 5, 1, " / 5", "ForcaAim_FixV3", function(v) aimForce = v end)
+safeSlider(CombatTab, "Bypass Anti-Cheat (10-Seguro)", 1, 10, 1, " / 10", "Bypass_FixV3", function(v) bypass = v end)
 
 safeToggle(VisualTab, "ESP Box", false, function(v) espBox = v end)
 safeToggle(VisualTab, "ESP Esqueleto", false, function(v) espSkel = v end)
@@ -122,15 +124,15 @@ safeToggle(VisualTab, "ESP Itens", false, function(v) espItems = v end)
 safeToggle(VisualTab, "Linhas Arco-íris", false, function(v) espLines = v end)
 safeToggle(VisualTab, "Círculo FOV", false, function(v) fovCircle = v end)
 safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
-safeSlider(VisualTab, "Raio FOV", 1, 360, 150, "px", function(v) fovRadius = v end)
+safeSlider(VisualTab, "Raio FOV", 1, 360, 150, " px", "FovRadius_FixV3", function(v) fovRadius = v end)
 
 safeInput(CoresTab, "Cor da Box (ex: vermelho)", "vermelho", function(v) local c = parseColor(v) if c then boxColor = c end end)
 safeInput(CoresTab, "Cor do Esqueleto (ex: azul)", "branco", function(v) local c = parseColor(v) if c then skelColor = c end end)
 
--- Nova Seção de Movimento com Speed Bypass
+-- Aba de Movimento com o seu Speed funcional por CFrame
 safeToggle(MovementTab, "Pulo Infinito", false, function(v) infJump = v end)
 safeToggle(MovementTab, "Velocidade Disfarçada (Andando Correndo)", false, function(v) stealthSpeed = v end)
-safeSlider(MovementTab, "Intensidade do Passo", 10, 100, 25, " extra", function(v) stealthSpeedValue = v end)
+safeSlider(MovementTab, "Intensidade do Passo", 10, 100, 25, " extra", "StealthSpeed_FixV3", function(v) stealthSpeedValue = v end)
 
 safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
 
@@ -153,7 +155,7 @@ safeButton(ConfigTab, "DESTRUIR TUDO", function()
     script:Destroy()
 end)
 
--- Inicialização da Drawing API
+-- Desenho do FOV
 local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
 if useDrawing then
     pcall(function()
@@ -166,7 +168,7 @@ if useDrawing then
     end)
 end
 
--- Dinheiro do jogador
+-- Funções Auxiliares de Dinheiro e Itens
 local function getPlayerMoney(plr)
     local ls = plr:FindFirstChild("leaderstats")
     if ls then
@@ -180,7 +182,6 @@ local function getPlayerMoney(plr)
     return nil
 end
 
--- Otimização da busca de Itens
 task.spawn(function()
     while task.wait(2) do
         if espItems then
@@ -201,7 +202,7 @@ task.spawn(function()
     end
 end)
 
--- Lógica de Aimbot
+-- Lógica do Aimbot
 local function aimbotStep()
     if not aimbot then return end
     local center = Camera.ViewportSize / 2
@@ -253,7 +254,7 @@ local function aimbotStep()
     end
 end
 
--- Sistema de ESP 
+-- Renderizações de ESP (Box, Esqueleto, Linhas)
 local function updateESP()
     for p, box in pairs(boxes) do if not p.Parent then pcall(function() box:Remove() end); boxes[p] = nil end end
     for p, data in pairs(skeletons) do if not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p] = nil end end
@@ -343,7 +344,7 @@ local function updateESP()
     end
 end
 
--- Staff Counter
+-- Staff Counter Movel
 local function updateStaffCounter()
     if not staffFrame then return end
     local count = 0
@@ -398,20 +399,19 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Loop principal integrado (Com o novo CFrame Stealth Speed integrado)
+-- Loop principal unificado
 local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function(deltaTime)
     aimbotStep()
     updateESP()
     updateStaffCounter()
     
-    -- Lógica do Speed Diferenciado (Sem alterar animação e indetectável)
+    -- O sistema de velocidade Stealth por CFrame que você gostou!
     if stealthSpeed and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and Player.Character:FindFirstChild("Humanoid") then
         local humanoid = Player.Character.Humanoid
         local hrp = Player.Character.HumanoidRootPart
         
         if humanoid.MoveDirection.Magnitude > 0 then
-            -- Muda a posição via CFrame com base na direção do movimento analógico/teclado
             local factor = (stealthSpeedValue / 10)
             hrp.CFrame = hrp.CFrame + (humanoid.MoveDirection * factor * deltaTime * 35)
         end
@@ -423,7 +423,6 @@ RunService.RenderStepped:Connect(function(deltaTime)
     end
 end)
 
--- Limpeza total ao destruir
 script.Destroying:Connect(function()
     if fovCircleObj then pcall(function() fovCircleObj:Remove() end) end
     for _, box in pairs(boxes) do pcall(function() box:Remove() end) end
@@ -435,4 +434,4 @@ script.Destroying:Connect(function()
     if staffFrame and staffFrame.Parent then pcall(function() staffFrame.Parent:Destroy() end) end
 end)
 
-print("SZ MODS V2 carregado – Cache limpo e Speed por CFrame ativo!")
+print("SZ MODS V3 Carregado – Sliders destravados e corrigidos com sucesso!")
