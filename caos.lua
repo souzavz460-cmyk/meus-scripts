@@ -1,5 +1,4 @@
--- SZ MODS EVOLUÍDO – Rayfield UI
--- Aimbot, ESP (box/esqueleto/nome/vida/linhas), Speed, Noclip, Wallshot, Anti Live
+-- SZ MODS – Versão limpa, sem Wallshot, sem travamentos
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Players = game:GetService("Players")
@@ -11,174 +10,127 @@ local Player = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 -- Variáveis de estado
-local aimbotEnabled = false
+local aimbot = false
 local aimForce = 1
-local bypassLevel = 1
+local bypass = 1
+local fovCircle = false
+local fovRainbow = false
 local fovRadius = 150
-local fovCircleEnabled = false
-local fovRainbowEnabled = false
 local espBox = false
-local espSkeleton = false
+local espSkel = false
 local espLines = false
 local showNameHealth = false
-local wallshotEnabled = false
-local speedEnabled = false
-local speedValue = 16
-local noclipEnabled = false
+local silentAim = false
+local infJump = false
+local godmode = false
+local antiLive = true
 
--- Desenhos (Drawing)
-local fovCircle = Drawing.new("Circle")
-fovCircle.Visible = false
-fovCircle.Thickness = 2
-fovCircle.Radius = fovRadius
-fovCircle.Color = Color3.fromRGB(255,255,255)
-fovCircle.Filled = false
-fovCircle.Position = Camera.ViewportSize / 2
+-- Desenhos
+local fov = Drawing.new("Circle")
+fov.Visible = false
+fov.Thickness = 2
+fov.Radius = fovRadius
+fov.Color = Color3.new(1,1,1)
+fov.Filled = false
+fov.Position = Camera.ViewportSize/2
 
-local boxes = {}
-local skeletons = {}
-local nameTags = {}
-local rainbowLines = {}
+local boxes, skeletons, nameTags, healthBars, rainbowLines = {}, {}, {}, {}, {}
 
--- ==================== FUNÇÕES ====================
-
--- Wallshot
-local function isProjectile(part)
-    if not part:IsA("BasePart") then return false end
-    local parent = part.Parent
-    while parent do
-        if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then return false end
-        parent = parent.Parent
+-- ==================== AIMBOT (COM BYPASS) ====================
+local function aimbotStep()
+    if not aimbot then return end
+    local enemies = {}
+    local center = Camera.ViewportSize/2
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == Player then continue end
+        local chr = p.Character
+        if chr and chr:FindFirstChild("Head") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
+            local pos, on = Camera:WorldToViewportPoint(chr.Head.Position)
+            if on and (Vector2.new(pos.X,pos.Y)-center).Magnitude <= fovRadius then
+                table.insert(enemies, {chr = chr, dist = (Vector2.new(pos.X,pos.Y)-center).Magnitude})
+            end
+        end
     end
-    if part.Velocity.Magnitude > 20 then return true end
-    local name = part.Name:lower()
-    local keywords = {"bullet","projectile","pellet","arrow","bolt","rocket","grenade","ball","shell","kunai","shuriken","missile","blast","beam"}
-    for _, kw in ipairs(keywords) do
-        if name:find(kw) then return true end
+    if #enemies == 0 then return end
+    table.sort(enemies, function(a,b) return a.dist < b.dist end)
+    local targetPos = enemies[1].chr.Head.Position + Vector3.new(math.random()-0.5,math.random()-0.5,math.random()-0.5)*(bypass*0.05)
+    local alpha = 0.02 + (aimForce-1)*0.245
+    if alpha >= 1 then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+    else
+        Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha)
     end
-    return false
 end
 
-local function disableCollisions(obj)
-    pcall(function()
-        if obj:IsA("BasePart") then obj.CanCollide = false; obj.CanQuery = false end
-        for _, child in ipairs(obj:GetDescendants()) do
-            if child:IsA("BasePart") then child.CanCollide = false; child.CanQuery = false end
+-- ==================== SILENT AIM ====================
+local function silentAimStep()
+    if not silentAim then return end
+    local enemies = {}
+    local center = Camera.ViewportSize/2
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == Player then continue end
+        local chr = p.Character
+        if chr and chr:FindFirstChild("Head") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
+            local pos, on = Camera:WorldToViewportPoint(chr.Head.Position)
+            if on and (Vector2.new(pos.X,pos.Y)-center).Magnitude <= fovRadius then
+                table.insert(enemies, {chr = chr, dist = (Vector2.new(pos.X,pos.Y)-center).Magnitude})
+            end
         end
+    end
+    if #enemies == 0 then return end
+    table.sort(enemies, function(a,b) return a.dist < b.dist end)
+    local target = enemies[1].chr.Head
+    local screenPos = Camera:WorldToViewportPoint(target.Position)
+    pcall(function()
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 0)
+        task.wait(0.02)
+        VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 0)
     end)
 end
 
-local whConnection
-local function enableWallshot()
-    wallshotEnabled = true
-    local char = Player.Character
-    if char then for _, tool in ipairs(char:GetChildren()) do if tool:IsA("Tool") then disableCollisions(tool) end end end
-    for _, obj in ipairs(Workspace:GetDescendants()) do if isProjectile(obj) then disableCollisions(obj) end end
-    if not whConnection then
-        whConnection = Workspace.DescendantAdded:Connect(function(obj)
-            if wallshotEnabled and isProjectile(obj) then task.wait(0.05); disableCollisions(obj) end
-        end)
-    end
-end
-
-local function disableWallshot()
-    wallshotEnabled = false
-    if whConnection then whConnection:Disconnect(); whConnection = nil end
-end
-
--- Aimbot
-local function getEnemiesInFOV()
-    local center = Camera.ViewportSize / 2
-    local enemies = {}
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p == Player then continue end
-        local char = p.Character
-        if not char or not char:FindFirstChild("Head") then continue end
-        local hum = char:FindFirstChild("Humanoid")
-        if not hum or hum.Health <= 0 then continue end
-        local headPos, onScreen = Camera:WorldToViewportPoint(char.Head.Position)
-        if not onScreen then continue end
-        local screenPos = Vector2.new(headPos.X, headPos.Y)
-        local dist = (center - screenPos).Magnitude
-        if dist <= fovRadius then
-            table.insert(enemies, {player = p, dist = dist, worldPos = char.Head.Position})
+-- ==================== INF JUMP ====================
+local jumpConnection
+local function enableInfJump()
+    if jumpConnection then return end
+    jumpConnection = UserInputService.JumpRequest:Connect(function()
+        if infJump then
+            local char = Player.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
         end
-    end
-    table.sort(enemies, function(a,b) return a.dist < b.dist end)
-    return enemies
+    end)
+end
+local function disableInfJump()
+    if jumpConnection then jumpConnection:Disconnect(); jumpConnection = nil end
 end
 
-local bypassTimer = 0
-local bypassOffset = Vector3.zero
-
-local function aimbotStep()
-    if not aimbotEnabled then return end
-    local enemies = getEnemiesInFOV()
-    if #enemies == 0 then return end
-    local targetPos = enemies[1].worldPos
-
-    if bypassLevel > 1 then
-        local now = tick()
-        if now - bypassTimer > (0.5 - bypassLevel * 0.04) then
-            bypassTimer = now
-            local maxOff = bypassLevel * 0.12
-            bypassOffset = Vector3.new((math.random()-0.5)*2*maxOff, (math.random()-0.5)*2*maxOff, (math.random()-0.5)*2*maxOff)
+-- ==================== GODMODE (REGERA VIDA) ====================
+local godmodeConnection
+local function enableGodmode()
+    godmode = true
+    if godmodeConnection then return end
+    godmodeConnection = RunService.RenderStepped:Connect(function()
+        if not godmode then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.Health = char.Humanoid.MaxHealth
         end
-        targetPos = targetPos + bypassOffset
-    end
-
-    local alpha = 0.02 + (aimForce - 1) * 0.245
-    if alpha > 1 then alpha = 1 end
-    local newCF = CFrame.new(Camera.CFrame.Position, targetPos)
-    if alpha < 1 then Camera.CFrame = Camera.CFrame:Lerp(newCF, alpha) else Camera.CFrame = newCF end
+    end)
+end
+local function disableGodmode()
+    godmode = false
+    if godmodeConnection then godmodeConnection:Disconnect(); godmodeConnection = nil end
 end
 
--- ESP
-local function getCharBounds(char)
-    local head = char:FindFirstChild("Head")
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not head or not root then return nil end
-    local topWorld = head.Position + Vector3.new(0,1.5,0)
-    local bottomWorld = root.Position - Vector3.new(0,3,0)
-    local topScr, topVis = Camera:WorldToViewportPoint(topWorld)
-    local botScr, botVis = Camera:WorldToViewportPoint(bottomWorld)
-    if not topVis or not botVis then return nil end
-    local h = math.abs(topScr.Y - botScr.Y)
-    local w = h * 0.45
-    local cx = (topScr.X + botScr.X) / 2
-    return {Position = Vector2.new(cx - w/2, topScr.Y), Size = Vector2.new(w, h)}
-end
-
-local function getBones(char)
-    local bones = {}
-    for _, obj in ipairs(char:GetDescendants()) do
-        if obj:IsA("Motor6D") or obj:IsA("Bone") then
-            local a,b = obj.Part0, obj.Part1
-            if a and b and a:IsA("BasePart") and b:IsA("BasePart") then table.insert(bones, {a,b}) end
-        end
-    end
-    if #bones == 0 then
-        local pairs = {
-            {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},{"LowerTorso","LeftUpperLeg"},
-            {"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},{"LowerTorso","RightUpperLeg"},
-            {"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"},{"UpperTorso","LeftUpperArm"},
-            {"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},{"UpperTorso","RightUpperArm"},
-            {"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"}
-        }
-        for _, pair in ipairs(pairs) do
-            local a = char:FindFirstChild(pair[1])
-            local b = char:FindFirstChild(pair[2])
-            if a and b then table.insert(bones, {a,b}) end
-        end
-    end
-    return bones
-end
-
+-- ==================== ESP (BOX, SKELETON, NAME/HEALTH, RAINBOW LINES) ====================
 local function updateESP()
-    -- limpeza de players que saíram
+    -- limpeza
     for p, box in pairs(boxes) do if not p.Parent then box:Remove(); boxes[p]=nil end end
     for p, data in pairs(skeletons) do if not p.Parent then for _,d in ipairs(data) do d.line:Remove() end; skeletons[p]=nil end end
     for p, tag in pairs(nameTags) do if not p.Parent then tag:Remove(); nameTags[p]=nil end end
+    for p, bar in pairs(healthBars) do if not p.Parent then bar.bg:Remove(); bar.fill:Remove(); healthBars[p]=nil end end
     for p, line in pairs(rainbowLines) do if not p.Parent then line:Remove(); rainbowLines[p]=nil end end
 
     for _, p in ipairs(Players:GetPlayers()) do
@@ -188,6 +140,7 @@ local function updateESP()
             if boxes[p] then boxes[p]:Remove(); boxes[p]=nil end
             if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p]=nil end
             if nameTags[p] then nameTags[p]:Remove(); nameTags[p]=nil end
+            if healthBars[p] then healthBars[p].bg:Remove(); healthBars[p].fill:Remove(); healthBars[p]=nil end
             if rainbowLines[p] then rainbowLines[p]:Remove(); rainbowLines[p]=nil end
             continue
         end
@@ -198,35 +151,55 @@ local function updateESP()
             if boxes[p] then boxes[p].Visible = false end
             if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line.Visible = false end end
             if nameTags[p] then nameTags[p].Visible = false end
+            if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
             if rainbowLines[p] then rainbowLines[p].Visible = false end
             continue
         end
 
         -- Box
         if espBox then
-            local bounds = getCharBounds(char)
-            if bounds then
-                if not boxes[p] then
-                    local box = Drawing.new("Square")
-                    box.Thickness = 2; box.Color = Color3.fromRGB(255,0,0); box.Filled = false
-                    boxes[p] = box
-                end
-                boxes[p].Position = bounds.Position; boxes[p].Size = bounds.Size; boxes[p].Visible = true
-            else
-                if boxes[p] then boxes[p].Visible = false end
+            local head = char:FindFirstChild("Head")
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if head and root then
+                local top = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.5,0))
+                local bot = Camera:WorldToViewportPoint(root.Position - Vector3.new(0,3,0))
+                if top and bot then
+                    local h = math.abs(top.Y - bot.Y); local w = h*0.45; local cx = (top.X+bot.X)/2
+                    if not boxes[p] then
+                        local box = Drawing.new("Square"); box.Thickness = 2; box.Color = Color3.new(1,0,0); box.Filled = false
+                        boxes[p] = box
+                    end
+                    boxes[p].Position = Vector2.new(cx-w/2, top.Y); boxes[p].Size = Vector2.new(w,h); boxes[p].Visible = true
+                else if boxes[p] then boxes[p].Visible = false end end
             end
-        else
-            if boxes[p] then boxes[p]:Remove(); boxes[p]=nil end
-        end
+        else if boxes[p] then boxes[p]:Remove(); boxes[p]=nil end end
 
         -- Esqueleto
-        if espSkeleton then
+        if espSkel then
             if not skeletons[p] then
                 skeletons[p] = {}
-                local bones = getBones(char)
+                local bones = {}
+                for _, obj in ipairs(char:GetDescendants()) do
+                    if obj:IsA("Motor6D") or obj:IsA("Bone") then
+                        local a,b = obj.Part0, obj.Part1
+                        if a and b and a:IsA("BasePart") and b:IsA("BasePart") then table.insert(bones, {a,b}) end
+                    end
+                end
+                if #bones == 0 then
+                    local pairs = {
+                        {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},{"LowerTorso","LeftUpperLeg"},
+                        {"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},{"LowerTorso","RightUpperLeg"},
+                        {"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"},{"UpperTorso","LeftUpperArm"},
+                        {"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},{"UpperTorso","RightUpperArm"},
+                        {"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"}
+                    }
+                    for _, pair in ipairs(pairs) do
+                        local a = char:FindFirstChild(pair[1]); local b = char:FindFirstChild(pair[2])
+                        if a and b then table.insert(bones, {a,b}) end
+                    end
+                end
                 for i, parts in ipairs(bones) do
-                    local line = Drawing.new("Line")
-                    line.Thickness = 1; line.Color = Color3.fromRGB(255,255,255)
+                    local line = Drawing.new("Line"); line.Thickness = 1; line.Color = Color3.new(1,1,1)
                     skeletons[p][i] = {line=line, a=parts[1], b=parts[2]}
                 end
             end
@@ -241,32 +214,41 @@ local function updateESP()
                     else line.Visible = false end
                 else line.Visible = false end
             end
-        else
-            if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p]=nil end
-        end
+        else if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line:Remove() end; skeletons[p]=nil end end
 
-        -- Nome e vida
+        -- Nome e barra de vida
         if showNameHealth then
-            local headPos, onScreen = Camera:WorldToViewportPoint(char.Head.Position + Vector3.new(0,1.5,0))
-            if onScreen then
+            local headPos, on = Camera:WorldToViewportPoint(char.Head.Position + Vector3.new(0,1.5,0))
+            if on then
                 if not nameTags[p] then
-                    local tag = Drawing.new("Text")
-                    tag.Center = true; tag.Size = 16; tag.Outline = true; tag.OutlineColor = Color3.new(0,0,0)
+                    local tag = Drawing.new("Text"); tag.Center = true; tag.Size = 14; tag.Outline = true; tag.OutlineColor = Color3.new(0,0,0)
                     nameTags[p] = tag
                 end
-                local tag = nameTags[p]
-                tag.Text = p.Name .. " [" .. math.floor(health) .. "/" .. math.floor(maxHealth) .. "]"
-                tag.Position = Vector2.new(headPos.X, headPos.Y)
-                tag.Color = Color3.fromRGB(255,255,255)
-                tag.Visible = true
+                nameTags[p].Text = p.Name; nameTags[p].Position = Vector2.new(headPos.X, headPos.Y-10); nameTags[p].Color = Color3.new(1,1,1); nameTags[p].Visible = true
+
+                local bw, bh = 50, 4
+                local bx, by = headPos.X - bw/2, headPos.Y + 2
+                if not healthBars[p] then
+                    local bg = Drawing.new("Line"); bg.Color = Color3.new(0.15,0.15,0.15); bg.Thickness = bh
+                    local fill = Drawing.new("Line"); fill.Color = Color3.new(0,1,0); fill.Thickness = bh
+                    healthBars[p] = {bg=bg, fill=fill}
+                end
+                healthBars[p].bg.From = Vector2.new(bx, by); healthBars[p].bg.To = Vector2.new(bx+bw, by); healthBars[p].bg.Visible = true
+                local percent = math.clamp(health/maxHealth,0,1)
+                local fw = bw * percent
+                healthBars[p].fill.From = Vector2.new(bx, by); healthBars[p].fill.To = Vector2.new(bx+fw, by)
+                healthBars[p].fill.Color = percent>0.5 and Color3.new(0,1,0) or (percent>0.25 and Color3.new(1,1,0) or Color3.new(1,0,0))
+                healthBars[p].fill.Visible = true
             else
                 if nameTags[p] then nameTags[p].Visible = false end
+                if healthBars[p] then healthBars[p].bg.Visible=false; healthBars[p].fill.Visible=false end
             end
         else
             if nameTags[p] then nameTags[p]:Remove(); nameTags[p]=nil end
+            if healthBars[p] then healthBars[p].bg:Remove(); healthBars[p].fill:Remove(); healthBars[p]=nil end
         end
 
-        -- Linhas arco-íris (do jogador até o inimigo)
+        -- Linhas arco-íris
         if espLines then
             local myChar = Player.Character
             if myChar and myChar:FindFirstChild("HumanoidRootPart") then
@@ -274,142 +256,84 @@ local function updateESP()
                 local enemyPos, enemyVis = Camera:WorldToViewportPoint(char.Head.Position)
                 if myVis and enemyVis then
                     if not rainbowLines[p] then
-                        local line = Drawing.new("Line")
-                        line.Thickness = 2
+                        local line = Drawing.new("Line"); line.Thickness = 2
                         rainbowLines[p] = line
                     end
-                    local line = rainbowLines[p]
-                    line.From = Vector2.new(myPos.X, myPos.Y)
-                    line.To = Vector2.new(enemyPos.X, enemyPos.Y)
-                    line.Color = Color3.fromHSV((tick()*50 % 255)/255, 1, 1)
-                    line.Visible = true
-                else
-                    if rainbowLines[p] then rainbowLines[p].Visible = false end
-                end
+                    rainbowLines[p].From = Vector2.new(myPos.X, myPos.Y); rainbowLines[p].To = Vector2.new(enemyPos.X, enemyPos.Y)
+                    rainbowLines[p].Color = Color3.fromHSV((tick()*50%255)/255,1,1); rainbowLines[p].Visible = true
+                else if rainbowLines[p] then rainbowLines[p].Visible = false end end
             end
-        else
-            for p, line in pairs(rainbowLines) do line:Remove(); rainbowLines[p]=nil end
-        end
+        else for p, line in pairs(rainbowLines) do line:Remove(); rainbowLines[p]=nil end end
     end
 end
 
 -- FOV Circle
 local function updateFOV()
-    fovCircle.Position = Camera.ViewportSize / 2
-    fovCircle.Radius = fovRadius
-    fovCircle.Visible = fovCircleEnabled
-    if fovCircleEnabled and fovRainbowEnabled then
-        fovCircle.Color = Color3.fromHSV((tick()%5)/5, 1, 1)
-    else
-        fovCircle.Color = Color3.fromRGB(255,255,255)
-    end
-end
-
--- Speed
-local function setSpeed()
-    if speedEnabled then
-        local char = Player.Character
-        if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = speedValue end
-    end
-end
-
--- Noclip
-local function applyNoclip()
-    local char = Player.Character
-    if not char then return end
-    for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then part.CanCollide = not noclipEnabled end
-    end
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            for _, part in ipairs(tool:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = not noclipEnabled end
-            end
-        end
-    end
-end
-
-Player.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid")
-    if speedEnabled then setSpeed() end
-    if noclipEnabled then applyNoclip() end
-end)
-
-if Player.Character then
-    if speedEnabled then setSpeed() end
-    if noclipEnabled then applyNoclip() end
+    fov.Position = Camera.ViewportSize/2; fov.Radius = fovRadius; fov.Visible = fovCircle
+    if fovCircle and fovRainbow then fov.Color = Color3.fromHSV((tick()%5)/5,1,1) else fov.Color = Color3.new(1,1,1) end
 end
 
 -- ==================== RAYFIELD UI ====================
 local Window = Rayfield:CreateWindow({
-    Name = "SZ MODS EVOLUÍDO",
+    Name = "SZ MODS",
     LoadingTitle = "Carregando...",
     LoadingSubtitle = "por Souza",
-    ConfigurationSaving = { Enabled = false },
-    Discord = { Enabled = false },
+    ConfigurationSaving = {Enabled = false},
+    Discord = {Enabled = false},
     KeySystem = false
 })
 
-local AimbotTab = Window:CreateTab("Combate", 4483362458) -- ícone de mira
+local CombatTab = Window:CreateTab("Combate", 4483362458)
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 local MovementTab = Window:CreateTab("Movimento", 4483362458)
-local SettingsTab = Window:CreateTab("Config", 4483362458)
+local ConfigTab = Window:CreateTab("Config", 4483362458)
 
 -- Combate
-AimbotTab:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) aimbotEnabled = v end })
-AimbotTab:CreateSlider({ Name = "Força", Range = {1,5}, Increment = 1, CurrentValue = 1, Callback = function(v) aimForce = v end })
-AimbotTab:CreateSlider({ Name = "Bypass", Range = {1,10}, Increment = 1, CurrentValue = 1, Callback = function(v) bypassLevel = v end })
-AimbotTab:CreateToggle({ Name = "Wallshot", CurrentValue = false, Callback = function(v) if v then enableWallshot() else disableWallshot() end end })
+CombatTab:CreateToggle({Name="Aimbot", CurrentValue=false, Callback=function(v) aimbot=v end})
+CombatTab:CreateSlider({Name="Força", Range={1,5}, Increment=1, CurrentValue=1, Callback=function(v) aimForce=v end})
+CombatTab:CreateSlider({Name="Bypass", Range={1,10}, Increment=1, CurrentValue=1, Callback=function(v) bypass=v end})
+CombatTab:CreateToggle({Name="Silent Aim", CurrentValue=false, Callback=function(v) silentAim=v end})
+CombatTab:CreateToggle({Name="Godmode (Vida)", CurrentValue=false, Callback=function(v) if v then enableGodmode() else disableGodmode() end end})
 
 -- Visual
-VisualTab:CreateToggle({ Name = "ESP Box", CurrentValue = false, Callback = function(v) espBox = v end })
-VisualTab:CreateToggle({ Name = "ESP Esqueleto", CurrentValue = false, Callback = function(v) espSkeleton = v end })
-VisualTab:CreateToggle({ Name = "Nome / Vida", CurrentValue = false, Callback = function(v) showNameHealth = v end })
-VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Callback = function(v) espLines = v end })
-VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Callback = function(v) fovCircleEnabled = v end })
-VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbowEnabled = v end })
-VisualTab:CreateSlider({ Name = "Raio FOV", Range = {50,500}, Increment = 10, CurrentValue = 150, Callback = function(v) fovRadius = v end })
+VisualTab:CreateToggle({Name="ESP Box", CurrentValue=false, Callback=function(v) espBox=v end})
+VisualTab:CreateToggle({Name="ESP Esqueleto", CurrentValue=false, Callback=function(v) espSkel=v end})
+VisualTab:CreateToggle({Name="Nome / Vida", CurrentValue=false, Callback=function(v) showNameHealth=v end})
+VisualTab:CreateToggle({Name="Linhas Arco-íris", CurrentValue=false, Callback=function(v) espLines=v end})
+VisualTab:CreateToggle({Name="Círculo FOV", CurrentValue=false, Callback=function(v) fovCircle=v end})
+VisualTab:CreateToggle({Name="FOV Arco-íris", CurrentValue=false, Callback=function(v) fovRainbow=v end})
+VisualTab:CreateSlider({Name="Raio FOV", Range={50,500}, Increment=10, CurrentValue=150, Callback=function(v) fovRadius=v end})
 
 -- Movimento
-MovementTab:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) speedEnabled = v; setSpeed() end })
-MovementTab:CreateSlider({ Name = "Velocidade", Range = {16,200}, Increment = 1, CurrentValue = 16, Callback = function(v) speedValue = v; if speedEnabled then setSpeed() end end })
-MovementTab:CreateToggle({ Name = "Noclip", CurrentValue = false, Callback = function(v) noclipEnabled = v; applyNoclip() end })
+MovementTab:CreateToggle({Name="Pulo Infinito", CurrentValue=false, Callback=function(v) infJump=v; if v then enableInfJump() else disableInfJump() end end})
 
--- Config (Anti Live)
-SettingsTab:CreateToggle({ Name = "Anti Live (Ocultar em live)", CurrentValue = true, Callback = function(v) antiLiveEnabled = v end })
+-- Config
+ConfigTab:CreateToggle({Name="Anti Live", CurrentValue=true, Callback=function(v) antiLive=v end})
 
--- Anti Live check
-local antiLiveEnabled = true
-local lastLiveCheck = 0
+-- ==================== LOOPS ====================
+local lastLive = 0
 RunService.RenderStepped:Connect(function()
     aimbotStep()
+    silentAimStep()
     updateESP()
     updateFOV()
-    if speedEnabled then setSpeed() end  -- mantém após dano
 
-    if antiLiveEnabled and tick() - lastLiveCheck > 1 then
-        lastLiveCheck = tick()
-        local isLive = CoreGui:FindFirstChild("LiveIndicator") ~= nil
-        Window.Enabled = not isLive  -- esconde a janela durante live
+    if antiLive and tick()-lastLive > 1 then
+        lastLive = tick()
+        Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
     end
 end)
 
--- Limpeza ao destruir
-gui.Destroying:Connect(function() --[[ a janela do Rayfield não tem Destroying, então faremos no final do script? ]] end)
--- Rayfield não fornece evento de destruição. Como o script é executado uma vez, podemos confiar na limpeza quando o script é removido? Vamos adicionar um encerramento manual.
-
--- Limpeza geral ao fechar
-local function cleanup()
-    disableWallshot()
-    fovCircle:Remove()
+-- Limpeza
+script.Destroying:Connect(function()
+    disableInfJump()
+    disableGodmode()
+    fov:Remove()
     for _, box in pairs(boxes) do box:Remove() end
     for _, data in pairs(skeletons) do for _, d in ipairs(data) do d.line:Remove() end end
     for _, tag in pairs(nameTags) do tag:Remove() end
+    for _, bar in pairs(healthBars) do bar.bg:Remove(); bar.fill:Remove() end
     for _, line in pairs(rainbowLines) do line:Remove() end
-end
+end)
 
--- Tenta limpar se o script for removido
-script.Destroying:Connect(cleanup)
-game:GetService("Players").LocalPlayer.OnDestroy:Connect(cleanup)
-
-print("SZ MODS EVOLUÍDO carregado com sucesso via Rayfield!")
+print("SZ MODS limpo carregado – sem Wallshot, sem travamentos")
