@@ -1,9 +1,9 @@
--- SZ MODS COMPLETO – Versão Avançada (Hold & Throw Car + Pro Tool Grabber)
+-- SZ MODS COMPLETO – Versão Sirius Atualizada (Range Sliders & Tab Icons Fix)
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
     Name = "Souza Mods",
-    Icon = 0,
+    Icon = 4483362458,
     LoadingTitle = "Souza Mods",
     LoadingSubtitle = "by Souzavz",
     Theme = "Default",
@@ -56,21 +56,51 @@ function parseColor(input)
     return nil
 end
 
--- ========== CRIAÇÃO DAS ABAS (Corrigido para 'nil' para renderizar perfeitamente) ==========
-local CombatTab = Window:CreateTab("Combate", nil)
-local VisualTab = Window:CreateTab("Visual", nil)
-local CoresTab = Window:CreateTab("Cores ESP", nil)
-local VeiculosTab = Window:CreateTab("Veículos", nil)
-local ArmasTab = Window:CreateTab("Armas", nil)
-local MovementTab = Window:CreateTab("Movimento", nil)
-local ConfigTab = Window:CreateTab("Config", nil)
+-- ========== CRIAÇÃO DAS ABAS (Corrigido com ID do Ícone para não bugarem) ==========
+local CombatTab = Window:CreateTab("Combate", 4483362458)
+local VisualTab = Window:CreateTab("Visual", 4483362458)
+local CoresTab = Window:CreateTab("Cores ESP", 4483362458)
+local VeiculosTab = Window:CreateTab("Veículos", 4483362458)
+local ArmasTab = Window:CreateTab("Armas", 4483362458)
+local MovementTab = Window:CreateTab("Movimento", 4483362458)
+local ConfigTab = Window:CreateTab("Config", 4483362458)
 
--- ========== ELEMENTOS DA UI DA COMBATE ==========
+-- Botão de Teste para verificar o carregamento imediato das abas
+CombatTab:CreateButton({
+    Name = "Teste",
+    Callback = function()
+        print("Funcionando")
+    end
+})
+
+-- ========== ELEMENTOS DA UI DA COMBATE (Sliders Corrigidos com Range) ==========
 CombatTab:CreateToggle({ Name = "Aimbot", CurrentValue = false, Flag = "Aimbot_Toggle", Callback = function(v) aimbot = v end })
-CombatTab:CreateSlider({ Name = "Força (1-5)", Min = 1, Max = 5, Increment = 1, CurrentValue = 1, Flag = "AimForce_Slider", Callback = function(v) aimForce = v end })
-CombatTab:CreateSlider({ Name = "Bypass", Min = 1, Max = 10, Increment = 1, CurrentValue = 1, Flag = "Bypass_Slider", Callback = function(v) bypass = v end })
 
--- ========== ELEMENTOS DA UI DE VISUAL ==========
+CombatTab:CreateSlider({
+    Name = "Força (1-5)",
+    Range = {1, 5},
+    Increment = 1,
+    Suffix = "x",
+    CurrentValue = 1,
+    Flag = "AimForce_Slider",
+    Callback = function(v)
+        aimForce = v
+    end
+})
+
+CombatTab:CreateSlider({
+    Name = "Bypass",
+    Range = {1, 10},
+    Increment = 1,
+    Suffix = "",
+    CurrentValue = 1,
+    Flag = "Bypass_Slider",
+    Callback = function(v)
+        bypass = v
+    end
+})
+
+-- ========== ELEMENTOS DA UI DE VISUAL (Sliders Corrigidos com Range) ==========
 VisualTab:CreateToggle({ Name = "ESP Box", CurrentValue = false, Flag = "ESPBox_Toggle", Callback = function(v) espBox = v end })
 VisualTab:CreateToggle({ Name = "ESP Esqueleto", CurrentValue = false, Flag = "ESPSkel_Toggle", Callback = function(v) espSkel = v end })
 VisualTab:CreateToggle({ Name = "Nome / Vida / Dinheiro", CurrentValue = false, Flag = "ESPName_Toggle", Callback = function(v) showNameHealth = v end })
@@ -79,7 +109,18 @@ VisualTab:CreateToggle({ Name = "ESP Itens", CurrentValue = false, Flag = "ESPIt
 VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Flag = "ESPLines_Toggle", Callback = function(v) espLines = v end })
 VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Flag = "FOVCircle_Toggle", Callback = function(v) fovCircle = v end })
 VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Flag = "FOVRainbow_Toggle", Callback = function(v) fovRainbow = v end })
-VisualTab:CreateSlider({ Name = "Raio FOV", Min = 50, Max = 500, Increment = 1, CurrentValue = 150, Flag = "FOVRadius_Slider", Callback = function(v) fovRadius = v end })
+
+VisualTab:CreateSlider({
+    Name = "Raio FOV",
+    Range = {50, 500},
+    Increment = 1,
+    Suffix = "px",
+    CurrentValue = 150,
+    Flag = "FOVRadius_Slider",
+    Callback = function(v)
+        fovRadius = v
+    end
+})
 
 -- ========== ELEMENTOS DA UI DE CORES ==========
 CoresTab:CreateInput({ Name = "Cor da Box (ex: vermelho)", PlaceholderText = "vermelho", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then boxColor = c end end })
@@ -129,7 +170,6 @@ VeiculosTab:CreateButton({
                 end
                 local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
                 if prim then
-                    -- Mantém o carro flutuando na sua mão (frente do corpo)
                     prim.CFrame = r.CFrame * CFrame.new(0, 2, -6) * CFrame.Angles(0, math.rad(90), 0)
                 end
             end)
@@ -155,7 +195,6 @@ VeiculosTab:CreateButton({
                 for _, part in ipairs(holdingCar:GetDescendants()) do
                     if part:IsA("BasePart") then part.CanCollide = true end
                 end
-                -- Arremessa com velocidade brutal baseada na direção da sua câmera + rotação agressiva de Fling
                 prim.AssemblyLinearVelocity = Camera.CFrame.LookVector * 6000
                 prim.AssemblyAngularVelocity = Vector3.new(0, 3000, 0)
             end)
@@ -253,7 +292,6 @@ ArmasTab:CreateButton({
         local successCount = 0
         for _, tool in ipairs(targets) do
             pcall(function()
-                -- Desativa e destrói scripts locais anti-cheat/antitamper internos da própria arma antes de puxar
                 for _, child in ipairs(tool:GetDescendants()) do
                     if child:IsA("LocalScript") and (child.Name:lower():find("anti") or child.Name:lower():find("check") or child.Name:lower():find("protect")) then
                         child.Disabled = true
@@ -261,7 +299,6 @@ ArmasTab:CreateButton({
                     end
                 end
                 
-                -- Força a mudança de Parent direta ou clonagem forçada no inventário para contornar restrições
                 tool.Parent = backpack
                 if tool.Parent == backpack then
                     successCount = successCount + 1
@@ -281,12 +318,36 @@ ArmasTab:CreateButton({
     end
 })
 
--- ========== ELEMENTOS DA UI DE MOVIMENTO ==========
+-- ========== ELEMENTOS DA UI DE MOVIMENTO (Sliders Corrigidos com Range) ==========
 MovementTab:CreateToggle({ Name = "Pulo Infinito", CurrentValue = false, Flag = "InfJump_Toggle", Callback = function(v) infJump = v end })
+
 MovementTab:CreateToggle({ Name = "Fly Indetectável (CFrame)", CurrentValue = false, Flag = "Fly_Toggle", Callback = function(v) flyEnabled = v end })
-MovementTab:CreateSlider({ Name = "Velocidade Fly", Min = 20, Max = 200, Increment = 1, CurrentValue = 50, Flag = "FlySpeed_Slider", Callback = function(v) flySpeed = v end })
+
+MovementTab:CreateSlider({
+    Name = "Velocidade Fly",
+    Range = {20, 200},
+    Increment = 1,
+    Suffix = "",
+    CurrentValue = 50,
+    Flag = "FlySpeed_Slider",
+    Callback = function(v)
+        flySpeed = v
+    end
+})
+
 MovementTab:CreateToggle({ Name = "Speed Hack (CFrame Stealth)", CurrentValue = false, Flag = "Speed_Toggle", Callback = function(v) speedEnabled = v end })
-MovementTab:CreateSlider({ Name = "Velocidade Speed", Min = 16, Max = 200, Increment = 1, CurrentValue = 24, Flag = "SpeedValue_Slider", Callback = function(v) speedValue = v end })
+
+MovementTab:CreateSlider({
+    Name = "Velocidade Speed",
+    Range = {16, 200},
+    Increment = 1,
+    Suffix = "",
+    CurrentValue = 24,
+    Flag = "SpeedValue_Slider",
+    Callback = function(v)
+        speedValue = v
+    end
+})
 
 -- ========== ELEMENTOS DA UI DE CONFIG ==========
 ConfigTab:CreateToggle({ Name = "Anti Live", CurrentValue = false, Flag = "AntiLive_Toggle", Callback = function(v) antiLive = v end })
