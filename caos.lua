@@ -1,4 +1,4 @@
--- SZ MODS COMPLETO – Totalmente funcional e corrigido
+-- SZ MODS COMPLETO – Totalmente funcional e corrigido com formato Range nos Sliders
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
@@ -8,8 +8,9 @@ local Window = Rayfield:CreateWindow({
     LoadingSubtitle = "by Souzavz",
     Theme = "Default",
 
+    -- Desativado temporariamente para limpar o cache antigo bugado, depois você pode mudar para true
     ConfigurationSaving = {
-        Enabled = true,
+        Enabled = false,
         FolderName = "SouzaMods",
         FileName = "Main"
     },
@@ -75,22 +76,25 @@ CombatTab:CreateToggle({
     Callback = function(v) aimbot = v end
 })
 
--- Correção nativa da estrutura do Slider (evita a barra azul)
+-- CORRIGIDO: Formato Range aplicado
 CombatTab:CreateSlider({
     Name = "Força (1-5)",
-    Min = 1,
-    Max = 5,
+    Range = {1, 5},
     Increment = 1,
+    Suffix = "x",
     CurrentValue = 1,
+    Flag = "AimForce",
     Callback = function(v) aimForce = v end
 })
 
+-- CORRIGIDO: Formato Range aplicado
 CombatTab:CreateSlider({
     Name = "Bypass",
-    Min = 1,
-    Max = 10,
+    Range = {1, 10},
     Increment = 1,
+    Suffix = " ms",
     CurrentValue = 1,
+    Flag = "AimBypass",
     Callback = function(v) bypass = v end
 })
 
@@ -104,12 +108,14 @@ VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Callb
 VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Callback = function(v) fovCircle = v end })
 VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end })
 
+-- CORRIGIDO: Formato Range aplicado
 VisualTab:CreateSlider({
     Name = "Raio FOV",
-    Min = 50,
-    Max = 500,
+    Range = {50, 500},
     Increment = 1,
+    Suffix = "px",
     CurrentValue = 150,
+    Flag = "RaioFOV",
     Callback = function(v) fovRadius = v end
 })
 
@@ -295,12 +301,14 @@ MovementTab:CreateToggle({
     end
 })
 
+-- CORRIGIDO: Formato Range aplicado
 MovementTab:CreateSlider({
     Name = "Velocidade Fly",
-    Min = 20,
-    Max = 200,
+    Range = {20, 200},
     Increment = 1,
+    Suffix = " Vel",
     CurrentValue = 50,
+    Flag = "VelFly",
     Callback = function(v) flySpeed = v end
 })
 
@@ -316,12 +324,14 @@ MovementTab:CreateToggle({
     end
 })
 
+-- CORRIGIDO: Formato Range aplicado
 MovementTab:CreateSlider({
     Name = "Velocidade Speed",
-    Min = 16,
-    Max = 200,
+    Range = {16, 200},
     Increment = 1,
+    Suffix = " Studs",
     CurrentValue = 24,
+    Flag = "VelSpeed",
     Callback = function(v) speedValue = v end
 })
 
