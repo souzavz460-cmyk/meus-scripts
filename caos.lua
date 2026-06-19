@@ -1,5 +1,6 @@
 -- SZ MODS COMPLETO – Fly indetectável, Speed Hack, Tool Grabber real com som e dano
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+-- ATUALIZADO: Usando o repositório estável oficial para corrigir os Sliders (barras azuis)
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "SZ MODS",
@@ -58,12 +59,12 @@ local ArmasTab = safeTab("Armas", 4483362458)
 local MovementTab = safeTab("Movimento", 4483362458)
 local ConfigTab = safeTab("Config", 4483362458)
 
--- ========== CONTROLES CORRIGIDOS ==========
+-- ========== CONTROLES ==========
 local function safeToggle(tab, name, default, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=default, Callback=cb}) end) end end
 local function safeInput(tab, name, placeholder, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=placeholder, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
 local function safeButton(tab, name, cb) if tab then pcall(function() tab:CreateButton({Name=name, Callback=cb}) end) end end
 
--- Correção da barra azul: Envelopando os argumentos em uma tabela adequada para a Rayfield
+-- Função Slider atualizada para a estrutura estável da Rayfield V2
 local function safeSlider(tab, name, min, max, default, cb)
     if tab then
         pcall(function()
@@ -195,7 +196,6 @@ safeButton(ArmasTab, "🔫 Puxar Arma (Real)", function()
         local itemName = foundItem.Name
         local itemDamage = "Desconhecido"
 
-        -- Extrair dano
         pcall(function()
             local tool = (foundType == "tool") and foundItem or foundItem:FindFirstChildWhichIsA("Tool")
             if tool then
@@ -204,7 +204,6 @@ safeButton(ArmasTab, "🔫 Puxar Arma (Real)", function()
                     local dmg = config:FindFirstChild("Damage") or config:FindFirstChild("BaseDamage")
                     if dmg and dmg:IsA("NumberValue") then itemDamage = tostring(dmg.Value) end
                 end
-                -- Tocar som da ferramenta
                 local handle = tool:FindFirstChild("Handle")
                 if handle and handle:IsA("BasePart") then
                     local sound = handle:FindFirstChild("EquipSound") or handle:FindFirstChild("ActivateSound") or handle:FindFirstChild("Sound")
@@ -215,14 +214,12 @@ safeButton(ArmasTab, "🔫 Puxar Arma (Real)", function()
             end
         end)
 
-        -- Mover para a mochila
         pcall(function()
             foundItem.Parent = backpack
             success = (foundItem.Parent == backpack)
         end)
 
         if not success then
-            -- Tentar clonar
             pcall(function()
                 local clone = foundItem:Clone()
                 clone.Parent = backpack
@@ -260,18 +257,10 @@ end)
 safeToggle(MovementTab, "Pulo Infinito", false, function(v) infJump = v end)
 safeToggle(MovementTab, "Fly Indetectável", false, function(v)
     flyEnabled = v
-    if v then
-        local char = Player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = true end
-        end
-    else
-        local char = Player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = false end
-        end
+    local char = Player.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.PlatformStand = v end
     end
 end)
 safeSlider(MovementTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
@@ -301,9 +290,8 @@ safeButton(ConfigTab, "DESTRUIR TUDO", function()
     script:Destroy()
 end)
 
--- ========== FUNÇÕES PRINCIPAIS ==========
+-- ========== FUNÇÕES PRINCIPAIS (Render Loops) ==========
 local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
-
 local fovCircleObj
 if useDrawing then
     pcall(function()
@@ -352,7 +340,6 @@ local function aimbotStep()
 end
 
 local function updateESP()
-    -- Limpeza
     for p, box in pairs(boxes) do if not p.Parent then pcall(function() box:Remove() end); boxes[p]=nil end end
     for p, data in pairs(skeletons) do if not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end end
     for p, tag in pairs(nameTags) do if not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
@@ -360,7 +347,6 @@ local function updateESP()
     for p, line in pairs(rainbowLines) do if not p.Parent then pcall(function() line:Remove() end); rainbowLines[p]=nil end end
     for part, obj in pairs(itemESP) do if not part.Parent then pcall(function() obj:Remove() end); itemESP[part]=nil end end
 
-    -- Itens
     if espItems and useDrawing then
         local valuable = {"coin","gold","diamond","gem","money","cash","loot","chest","armor","weapon","sword","gun"}
         for _, part in ipairs(Workspace:GetDescendants()) do
@@ -389,7 +375,6 @@ local function updateESP()
         for part, obj in pairs(itemESP) do pcall(function() obj:Remove() end); itemESP[part]=nil end
     end
 
-    -- Jogadores
     for _, p in ipairs(Players:GetPlayers()) do
         if p == Player then continue end
         local char = p.Character
@@ -413,7 +398,6 @@ local function updateESP()
             continue
         end
 
-        -- Box
         if espBox and useDrawing then
             local head = char.Head; local root = char.HumanoidRootPart
             local top = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.5,0))
@@ -439,7 +423,6 @@ local function updateESP()
             if boxes[p] then pcall(function() boxes[p]:Remove() end); boxes[p]=nil end
         end
 
-        -- Esqueleto
         if espSkel and useDrawing then
             if not skeletons[p] then
                 skeletons[p] = {}
@@ -494,7 +477,6 @@ local function updateESP()
             end
         end
 
-        -- Nome / Vida / Dinheiro
         if showNameHealth and useDrawing then
             local headPos, on = Camera:WorldToViewportPoint(char.Head.Position + Vector3.new(0,1.5,0))
             if on then
@@ -517,7 +499,6 @@ local function updateESP()
                     nameTags[p].Visible = true
                 end
 
-                -- Barra de vida
                 local bw, bh = 50, 4
                 local bx, by = headPos.X - bw/2, headPos.Y + 2
                 if not healthBars[p] then
@@ -545,7 +526,6 @@ local function updateESP()
             if healthBars[p] then pcall(function() healthBars[p].bg:Remove(); healthBars[p].fill:Remove() end); healthBars[p]=nil end
         end
 
-        -- Linhas arco-íris
         if espLines and useDrawing then
             local myChar = Player.Character
             if myChar and myChar:FindFirstChild("HumanoidRootPart") then
@@ -573,7 +553,6 @@ local function updateESP()
         end
     end
 
-    -- FOV
     if fovCircleObj then
         fovCircleObj.Position = Camera.ViewportSize / 2
         fovCircleObj.Radius = fovRadius
@@ -586,7 +565,6 @@ local function updateESP()
     end
 end
 
--- Fly Indetectável (movimento suave, sem BodyVelocity)
 local function flyStep()
     if not flyEnabled then return end
     local char = Player.Character
@@ -594,15 +572,12 @@ local function flyStep()
     local root = char.HumanoidRootPart
     local hum = char:FindFirstChild("Humanoid")
 
-    -- Mantém PlatformStand para não cair
     if hum then hum.PlatformStand = true end
 
-    -- Direção baseada na câmera
     local camDir = Camera.CFrame.LookVector
     local moveDir = Vector3.zero
-
-    -- Detecta teclas de movimento (WASD / Setas)
     local moving = false
+
     if UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up) then
         moveDir = moveDir + Vector3.new(camDir.X, 0, camDir.Z).Unit
         moving = true
@@ -619,8 +594,6 @@ local function flyStep()
         moveDir = moveDir + Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude
         moving = true
     end
-
-    -- Sobe/desce com E/Q ou Shift/Ctrl
     if UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
         moveDir = moveDir + Vector3.new(0, 1, 0)
         moving = true
@@ -631,22 +604,19 @@ local function flyStep()
     end
 
     if moving and moveDir.Magnitude > 0 then
-        moveDir = moveDir.Unit * flySpeed * 0.3 -- velocidade reduzida para parecer andar
+        moveDir = moveDir.Unit * flySpeed * 0.3
     end
 
-    -- Aplica movimento suave (Tween do CFrame)
     local targetPos = root.Position + moveDir
     root.CFrame = root.CFrame:Lerp(CFrame.new(targetPos), 0.5)
 end
 
--- Speed Hack (só ativa ao andar)
 local function speedStep()
     local char = Player.Character
     if not char or not char:FindFirstChild("Humanoid") then return end
     local hum = char.Humanoid
 
     if speedEnabled then
-        -- Verifica se o jogador está tentando se mover
         local moving = UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.A) or
                        UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.D) or
                        UserInputService:IsKeyDown(Enum.KeyCode.Up) or UserInputService:IsKeyDown(Enum.KeyCode.Down) or
@@ -654,7 +624,7 @@ local function speedStep()
         if moving then
             hum.WalkSpeed = speedValue
         else
-            hum.WalkSpeed = 16 -- normal quando parado
+            hum.WalkSpeed = 16
         end
     end
 end
@@ -698,7 +668,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Loop principal
+-- Loop principal integrado
 local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function()
     aimbotStep()
