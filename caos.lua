@@ -1,4 +1,4 @@
--- SZ MODS COMPLETO – Versão Stealth (Anti-Log & CFrame Avançado)
+-- SZ MODS COMPLETO – Versão Avançada (Hold & Throw Car + Pro Tool Grabber)
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
@@ -9,7 +9,7 @@ local Window = Rayfield:CreateWindow({
     Theme = "Default",
 
     ConfigurationSaving = {
-        Enabled = true,
+        Enabled = false, -- SALVAMENTO AUTOMÁTICO DESATIVADO
         FolderName = "SouzaMods",
         FileName = "Main"
     },
@@ -43,6 +43,10 @@ local antiLive = false
 local boxColor = Color3.fromRGB(255,0,0); local skelColor = Color3.fromRGB(255,255,255)
 local toolGrabName = ""
 
+-- Variáveis de controle do Fling (Pega e Joga)
+local holdingCar = nil
+local holdingConn = nil
+
 -- ========== CONVERSOR DE CORES ==========
 function parseColor(input)
     local s = tostring(input):lower():gsub("%s","")
@@ -52,84 +56,124 @@ function parseColor(input)
     return nil
 end
 
--- ========== CRIAÇÃO DAS ABAS (Ícones zerados para evitar erros de Asset no LogService) ==========
-local CombatTab = Window:CreateTab("Combate", 0)
-local VisualTab = Window:CreateTab("Visual", 0)
-local CoresTab = Window:CreateTab("Cores ESP", 0)
-local VeiculosTab = Window:CreateTab("Veículos", 0)
-local ArmasTab = Window:CreateTab("Armas", 0)
-local MovementTab = Window:CreateTab("Movimento", 0)
-local ConfigTab = Window:CreateTab("Config", 0)
+-- ========== CRIAÇÃO DAS ABAS (Corrigido para 'nil' para renderizar perfeitamente) ==========
+local CombatTab = Window:CreateTab("Combate", nil)
+local VisualTab = Window:CreateTab("Visual", nil)
+local CoresTab = Window:CreateTab("Cores ESP", nil)
+local VeiculosTab = Window:CreateTab("Veículos", nil)
+local ArmasTab = Window:CreateTab("Armas", nil)
+local MovementTab = Window:CreateTab("Movimento", nil)
+local ConfigTab = Window:CreateTab("Config", nil)
 
 -- ========== ELEMENTOS DA UI DA COMBATE ==========
-CombatTab:CreateToggle({
-    Name = "Aimbot",
-    CurrentValue = false,
-    Callback = function(v) aimbot = v end
-})
-
-CombatTab:CreateSlider({
-    Name = "Força (1-5)",
-    Min = 1,
-    Max = 5,
-    Increment = 1,
-    CurrentValue = 1,
-    Callback = function(v) aimForce = v end
-})
-
-CombatTab:CreateSlider({
-    Name = "Bypass",
-    Min = 1,
-    Max = 10,
-    Increment = 1,
-    CurrentValue = 1,
-    Callback = function(v) bypass = v end
-})
+CombatTab:CreateToggle({ Name = "Aimbot", CurrentValue = false, Flag = "Aimbot_Toggle", Callback = function(v) aimbot = v end })
+CombatTab:CreateSlider({ Name = "Força (1-5)", Min = 1, Max = 5, Increment = 1, CurrentValue = 1, Flag = "AimForce_Slider", Callback = function(v) aimForce = v end })
+CombatTab:CreateSlider({ Name = "Bypass", Min = 1, Max = 10, Increment = 1, CurrentValue = 1, Flag = "Bypass_Slider", Callback = function(v) bypass = v end })
 
 -- ========== ELEMENTOS DA UI DE VISUAL ==========
-VisualTab:CreateToggle({ Name = "ESP Box", CurrentValue = false, Callback = function(v) espBox = v end })
-VisualTab:CreateToggle({ Name = "ESP Esqueleto", CurrentValue = false, Callback = function(v) espSkel = v end })
-VisualTab:CreateToggle({ Name = "Nome / Vida / Dinheiro", CurrentValue = false, Callback = function(v) showNameHealth = v end })
-VisualTab:CreateToggle({ Name = "Mostrar Dinheiro", CurrentValue = false, Callback = function(v) showMoney = v end })
-VisualTab:CreateToggle({ Name = "ESP Itens", CurrentValue = false, Callback = function(v) espItems = v end })
-VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Callback = function(v) espLines = v end })
-VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Callback = function(v) fovCircle = v end })
-VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end })
-
-VisualTab:CreateSlider({
-    Name = "Raio FOV",
-    Min = 50,
-    Max = 500,
-    Increment = 1,
-    CurrentValue = 150,
-    Callback = function(v) fovRadius = v end
-})
+VisualTab:CreateToggle({ Name = "ESP Box", CurrentValue = false, Flag = "ESPBox_Toggle", Callback = function(v) espBox = v end })
+VisualTab:CreateToggle({ Name = "ESP Esqueleto", CurrentValue = false, Flag = "ESPSkel_Toggle", Callback = function(v) espSkel = v end })
+VisualTab:CreateToggle({ Name = "Nome / Vida / Dinheiro", CurrentValue = false, Flag = "ESPName_Toggle", Callback = function(v) showNameHealth = v end })
+VisualTab:CreateToggle({ Name = "Mostrar Dinheiro", CurrentValue = false, Flag = "ESPMoney_Toggle", Callback = function(v) showMoney = v end })
+VisualTab:CreateToggle({ Name = "ESP Itens", CurrentValue = false, Flag = "ESPItems_Toggle", Callback = function(v) espItems = v end })
+VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Flag = "ESPLines_Toggle", Callback = function(v) espLines = v end })
+VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Flag = "FOVCircle_Toggle", Callback = function(v) fovCircle = v end })
+VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Flag = "FOVRainbow_Toggle", Callback = function(v) fovRainbow = v end })
+VisualTab:CreateSlider({ Name = "Raio FOV", Min = 50, Max = 500, Increment = 1, CurrentValue = 150, Flag = "FOVRadius_Slider", Callback = function(v) fovRadius = v end })
 
 -- ========== ELEMENTOS DA UI DE CORES ==========
-CoresTab:CreateInput({
-    Name = "Cor da Box (ex: vermelho)",
-    PlaceholderText = "vermelho",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(v) local c = parseColor(v) if c then boxColor = c end end
-})
+CoresTab:CreateInput({ Name = "Cor da Box (ex: vermelho)", PlaceholderText = "vermelho", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then boxColor = c end end })
+CoresTab:CreateInput({ Name = "Cor do Esqueleto (ex: azul)", PlaceholderText = "branco", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then skelColor = c end end })
 
-CoresTab:CreateInput({
-    Name = "Cor do Esqueleto (ex: azul)",
-    PlaceholderText = "branco",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(v) local c = parseColor(v) if c then skelColor = c end end
-})
-
--- ========== ELEMENTOS DA UI DE VEÍCULOS ==========
+-- ========== ELEMENTOS DA UI DE VEÍCULOS (FLING PEGA NA MÃO E JOGA + DESTRANCAR) ==========
 VeiculosTab:CreateButton({
-    Name = "🚀 Fling Carro (mais próximo)",
+    Name = "🧲 Pegar Carro na Mão",
     Callback = function()
+        if holdingCar then return end
         local char = Player.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local root = char.HumanoidRootPart
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
         local nearest, nearestDist = nil, math.huge
         for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
+            if obj:IsA("VehicleSeat") then
+                local car = obj:FindFirstAncestorOfClass("Model")
+                if car then
+                    local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                    if p then
+                        local d = (p.Position - root.Position).Magnitude
+                        if d < nearestDist then nearestDist = d; nearest = car end
+                    end
+                end
+            end
+        end
+
+        if nearest then
+            holdingCar = nearest
+            holdingConn = RunService.Heartbeat:Connect(function()
+                if not holdingCar or not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then
+                    if holdingConn then holdingConn:Disconnect() end
+                    holdingCar = nil
+                    return
+                end
+                local r = Player.Character.HumanoidRootPart
+                for _, part in ipairs(holdingCar:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        pcall(function()
+                            part.CanCollide = false
+                            part.Anchored = false
+                            part.AssemblyLinearVelocity = Vector3.zero
+                            part.AssemblyAngularVelocity = Vector3.zero
+                        end)
+                    end
+                end
+                local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
+                if prim then
+                    -- Mantém o carro flutuando na sua mão (frente do corpo)
+                    prim.CFrame = r.CFrame * CFrame.new(0, 2, -6) * CFrame.Angles(0, math.rad(90), 0)
+                end
+            end)
+            Rayfield:Notify({ Title = "Souza Mods", Content = "✅ Carro pego na mão! Use o botão 'Jogar Carro' para arremessar.", Duration = 4 })
+        else
+            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Nenhum carro por perto.", Duration = 2 })
+        end
+    end
+})
+
+VeiculosTab:CreateButton({
+    Name = "💥 Jogar Carro (Fling Mecânico)",
+    Callback = function()
+        if not holdingCar then 
+            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Você não está segurando nenhum carro.", Duration = 2 })
+            return 
+        end
+        if holdingConn then holdingConn:Disconnect() end
+
+        local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
+        if prim then
+            pcall(function()
+                for _, part in ipairs(holdingCar:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = true end
+                end
+                -- Arremessa com velocidade brutal baseada na direção da sua câmera + rotação agressiva de Fling
+                prim.AssemblyLinearVelocity = Camera.CFrame.LookVector * 6000
+                prim.AssemblyAngularVelocity = Vector3.new(0, 3000, 0)
+            end)
+        end
+        holdingCar = nil
+        Rayfield:Notify({ Title = "Souza Mods", Content = "🚀 Carro jogado com sucesso!", Duration = 2 })
+    end
+})
+
+VeiculosTab:CreateButton({
+    Name = "🔓 Destrancar Veículo Próximo",
+    Callback = function()
+        local char = Player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        local nearest, nearestDist = nil, math.huge
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("VehicleSeat") then
                 local car = obj:FindFirstAncestorOfClass("Model")
                 if car then
                     local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
@@ -141,48 +185,28 @@ VeiculosTab:CreateButton({
             end
         end
         if nearest then
-            local p = nearest:FindFirstChild("PrimaryPart") or nearest:FindFirstChildWhichIsA("BasePart")
-            if p then
-                pcall(function()
-                    local bv = Instance.new("BodyVelocity"); bv.MaxForce = Vector3.new(1e9,1e9,1e9)
-                    bv.Velocity = (p.Position - root.Position).Unit * 300 + Vector3.new(0,200,0)
-                    bv.Parent = p; task.delay(0.5, function() bv:Destroy() end)
-                end)
-            end
-        end
-    end
-})
-
-VeiculosTab:CreateButton({
-    Name = "🔓 Destrancar Veículo",
-    Callback = function()
-        local char = Player.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local root = char.HumanoidRootPart
-        local nearest, nearestDist = nil, math.huge
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
-                local car = obj:FindFirstAncestorOfClass("Model")
-                if car then
-                    local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
-                    if p then
-                        local d = (p.Position - root.Position).Magnitude
-                        if d < nearestDist then nearestDist = d; nearest = car end
+            pcall(function()
+                for _, obj in ipairs(nearest:GetDescendants()) do
+                    if obj:IsA("VehicleSeat") or obj:IsA("Seat") then
+                        obj.Disabled = false
+                        obj:SetAttribute("Locked", false)
+                        obj:SetAttribute("Occupied", false)
+                    elseif obj:IsA("ProximityPrompt") then
+                        obj.Enabled = true
+                        obj.MaxActivationDistance = 20
+                    elseif obj.Name:lower():find("lock") or obj.Name:lower():find("tranca") then
+                        obj:Destroy()
                     end
                 end
-            end
-        end
-        if nearest then
-            for _, seat in ipairs(nearest:GetDescendants()) do
-                if seat:IsA("Seat") or seat:IsA("VehicleSeat") then
-                    pcall(function() seat:SetAttribute("Locked", false); if seat:FindFirstChild("Lock") then seat.Lock:Destroy() end end)
-                end
-            end
+            end)
+            Rayfield:Notify({ Title = "Souza Mods", Content = "🔓 Veículo totalmente destrancado!", Duration = 3 })
+        else
+            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Nenhum veículo encontrado para destrancar.", Duration = 2 })
         end
     end
 })
 
--- ========== ELEMENTOS DA UI DE ARMAS ==========
+-- ========== ELEMENTOS DA UI DE ARMAS (TOOL GRABBER PROFISSIONAL PRO INVENTÁRIO) ==========
 ArmasTab:CreateInput({
     Name = "Nome da Arma",
     PlaceholderText = "AK-47",
@@ -191,125 +215,81 @@ ArmasTab:CreateInput({
 })
 
 ArmasTab:CreateButton({
-    Name = "🔫 Puxar Arma (Real)",
+    Name = "🔫 Puxar Arma Pro Inventário (Pro)",
     Callback = function()
         local name = toolGrabName
         if name == "" then return end
         local backpack = Player:FindFirstChild("Backpack")
         if not backpack then return end
 
-        local locations = {
+        local targets = {}
+        local searchContainers = {
             Workspace, game:GetService("ReplicatedStorage"), game:GetService("ServerStorage"),
             game:GetService("Lighting"), game:GetService("StarterPack"), game:GetService("StarterGear")
         }
         for _, plr in ipairs(Players:GetPlayers()) do
-            if plr.Character then table.insert(locations, plr.Character) end
-            local bp = plr:FindFirstChild("Backpack")
-            if bp then table.insert(locations, bp) end
-        end
-
-        local nameLower = name:lower()
-        local foundItem, foundType = nil, nil
-
-        for _, loc in ipairs(locations) do
-            for _, obj in ipairs(loc:GetDescendants()) do
-                if obj:IsA("Tool") and obj.Name:lower() == nameLower then
-                    foundItem = obj; foundType = "tool"; break
-                elseif obj:IsA("Model") then
-                    local ti = obj:FindFirstChildWhichIsA("Tool")
-                    if ti and ti.Name:lower() == nameLower then
-                        foundItem = obj; foundType = "model"; break
-                    end
-                end
+            if plr ~= Player then
+                if plr.Character then table.insert(searchContainers, plr.Character) end
+                local bp = plr:FindFirstChild("Backpack")
+                if bp then table.insert(searchContainers, bp) end
             end
-            if foundItem then break end
         end
 
-        if foundItem then
-            local success = false
-            local itemName = foundItem.Name
-            local itemDamage = "Desconhecido"
-
+        for _, container in ipairs(searchContainers) do
             pcall(function()
-                local tool = (foundType == "tool") and foundItem or foundItem:FindFirstChildWhichIsA("Tool")
-                if tool then
-                    local config = tool:FindFirstChild("Configuration")
-                    if config then
-                        local dmg = config:FindFirstChild("Damage") or config:FindFirstChild("BaseDamage")
-                        if dmg and dmg:IsA("NumberValue") then itemDamage = tostring(dmg.Value) end
-                    end
-                    local handle = tool:FindFirstChild("Handle")
-                    if handle and handle:IsA("BasePart") then
-                        local sound = handle:FindFirstChild("EquipSound") or handle:FindFirstChild("ActivateSound") or handle:FindFirstChild("Sound")
-                        if sound and sound:IsA("Sound") then sound:Play() end
+                for _, item in ipairs(container:GetDescendants()) do
+                    if item:IsA("Tool") and item.Name:lower() == name:lower() then
+                        table.insert(targets, item)
                     end
                 end
             end)
+        end
 
+        if #targets == 0 then
+            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Nenhuma arma com o nome '" .. name .. "' foi encontrada.", Duration = 2 })
+            return
+        end
+
+        local successCount = 0
+        for _, tool in ipairs(targets) do
             pcall(function()
-                foundItem.Parent = backpack
-                success = (foundItem.Parent == backpack)
-            end)
-
-            if not success then
-                pcall(function()
-                    local clone = foundItem:Clone()
+                -- Desativa e destrói scripts locais anti-cheat/antitamper internos da própria arma antes de puxar
+                for _, child in ipairs(tool:GetDescendants()) do
+                    if child:IsA("LocalScript") and (child.Name:lower():find("anti") or child.Name:lower():find("check") or child.Name:lower():find("protect")) then
+                        child.Disabled = true
+                        child:Destroy()
+                    end
+                end
+                
+                -- Força a mudança de Parent direta ou clonagem forçada no inventário para contornar restrições
+                tool.Parent = backpack
+                if tool.Parent == backpack then
+                    successCount = successCount + 1
+                else
+                    local clone = tool:Clone()
                     clone.Parent = backpack
-                    success = (clone.Parent == backpack)
-                    if success then itemName = clone.Name end
-                end)
-            end
+                    if clone.Parent == backpack then successCount = successCount + 1 end
+                end
+            end)
+        end
 
-            if success then
-                Rayfield:Notify({ Title = "Souza Mods", Content = "✅ " .. itemName .. " puxada!\nDano: " .. itemDamage, Duration = 3 })
-            else
-                Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Item protegido por sistema do mapa.", Duration = 3 })
-            end
+        if successCount > 0 then
+            Rayfield:Notify({ Title = "Souza Mods", Content = "✅ " .. successCount .. " arma(s) puxada(s) direto pro seu inventário!", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ '" .. name .. "' não encontrada.", Duration = 2 })
+            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Bloqueado pelo servidor (Proteção de Script do Mapa).", Duration = 3 })
         end
     end
 })
 
 -- ========== ELEMENTOS DA UI DE MOVIMENTO ==========
-MovementTab:CreateToggle({ Name = "Pulo Infinito", CurrentValue = false, Callback = function(v) infJump = v end })
-
-MovementTab:CreateToggle({
-    Name = "Fly Indetectável (CFrame)",
-    CurrentValue = false,
-    Callback = function(v)
-        flyEnabled = v
-    end
-})
-
-MovementTab:CreateSlider({
-    Name = "Velocidade Fly",
-    Min = 20,
-    Max = 200,
-    Increment = 1,
-    CurrentValue = 50,
-    Callback = function(v) flySpeed = v end
-})
-
-MovementTab:CreateToggle({
-    Name = "Speed Hack (CFrame Stealth)",
-    CurrentValue = false,
-    Callback = function(v)
-        speedEnabled = v
-    end
-})
-
-MovementTab:CreateSlider({
-    Name = "Velocidade Speed",
-    Min = 16,
-    Max = 200,
-    Increment = 1,
-    CurrentValue = 24,
-    Callback = function(v) speedValue = v end
-})
+MovementTab:CreateToggle({ Name = "Pulo Infinito", CurrentValue = false, Flag = "InfJump_Toggle", Callback = function(v) infJump = v end })
+MovementTab:CreateToggle({ Name = "Fly Indetectável (CFrame)", CurrentValue = false, Flag = "Fly_Toggle", Callback = function(v) flyEnabled = v end })
+MovementTab:CreateSlider({ Name = "Velocidade Fly", Min = 20, Max = 200, Increment = 1, CurrentValue = 50, Flag = "FlySpeed_Slider", Callback = function(v) flySpeed = v end })
+MovementTab:CreateToggle({ Name = "Speed Hack (CFrame Stealth)", CurrentValue = false, Flag = "Speed_Toggle", Callback = function(v) speedEnabled = v end })
+MovementTab:CreateSlider({ Name = "Velocidade Speed", Min = 16, Max = 200, Increment = 1, CurrentValue = 24, Flag = "SpeedValue_Slider", Callback = function(v) speedValue = v end })
 
 -- ========== ELEMENTOS DA UI DE CONFIG ==========
-ConfigTab:CreateToggle({ Name = "Anti Live", CurrentValue = false, Callback = function(v) antiLive = v end })
+ConfigTab:CreateToggle({ Name = "Anti Live", CurrentValue = false, Flag = "AntiLive_Toggle", Callback = function(v) antiLive = v end })
 
 
 -- ========== SISTEMAS INTERNOS COMPLETAMENTE PROTEGIDOS CONTRA LOGS ==========
@@ -560,14 +540,13 @@ local function updateESP()
     end
 end
 
--- ========== FLY INDETECTÁVEL POR CFRAME MULTIPLIER (Não gera logs físicos) ==========
+-- ========== FLY INDETECTÁVEL POR CFRAME MULTIPLIER ==========
 local function flyStep()
     if not flyEnabled then return end
     local char = Player.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    -- Neutraliza a gravidade e forças físicas sem alterar o PlatformStand (Evita logs de física)
     pcall(function()
         root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     end)
@@ -584,12 +563,11 @@ local function flyStep()
     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) moving = true end
 
     if moving and moveDir.Magnitude > 0 then
-        -- Multiplicador suave acoplado ao DeltaTime invisível pro LogService
         root.CFrame = root.CFrame + (moveDir.Unit * (flySpeed * 0.016))
     end
 end
 
--- ========== SPEED HACK POR CFRAME STEALTH (Mantém WalkSpeed em 16 na memória) ==========
+-- ========== SPEED HACK POR CFRAME STEALTH ==========
 local function speedStep()
     if not speedEnabled or flyEnabled then return end
     local char = Player.Character
@@ -597,17 +575,14 @@ local function speedStep()
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not (hum and root) then return end
 
-    -- Se o jogador estiver usando o controle ou teclado para se mover
     if hum.MoveDirection.Magnitude > 0 then
         local extraSpeed = speedValue - 16
         if extraSpeed > 0 then
-            -- Adiciona CFrame extra na direção exata que o Humanoid quer andar
             root.CFrame = root.CFrame + (hum.MoveDirection * (extraSpeed * 0.016))
         end
     end
 end
 
--- Contador de Staff seguro (Injetado diretamente no PlayerGui para evitar flags do CoreGui no LogService)
 local staffFrame
 local function updateStaffCounter()
     if not staffFrame then return end
@@ -648,7 +623,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Main Loop - Execução blindada via pcall individual
+-- Main Loop
 local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function()
     pcall(aimbotStep)
