@@ -28,7 +28,7 @@ local antiLive = false
 local boxColor = Color3.fromRGB(255,0,0)
 local skelColor = Color3.fromRGB(255,255,255)
 
--- Variáveis do Speed Diferenciado (Que você curtiu!)
+-- Variáveis do Speed Diferenciado
 local stealthSpeed = false
 local stealthSpeedValue = 25
 
@@ -55,14 +55,13 @@ local function parseColor(input)
     return nil
 end
 
--- Janela configurada para IGNORAR o cache corrompido de 750 studs das fotos
+-- Janela configurada sem salvamento de arquivos antigos para resetar o cache
 local Window = Rayfield:CreateWindow({
    Name = "SZ MODS V3", 
    LoadingTitle = "SZ MODS",
    LoadingSubtitle = "by Souza",
    ConfigurationSaving = { 
-      Enabled = false, -- Desativa salvamento antigo para limpar o bug
-      FolderName = "SZModsResetFix" 
+      Enabled = false
    },
    KeySystem = false
 })
@@ -84,18 +83,17 @@ local function safeToggle(tab, name, default, callback)
     if tab then pcall(function() tab:CreateToggle({ Name = name, CurrentValue = default, Callback = callback }) end) end
 end
 
--- Função modificada: Agora exige uma "flagKey" única para nunca misturar os valores das barras
+-- CORREÇÃO COMPLETA: Mudança de Min/Max para Range = {min, max} que resolve o bug no Mobile
 local function safeSlider(tab, name, min, max, default, suffix, flagKey, callback)
     if tab then 
         pcall(function() 
             tab:CreateSlider({ 
                 Name = name, 
-                Min = min, 
-                Max = max, 
+                Range = {min, max}, 
                 Increment = 1, 
                 CurrentValue = default, 
                 Suffix = suffix,
-                Flag = flagKey, -- ESSA LINHA CORRIGE O REARRANJO E DESTRAVA O CLIQUE
+                Flag = flagKey, 
                 Callback = callback 
             }) 
         end) 
@@ -110,11 +108,12 @@ local function safeButton(tab, name, callback)
     if tab then pcall(function() tab:CreateButton({ Name = name, Callback = callback }) end) end
 end
 
--- ==================== INTERFACE CORRIGIDA E DESTRAVADA ====================
+-- ==================== INTERFACE AJUSTADA COM NOVAS FLAGS ÚNICAS ====================
 safeToggle(CombatTab, "Aimbot", false, function(v) aimbot = v end)
--- Sliders com IDs totalmente novos para quebrar o bug dos 750 studs
-safeSlider(CombatTab, "Força (1-Suave, 5-Portão)", 1, 5, 1, " / 5", "ForcaAim_FixV3", function(v) aimForce = v end)
-safeSlider(CombatTab, "Bypass Anti-Cheat (10-Seguro)", 1, 10, 1, " / 10", "Bypass_FixV3", function(v) bypass = v end)
+
+-- Sliders perfeitamente configurados de 1 a 5 e de 1 a 10
+safeSlider(CombatTab, "Força (1-Suave, 5-Portão)", 1, 5, 1, " / 5", "Forca_Ajuste_V3", function(v) aimForce = v end)
+safeSlider(CombatTab, "Bypass Anti-Cheat (10-Seguro)", 1, 10, 1, " / 10", "Bypass_Ajuste_V3", function(v) bypass = v end)
 
 safeToggle(VisualTab, "ESP Box", false, function(v) espBox = v end)
 safeToggle(VisualTab, "ESP Esqueleto", false, function(v) espSkel = v end)
@@ -124,7 +123,9 @@ safeToggle(VisualTab, "ESP Itens", false, function(v) espItems = v end)
 safeToggle(VisualTab, "Linhas Arco-íris", false, function(v) espLines = v end)
 safeToggle(VisualTab, "Círculo FOV", false, function(v) fovCircle = v end)
 safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
-safeSlider(VisualTab, "Raio FOV", 1, 360, 150, " px", "FovRadius_FixV3", function(v) fovRadius = v end)
+
+-- Slider do FOV configurado de 1 até 360
+safeSlider(VisualTab, "Raio FOV", 1, 360, 150, " px", "FovRadius_Ajuste_V3", function(v) fovRadius = v end)
 
 safeInput(CoresTab, "Cor da Box (ex: vermelho)", "vermelho", function(v) local c = parseColor(v) if c then boxColor = c end end)
 safeInput(CoresTab, "Cor do Esqueleto (ex: azul)", "branco", function(v) local c = parseColor(v) if c then skelColor = c end end)
@@ -132,7 +133,7 @@ safeInput(CoresTab, "Cor do Esqueleto (ex: azul)", "branco", function(v) local c
 -- Aba de Movimento com o seu Speed funcional por CFrame
 safeToggle(MovementTab, "Pulo Infinito", false, function(v) infJump = v end)
 safeToggle(MovementTab, "Velocidade Disfarçada (Andando Correndo)", false, function(v) stealthSpeed = v end)
-safeSlider(MovementTab, "Intensidade do Passo", 10, 100, 25, " extra", "StealthSpeed_FixV3", function(v) stealthSpeedValue = v end)
+safeSlider(MovementTab, "Intensidade do Passo", 10, 100, 25, " extra", "StealthSpeed_Ajuste_V3", function(v) stealthSpeedValue = v end)
 
 safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
 
@@ -152,7 +153,6 @@ safeButton(ConfigTab, "DESTRUIR TUDO", function()
     if staffFrame and staffFrame.Parent then pcall(function() staffFrame.Parent:Destroy() end) end
     
     pcall(function() Window:Destroy() end)
-    script:Destroy()
 end)
 
 -- Desenho do FOV
@@ -406,7 +406,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
     updateESP()
     updateStaffCounter()
     
-    -- O sistema de velocidade Stealth por CFrame que você gostou!
+    -- O sistema de velocidade Stealth por CFrame
     if stealthSpeed and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and Player.Character:FindFirstChild("Humanoid") then
         local humanoid = Player.Character.Humanoid
         local hrp = Player.Character.HumanoidRootPart
@@ -431,7 +431,4 @@ script.Destroying:Connect(function()
     for _, bar in pairs(healthBars) do pcall(function() bar.bg:Remove(); bar.fill:Remove() end) end
     for _, line in pairs(rainbowLines) do pcall(function() line:Remove() end) end
     for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
-    if staffFrame and staffFrame.Parent then pcall(function() staffFrame.Parent:Destroy() end) end
 end)
-
-print("SZ MODS V3 Carregado – Sliders destravados e corrigidos com sucesso!")
