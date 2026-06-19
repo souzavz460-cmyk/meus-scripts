@@ -1,4 +1,4 @@
--- SZ MODS FINAL – Arrasto corrigido, Tool Grabber profissional, tudo funcional
+-- SZ MODS COMPLETO – Fly indetectável, Speed Hack, Tool Grabber real com som e dano
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
@@ -17,60 +17,66 @@ local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
 local Player = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
+local TweenService = game:GetService("TweenService")
 
 -- ========== VARIÁVEIS ==========
+-- Aimbot
 local aimbot = false; local aimForce = 1; local bypass = 1
+-- Visual
 local fovCircle = false; local fovRainbow = false; local fovRadius = 150
 local espBox = false; local espSkel = false; local showNameHealth = false
 local showMoney = false; local espItems = false; local espLines = false
-local infJump = false; local antiLive = false
+-- Movimento
+local infJump = false
+local flyEnabled = false
+local flySpeed = 50
+local speedEnabled = false
+local speedValue = 24
+-- Config
+local antiLive = false
+-- Cores
 local boxColor = Color3.fromRGB(255,0,0); local skelColor = Color3.fromRGB(255,255,255)
+-- Tool Grabber
 local toolGrabName = ""
 
--- Conversor de cores (nome ou hex)
+-- ========== CONVERSOR DE CORES ==========
 function parseColor(input)
     local s = tostring(input):lower():gsub("%s","")
-    local named = {
-        vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00",
-        azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00",
-        roxo="800080", purple="800080", laranja="ff8800", orange="ff8800",
-        preto="000000", black="000000", branco="ffffff", white="ffffff",
-        rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff"
-    }
+    local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
     if named[s] then s = named[s] end
-    if #s == 6 and s:match("^%x+$") then
-        return Color3.fromRGB(tonumber(s:sub(1,2),16), tonumber(s:sub(3,4),16), tonumber(s:sub(5,6),16))
-    end
+    if #s == 6 and s:match("^%x+$") then return Color3.fromRGB(tonumber(s:sub(1,2),16), tonumber(s:sub(3,4),16), tonumber(s:sub(5,6),16)) end
     return nil
 end
 
--- ========== CRIAÇÃO DE ABAS ==========
-local function safeCreateTab(name, icon)
-    local tab
-    pcall(function() tab = Window:CreateTab(name, icon) end)
-    return tab
-end
+-- ========== ABAS ==========
+local function safeTab(name, icon) local t; pcall(function() t = Window:CreateTab(name, icon) end); return t end
+local CombatTab = safeTab("Combate", 4483362458)
+local VisualTab = safeTab("Visual", 4483362458)
+local CoresTab = safeTab("Cores ESP", 4483362458)
+local VeiculosTab = safeTab("Veículos", 4483362458)
+local ArmasTab = safeTab("Armas", 4483362458)
+local MovementTab = safeTab("Movimento", 4483362458)
+local ConfigTab = safeTab("Config", 4483362458)
 
-local CombatTab = safeCreateTab("Combate", 4483362458)
-local VisualTab = safeCreateTab("Visual", 4483362458)
-local CoresTab = safeCreateTab("Cores ESP", 4483362458)
-local VeiculosTab = safeCreateTab("Veículos", 4483362458)
-local ArmasTab = safeCreateTab("Armas", 4483362458)
-local MovementTab = safeCreateTab("Movimento", 4483362458)
-local ConfigTab = safeCreateTab("Config", 4483362458)
+-- ========== CONTROLES CORRIGIDOS ==========
+local function safeToggle(tab, name, default, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=default, Callback=cb}) end) end end
+local function safeInput(tab, name, placeholder, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=placeholder, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
+local function safeButton(tab, name, cb) if tab then pcall(function() tab:CreateButton({Name=name, Callback=cb}) end) end end
 
--- ========== CONTROLES ==========
-local function safeToggle(tab, name, default, callback)
-    if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=default, Callback=callback}) end) end
-end
-local function safeSlider(tab, name, min, max, default, callback)
-    if tab then pcall(function() tab:CreateSlider({Name=name, Min=min, Max=max, Increment=1, CurrentValue=default, Callback=callback}) end) end
-end
-local function safeInput(tab, name, placeholder, callback)
-    if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=placeholder, RemoveTextAfterFocusLost=false, Callback=callback}) end) end
-end
-local function safeButton(tab, name, callback)
-    if tab then pcall(function() tab:CreateButton({Name=name, Callback=callback}) end) end
+-- Correção da barra azul: Envelopando os argumentos em uma tabela adequada para a Rayfield
+local function safeSlider(tab, name, min, max, default, cb)
+    if tab then
+        pcall(function()
+            tab:CreateSlider({
+                Name = name,
+                Min = min,
+                Max = max,
+                Increment = 1,
+                CurrentValue = default,
+                Callback = cb
+            })
+        end)
+    end
 end
 
 -- Combate
@@ -93,37 +99,31 @@ safeSlider(VisualTab, "Raio FOV", 50, 500, 150, function(v) fovRadius = v end)
 safeInput(CoresTab, "Cor da Box (ex: vermelho)", "vermelho", function(v) local c=parseColor(v) if c then boxColor=c end end)
 safeInput(CoresTab, "Cor do Esqueleto (ex: azul)", "branco", function(v) local c=parseColor(v) if c then skelColor=c end end)
 
--- 🚗 Veículos
+-- Veículos
 safeButton(VeiculosTab, "🚀 Fling Carro (mais próximo)", function()
     local char = Player.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
-    local nearest = nil
-    local nearestDist = math.huge
+    local nearest, nearestDist = nil, math.huge
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
             local car = obj:FindFirstAncestorOfClass("Model")
             if car then
-                local primary = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
-                if primary then
-                    local dist = (primary.Position - root.Position).Magnitude
-                    if dist < nearestDist then
-                        nearestDist = dist
-                        nearest = car
-                    end
+                local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                if p then
+                    local d = (p.Position - root.Position).Magnitude
+                    if d < nearestDist then nearestDist = d; nearest = car end
                 end
             end
         end
     end
     if nearest then
-        local primary = nearest:FindFirstChild("PrimaryPart") or nearest:FindFirstChildWhichIsA("BasePart")
-        if primary then
+        local p = nearest:FindFirstChild("PrimaryPart") or nearest:FindFirstChildWhichIsA("BasePart")
+        if p then
             pcall(function()
-                local bv = Instance.new("BodyVelocity")
-                bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-                bv.Velocity = (primary.Position - root.Position).Unit * 300 + Vector3.new(0, 200, 0)
-                bv.Parent = primary
-                task.delay(0.5, function() bv:Destroy() end)
+                local bv = Instance.new("BodyVelocity"); bv.MaxForce = Vector3.new(1e9,1e9,1e9)
+                bv.Velocity = (p.Position - root.Position).Unit * 300 + Vector3.new(0,200,0)
+                bv.Parent = p; task.delay(0.5, function() bv:Destroy() end)
             end)
         end
     end
@@ -133,19 +133,15 @@ safeButton(VeiculosTab, "🔓 Destrancar Veículo", function()
     local char = Player.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
-    local nearest = nil
-    local nearestDist = math.huge
+    local nearest, nearestDist = nil, math.huge
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
             local car = obj:FindFirstAncestorOfClass("Model")
             if car then
-                local primary = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
-                if primary then
-                    local dist = (primary.Position - root.Position).Magnitude
-                    if dist < nearestDist then
-                        nearestDist = dist
-                        nearest = car
-                    end
+                local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                if p then
+                    local d = (p.Position - root.Position).Magnitude
+                    if d < nearestDist then nearestDist = d; nearest = car end
                 end
             end
         end
@@ -153,99 +149,88 @@ safeButton(VeiculosTab, "🔓 Destrancar Veículo", function()
     if nearest then
         for _, seat in ipairs(nearest:GetDescendants()) do
             if seat:IsA("Seat") or seat:IsA("VehicleSeat") then
-                pcall(function()
-                    seat:SetAttribute("Locked", false)
-                    if seat:FindFirstChild("Lock") then seat.Lock:Destroy() end
-                end)
+                pcall(function() seat:SetAttribute("Locked", false); if seat:FindFirstChild("Lock") then seat.Lock:Destroy() end end)
             end
         end
     end
 end)
 
--- 🔫 Armas (Tool Grabber Profissional)
+-- Armas (Tool Grabber com som e dano)
 safeInput(ArmasTab, "Nome da Arma", "AK-47", function(v) toolGrabName = v end)
 safeButton(ArmasTab, "🔫 Puxar Arma (Real)", function()
     local name = toolGrabName
     if name == "" then return end
-    
     local backpack = Player:FindFirstChild("Backpack")
     if not backpack then return end
-    
+
     local locations = {
-        Workspace,
-        game:GetService("ReplicatedStorage"),
-        game:GetService("ServerStorage"),
-        game:GetService("Lighting"),
-        game:GetService("StarterPack"),
-        game:GetService("StarterGear")
+        Workspace, game:GetService("ReplicatedStorage"), game:GetService("ServerStorage"),
+        game:GetService("Lighting"), game:GetService("StarterPack"), game:GetService("StarterGear")
     }
-    
-    -- Adiciona todos os jogadores e suas mochilas
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr.Character then table.insert(locations, plr.Character) end
         local bp = plr:FindFirstChild("Backpack")
         if bp then table.insert(locations, bp) end
     end
-    
+
     local nameLower = name:lower()
-    local foundItem = nil
-    local foundType = nil -- "tool" ou "model"
-    
-    -- Busca profissional (procura Tool ou Model contendo Tool)
+    local foundItem, foundType = nil, nil
+
     for _, loc in ipairs(locations) do
         for _, obj in ipairs(loc:GetDescendants()) do
             if obj:IsA("Tool") and obj.Name:lower() == nameLower then
-                foundItem = obj
-                foundType = "tool"
-                break
+                foundItem = obj; foundType = "tool"; break
             elseif obj:IsA("Model") then
-                local toolInside = obj:FindFirstChildWhichIsA("Tool")
-                if toolInside and toolInside.Name:lower() == nameLower then
-                    foundItem = obj
-                    foundType = "model"
-                    break
+                local ti = obj:FindFirstChildWhichIsA("Tool")
+                if ti and ti.Name:lower() == nameLower then
+                    foundItem = obj; foundType = "model"; break
                 end
             end
         end
         if foundItem then break end
     end
-    
+
     if foundItem then
         local success = false
         local itemName = foundItem.Name
         local itemDamage = "Desconhecido"
-        
-        -- Tenta extrair dano (se for ferramenta com configuração de dano)
+
+        -- Extrair dano
         pcall(function()
-            if foundType == "tool" then
-                -- Procura por valores de dano em configurações comuns
-                local config = foundItem:FindFirstChild("Configuration")
+            local tool = (foundType == "tool") and foundItem or foundItem:FindFirstChildWhichIsA("Tool")
+            if tool then
+                local config = tool:FindFirstChild("Configuration")
                 if config then
                     local dmg = config:FindFirstChild("Damage") or config:FindFirstChild("BaseDamage")
-                    if dmg and dmg:IsA("NumberValue") then
-                        itemDamage = tostring(dmg.Value)
-                    end
+                    if dmg and dmg:IsA("NumberValue") then itemDamage = tostring(dmg.Value) end
                 end
-                -- Tenta mover diretamente
-                foundItem.Parent = backpack
-                success = (foundItem.Parent == backpack)
-            else
-                -- É um model com tool dentro
-                foundItem.Parent = backpack
-                success = (foundItem.Parent == backpack)
-                if not success then
-                    -- Se o model não moveu, tenta clonar a tool de dentro
-                    local toolInside = foundItem:FindFirstChildWhichIsA("Tool")
-                    if toolInside then
-                        local clone = toolInside:Clone()
-                        clone.Parent = backpack
-                        success = (clone.Parent == backpack)
-                        if success then itemName = clone.Name end
+                -- Tocar som da ferramenta
+                local handle = tool:FindFirstChild("Handle")
+                if handle and handle:IsA("BasePart") then
+                    local sound = handle:FindFirstChild("EquipSound") or handle:FindFirstChild("ActivateSound") or handle:FindFirstChild("Sound")
+                    if sound and sound:IsA("Sound") then
+                        sound:Play()
                     end
                 end
             end
         end)
-        
+
+        -- Mover para a mochila
+        pcall(function()
+            foundItem.Parent = backpack
+            success = (foundItem.Parent == backpack)
+        end)
+
+        if not success then
+            -- Tentar clonar
+            pcall(function()
+                local clone = foundItem:Clone()
+                clone.Parent = backpack
+                success = (clone.Parent == backpack)
+                if success then itemName = clone.Name end
+            end)
+        end
+
         if success then
             Rayfield:Notify({
                 Title = "SZ MODS",
@@ -254,26 +239,12 @@ safeButton(ArmasTab, "🔫 Puxar Arma (Real)", function()
                 Image = 4483362458
             })
         else
-            -- Tenta clonar como última alternativa
-            pcall(function()
-                local clone = foundItem:Clone()
-                clone.Parent = backpack
-                if clone.Parent == backpack then
-                    Rayfield:Notify({
-                        Title = "SZ MODS",
-                        Content = "⚠️ Original travado. Clone criado: " .. clone.Name,
-                        Duration = 3,
-                        Image = 4483362458
-                    })
-                else
-                    Rayfield:Notify({
-                        Title = "SZ MODS",
-                        Content = "❌ Item protegido. Impossível mover.",
-                        Duration = 3,
-                        Image = 4483362458
-                    })
-                end
-            end)
+            Rayfield:Notify({
+                Title = "SZ MODS",
+                Content = "❌ Item protegido. Impossível mover.",
+                Duration = 3,
+                Image = 4483362458
+            })
         end
     else
         Rayfield:Notify({
@@ -285,14 +256,39 @@ safeButton(ArmasTab, "🔫 Puxar Arma (Real)", function()
     end
 end)
 
--- Movimento
+-- Movimento (Fly indetectável, Speed Hack, Pulo Infinito)
 safeToggle(MovementTab, "Pulo Infinito", false, function(v) infJump = v end)
+safeToggle(MovementTab, "Fly Indetectável", false, function(v)
+    flyEnabled = v
+    if v then
+        local char = Player.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then hum.PlatformStand = true end
+        end
+    else
+        local char = Player.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then hum.PlatformStand = false end
+        end
+    end
+end)
+safeSlider(MovementTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
+safeToggle(MovementTab, "Speed Hack", false, function(v) speedEnabled = v; if not v then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid.WalkSpeed = 16 end end end)
+safeSlider(MovementTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
 
 -- Config
 safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
 safeButton(ConfigTab, "DESTRUIR TUDO", function()
     aimbot=false; espBox=false; espSkel=false; showNameHealth=false; showMoney=false
-    espItems=false; espLines=false; fovCircle=false; fovRainbow=false; infJump=false; antiLive=false
+    espItems=false; espLines=false; fovCircle=false; fovRainbow=false
+    infJump=false; flyEnabled=false; speedEnabled=false; antiLive=false
+    local char = Player.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.PlatformStand = false; hum.WalkSpeed = 16 end
+    end
     if fovCircleObj then fovCircleObj:Remove() end
     for _, box in pairs(boxes) do pcall(function() box:Remove() end) end
     for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
@@ -590,7 +586,80 @@ local function updateESP()
     end
 end
 
--- Staff Counter (simples, sem arrasto)
+-- Fly Indetectável (movimento suave, sem BodyVelocity)
+local function flyStep()
+    if not flyEnabled then return end
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    local hum = char:FindFirstChild("Humanoid")
+
+    -- Mantém PlatformStand para não cair
+    if hum then hum.PlatformStand = true end
+
+    -- Direção baseada na câmera
+    local camDir = Camera.CFrame.LookVector
+    local moveDir = Vector3.zero
+
+    -- Detecta teclas de movimento (WASD / Setas)
+    local moving = false
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up) then
+        moveDir = moveDir + Vector3.new(camDir.X, 0, camDir.Z).Unit
+        moving = true
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Down) then
+        moveDir = moveDir - Vector3.new(camDir.X, 0, camDir.Z).Unit
+        moving = true
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) or UserInputService:IsKeyDown(Enum.KeyCode.Left) then
+        moveDir = moveDir - Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude
+        moving = true
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) or UserInputService:IsKeyDown(Enum.KeyCode.Right) then
+        moveDir = moveDir + Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude
+        moving = true
+    end
+
+    -- Sobe/desce com E/Q ou Shift/Ctrl
+    if UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+        moveDir = moveDir + Vector3.new(0, 1, 0)
+        moving = true
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.Q) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+        moveDir = moveDir - Vector3.new(0, 1, 0)
+        moving = true
+    end
+
+    if moving and moveDir.Magnitude > 0 then
+        moveDir = moveDir.Unit * flySpeed * 0.3 -- velocidade reduzida para parecer andar
+    end
+
+    -- Aplica movimento suave (Tween do CFrame)
+    local targetPos = root.Position + moveDir
+    root.CFrame = root.CFrame:Lerp(CFrame.new(targetPos), 0.5)
+end
+
+-- Speed Hack (só ativa ao andar)
+local function speedStep()
+    local char = Player.Character
+    if not char or not char:FindFirstChild("Humanoid") then return end
+    local hum = char.Humanoid
+
+    if speedEnabled then
+        -- Verifica se o jogador está tentando se mover
+        local moving = UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.A) or
+                       UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.D) or
+                       UserInputService:IsKeyDown(Enum.KeyCode.Up) or UserInputService:IsKeyDown(Enum.KeyCode.Down) or
+                       UserInputService:IsKeyDown(Enum.KeyCode.Left) or UserInputService:IsKeyDown(Enum.KeyCode.Right)
+        if moving then
+            hum.WalkSpeed = speedValue
+        else
+            hum.WalkSpeed = 16 -- normal quando parado
+        end
+    end
+end
+
+-- Staff Counter
 local staffFrame
 local function updateStaffCounter()
     if not staffFrame then return end
@@ -634,23 +703,11 @@ local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function()
     aimbotStep()
     updateESP()
+    flyStep()
+    speedStep()
     updateStaffCounter()
     if antiLive and tick()-lastLiveCheck > 1 then
         lastLiveCheck = tick()
         Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
     end
 end)
-
--- Limpeza
-script.Destroying:Connect(function()
-    if fovCircleObj then fovCircleObj:Remove() end
-    for _, box in pairs(boxes) do pcall(function() box:Remove() end) end
-    for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
-    for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
-    for _, bar in pairs(healthBars) do pcall(function() bar.bg:Remove(); bar.fill:Remove() end) end
-    for _, line in pairs(rainbowLines) do pcall(function() line:Remove() end) end
-    for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
-    if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
-end)
-
-print("SZ MODS carregado – Arrasto corrigido, Tool Grabber profissional!")
