@@ -1,15 +1,15 @@
--- SZ MODS COMPLETO – Versão Sirius Atualizada (Range Sliders & Tab Icons Fix)
+-- SZ MODS COMPLETO – Versão Sirius ULTRA PRO
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Souza Mods",
+    Name = "Souza Mods Pro",
     Icon = 4483362458,
-    LoadingTitle = "Souza Mods",
+    LoadingTitle = "Souza Mods Elite",
     LoadingSubtitle = "by Souzavz",
     Theme = "Default",
 
     ConfigurationSaving = {
-        Enabled = false, -- SALVAMENTO AUTOMÁTICO DESATIVADO
+        Enabled = false,
         FolderName = "SouzaMods",
         FileName = "Main"
     },
@@ -21,7 +21,7 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false
 })
 
--- Serviços do Roblox protegidos
+-- Serviços do Roblox
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -43,7 +43,7 @@ local antiLive = false
 local boxColor = Color3.fromRGB(255,0,0); local skelColor = Color3.fromRGB(255,255,255)
 local toolGrabName = ""
 
--- Variáveis de controle do Fling (Pega e Joga)
+-- Controle de Veículos
 local holdingCar = nil
 local holdingConn = nil
 
@@ -56,7 +56,7 @@ function parseColor(input)
     return nil
 end
 
--- ========== CRIAÇÃO DAS ABAS (Corrigido com ID do Ícone para não bugarem) ==========
+-- ========== CRIAÇÃO DAS ABAS (Formatado com Ícones) ==========
 local CombatTab = Window:CreateTab("Combate", 4483362458)
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 local CoresTab = Window:CreateTab("Cores ESP", 4483362458)
@@ -65,15 +65,15 @@ local ArmasTab = Window:CreateTab("Armas", 4483362458)
 local MovementTab = Window:CreateTab("Movimento", 4483362458)
 local ConfigTab = Window:CreateTab("Config", 4483362458)
 
--- Botão de Teste para verificar o carregamento imediato das abas
+-- Botão de Verificação Inicial
 CombatTab:CreateButton({
-    Name = "Teste",
+    Name = "Teste de Inicialização",
     Callback = function()
-        print("Funcionando")
+        Rayfield:Notify({ Title = "SOUZA MODS", Content = "Sistemas operando em 100%", Duration = 2 })
     end
 })
 
--- ========== ELEMENTOS DA UI DA COMBATE (Sliders Corrigidos com Range) ==========
+-- ========== ABA COMBATE ==========
 CombatTab:CreateToggle({ Name = "Aimbot", CurrentValue = false, Flag = "Aimbot_Toggle", Callback = function(v) aimbot = v end })
 
 CombatTab:CreateSlider({
@@ -83,9 +83,7 @@ CombatTab:CreateSlider({
     Suffix = "x",
     CurrentValue = 1,
     Flag = "AimForce_Slider",
-    Callback = function(v)
-        aimForce = v
-    end
+    Callback = function(v) aimForce = v end
 })
 
 CombatTab:CreateSlider({
@@ -95,12 +93,10 @@ CombatTab:CreateSlider({
     Suffix = "",
     CurrentValue = 1,
     Flag = "Bypass_Slider",
-    Callback = function(v)
-        bypass = v
-    end
+    Callback = function(v) bypass = v end
 })
 
--- ========== ELEMENTOS DA UI DE VISUAL (Sliders Corrigidos com Range) ==========
+-- ========== ABA VISUAL ==========
 VisualTab:CreateToggle({ Name = "ESP Box", CurrentValue = false, Flag = "ESPBox_Toggle", Callback = function(v) espBox = v end })
 VisualTab:CreateToggle({ Name = "ESP Esqueleto", CurrentValue = false, Flag = "ESPSkel_Toggle", Callback = function(v) espSkel = v end })
 VisualTab:CreateToggle({ Name = "Nome / Vida / Dinheiro", CurrentValue = false, Flag = "ESPName_Toggle", Callback = function(v) showNameHealth = v end })
@@ -117,18 +113,16 @@ VisualTab:CreateSlider({
     Suffix = "px",
     CurrentValue = 150,
     Flag = "FOVRadius_Slider",
-    Callback = function(v)
-        fovRadius = v
-    end
+    Callback = function(v) fovRadius = v end
 })
 
--- ========== ELEMENTOS DA UI DE CORES ==========
+-- ========== ABA CORES ==========
 CoresTab:CreateInput({ Name = "Cor da Box (ex: vermelho)", PlaceholderText = "vermelho", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then boxColor = c end end })
 CoresTab:CreateInput({ Name = "Cor do Esqueleto (ex: azul)", PlaceholderText = "branco", RemoveTextAfterFocusLost = false, Callback = function(v) local c = parseColor(v) if c then skelColor = c end end })
 
--- ========== ELEMENTOS DA UI DE VEÍCULOS (FLING PEGA NA MÃO E JOGA + DESTRANCAR) ==========
+-- ========== ABA VEÍCULOS (FLING PRO & DESTRANCAR SYSTEM V2) ==========
 VeiculosTab:CreateButton({
-    Name = "🧲 Pegar Carro na Mão",
+    Name = "🧲 Pegar Carro Mais Próximo",
     Callback = function()
         if holdingCar then return end
         local char = Player.Character
@@ -163,53 +157,67 @@ VeiculosTab:CreateButton({
                         pcall(function()
                             part.CanCollide = false
                             part.Anchored = false
-                            part.AssemblyLinearVelocity = Vector3.zero
+                            -- Força propriedade física no cliente para herdar rede
+                            part.AssemblyLinearVelocity = Vector3.new(0, 0.1, 0)
                             part.AssemblyAngularVelocity = Vector3.zero
                         end)
                     end
                 end
                 local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
                 if prim then
-                    prim.CFrame = r.CFrame * CFrame.new(0, 2, -6) * CFrame.Angles(0, math.rad(90), 0)
+                    -- Mantém o veículo grudado na frente para carregar o peso físico
+                    prim.CFrame = r.CFrame * CFrame.new(0, 1.5, -7)
                 end
             end)
-            Rayfield:Notify({ Title = "Souza Mods", Content = "✅ Carro pego na mão! Use o botão 'Jogar Carro' para arremessar.", Duration = 4 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "✅ Veículo fixado! Use 'Jogar Carro' para arremessar.", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Nenhum carro por perto.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhum veículo encontrado.", Duration = 2 })
         end
     end
 })
 
 VeiculosTab:CreateButton({
-    Name = "💥 Jogar Carro (Fling Mecânico)",
+    Name = "💥 Jogar Carro (Fling com Loop de Replicação)",
     Callback = function()
         if not holdingCar then 
-            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Você não está segurando nenhum carro.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Você não está segurando um veículo.", Duration = 2 })
             return 
         end
         if holdingConn then holdingConn:Disconnect() end
 
         local prim = holdingCar.PrimaryPart or holdingCar:FindFirstChildWhichIsA("BasePart")
+        local throwDirection = Camera.CFrame.LookVector
+
         if prim then
-            pcall(function()
-                for _, part in ipairs(holdingCar:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = true end
+            -- Ativa colisões novamente antes do arremesso
+            for _, part in ipairs(holdingCar:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = true end
+            end
+
+            -- Solução Profissional: Loop de frames para o servidor processar a velocidade e não resetar o carro no mesmo lugar
+            task.spawn(function()
+                for i = 1, 45 do
+                    if prim and prim.Parent then
+                        prim.AssemblyLinearVelocity = throwDirection * 9999
+                        prim.AssemblyAngularVelocity = Vector3.new(8000, 8000, 8000)
+                    end
+                    task.wait()
                 end
-                prim.AssemblyLinearVelocity = Camera.CFrame.LookVector * 6000
-                prim.AssemblyAngularVelocity = Vector3.new(0, 3000, 0)
             end)
         end
+        
         holdingCar = nil
-        Rayfield:Notify({ Title = "Souza Mods", Content = "🚀 Carro jogado com sucesso!", Duration = 2 })
+        Rayfield:Notify({ Title = "SOUZA MODS", Content = "🚀 Veículo ejetado com força máxima!", Duration = 2 })
     end
 })
 
 VeiculosTab:CreateButton({
-    Name = "🔓 Destrancar Veículo Próximo",
+    Name = "🔓 Destrancar Todos os Sistemas do Veículo",
     Callback = function()
         local char = Player.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if not root then return end
+        
         local nearest, nearestDist = nil, math.huge
         for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("VehicleSeat") then
@@ -223,41 +231,58 @@ VeiculosTab:CreateButton({
                 end
             end
         end
+
         if nearest then
             pcall(function()
                 for _, obj in ipairs(nearest:GetDescendants()) do
+                    -- Destranca bancos padrões e avançados
                     if obj:IsA("VehicleSeat") or obj:IsA("Seat") then
                         obj.Disabled = false
+                        obj.CanTouch = true
                         obj:SetAttribute("Locked", false)
                         obj:SetAttribute("Occupied", false)
+                        obj:SetAttribute("Owner", "")
+                    -- Ativa cliques e interações por ProximityPrompt
                     elseif obj:IsA("ProximityPrompt") then
                         obj.Enabled = true
-                        obj.MaxActivationDistance = 20
+                        obj.MaxActivationDistance = 25
+                    -- Quebra configurações de A-Chassis e Scripts proprietários
+                    elseif obj:IsA("ValueBase") then
+                        local n = obj.Name:lower()
+                        if n:find("owner") or n:find("dono") or n:find("proprietario") then
+                            obj.Value = ""
+                        elseif n:find("lock") or n:find("tranca") or n:find("preso") then
+                            if obj:IsA("BoolValue") then obj.Value = false else obj.Value = 0 end
+                        end
                     elseif obj.Name:lower():find("lock") or obj.Name:lower():find("tranca") then
                         obj:Destroy()
                     end
                 end
             end)
-            Rayfield:Notify({ Title = "Souza Mods", Content = "🔓 Veículo totalmente destrancado!", Duration = 3 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "🔓 Segurança e propriedade do veículo limpas!", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Nenhum veículo encontrado para destrancar.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhum veículo detectado no raio de ação.", Duration = 2 })
         end
     end
 })
 
--- ========== ELEMENTOS DA UI DE ARMAS (TOOL GRABBER PROFISSIONAL PRO INVENTÁRIO) ==========
+-- ========== ABA ARMAS (BUSCA INTELIGENTE POR APROXIMAÇÃO) ==========
 ArmasTab:CreateInput({
-    Name = "Nome da Arma",
-    PlaceholderText = "AK-47",
+    Name = "Nome da Arma (Completo ou Parte)",
+    PlaceholderText = "Ex: AK ou M4",
     RemoveTextAfterFocusLost = false,
     Callback = function(v) toolGrabName = v end
 })
 
 ArmasTab:CreateButton({
-    Name = "🔫 Puxar Arma Pro Inventário (Pro)",
+    Name = "🔫 Puxar Arma Pro Inventário (Fuzzy Search)",
     Callback = function()
         local name = toolGrabName
-        if name == "" then return end
+        if name == "" then 
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Digite um nome válido.", Duration = 2 })
+            return 
+        end
+        
         local backpack = Player:FindFirstChild("Backpack")
         if not backpack then return end
 
@@ -274,10 +299,11 @@ ArmasTab:CreateButton({
             end
         end
 
+        -- Varredura profissional com string.find (acha mesmo digitando errado/metade do nome)
         for _, container in ipairs(searchContainers) do
             pcall(function()
                 for _, item in ipairs(container:GetDescendants()) do
-                    if item:IsA("Tool") and item.Name:lower() == name:lower() then
+                    if item:IsA("Tool") and string.find(item.Name:lower(), name:lower()) then
                         table.insert(targets, item)
                     end
                 end
@@ -285,7 +311,7 @@ ArmasTab:CreateButton({
         end
 
         if #targets == 0 then
-            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Nenhuma arma com o nome '" .. name .. "' foi encontrada.", Duration = 2 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Nenhuma arma compatível encontrada.", Duration = 2 })
             return
         end
 
@@ -311,17 +337,16 @@ ArmasTab:CreateButton({
         end
 
         if successCount > 0 then
-            Rayfield:Notify({ Title = "Souza Mods", Content = "✅ " .. successCount .. " arma(s) puxada(s) direto pro seu inventário!", Duration = 3 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "✅ " .. successCount .. " item(ns) puxado(s) com sucesso!", Duration = 3 })
         else
-            Rayfield:Notify({ Title = "Souza Mods", Content = "❌ Bloqueado pelo servidor (Proteção de Script do Mapa).", Duration = 3 })
+            Rayfield:Notify({ Title = "SOUZA MODS", Content = "❌ Protegido pela infraestrutura do Servidor.", Duration = 3 })
         end
     end
 })
 
--- ========== ELEMENTOS DA UI DE MOVIMENTO (Sliders Corrigidos com Range) ==========
+-- ========== ABA MOVIMENTO (FLY ELITE ATUALIZADO) ==========
 MovementTab:CreateToggle({ Name = "Pulo Infinito", CurrentValue = false, Flag = "InfJump_Toggle", Callback = function(v) infJump = v end })
-
-MovementTab:CreateToggle({ Name = "Fly Indetectável (CFrame)", CurrentValue = false, Flag = "Fly_Toggle", Callback = function(v) flyEnabled = v end })
+MovementTab:CreateToggle({ Name = "Fly Suave (Estabilizado)", CurrentValue = false, Flag = "Fly_Toggle", Callback = function(v) flyEnabled = v end })
 
 MovementTab:CreateSlider({
     Name = "Velocidade Fly",
@@ -330,9 +355,7 @@ MovementTab:CreateSlider({
     Suffix = "",
     CurrentValue = 50,
     Flag = "FlySpeed_Slider",
-    Callback = function(v)
-        flySpeed = v
-    end
+    Callback = function(v) flySpeed = v end
 })
 
 MovementTab:CreateToggle({ Name = "Speed Hack (CFrame Stealth)", CurrentValue = false, Flag = "Speed_Toggle", Callback = function(v) speedEnabled = v end })
@@ -344,16 +367,13 @@ MovementTab:CreateSlider({
     Suffix = "",
     CurrentValue = 24,
     Flag = "SpeedValue_Slider",
-    Callback = function(v)
-        speedValue = v
-    end
+    Callback = function(v) speedValue = v end
 })
 
--- ========== ELEMENTOS DA UI DE CONFIG ==========
+-- ========== ABA CONFIG ==========
 ConfigTab:CreateToggle({ Name = "Anti Live", CurrentValue = false, Flag = "AntiLive_Toggle", Callback = function(v) antiLive = v end })
 
-
--- ========== SISTEMAS INTERNOS COMPLETAMENTE PROTEGIDOS CONTRA LOGS ==========
+-- ========== MOTORES DE EXECUÇÃO INTERNA DE ALTA PERFORMANCE ==========
 local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
 local fovCircleObj
 if useDrawing then
@@ -601,12 +621,13 @@ local function updateESP()
     end
 end
 
--- ========== FLY INDETECTÁVEL POR CFRAME MULTIPLIER ==========
+-- ========== ENGINE DO FLY ATUALIZADA (Suave e Anti-Bypass de Gravidade) ==========
 local function flyStep()
     if not flyEnabled then return end
     local char = Player.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+    local hum = char and char:FindFirstChild("Humanoid")
+    if not root or not hum then return end
 
     pcall(function()
         root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
@@ -623,12 +644,18 @@ local function flyStep()
     if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) moving = true end
     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) moving = true end
 
+    -- Trava o estado do boneco para não sofrer queda livre
+    hum:ChangeState(Enum.HumanoidStateType.Physics)
+
     if moving and moveDir.Magnitude > 0 then
         root.CFrame = root.CFrame + (moveDir.Unit * (flySpeed * 0.016))
+    else
+        -- Mantém estático no ar se não houver comandos ativos
+        root.CFrame = CFrame.new(root.CFrame.Position) * CFrame.Angles(0, math.rad(root.Rotation.Y), 0)
     end
 end
 
--- ========== SPEED HACK POR CFRAME STEALTH ==========
+-- ========== ENGINE DO SPEED ==========
 local function speedStep()
     if not speedEnabled or flyEnabled then return end
     local char = Player.Character
@@ -684,7 +711,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Main Loop
+-- Loop Geral Primário
 local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function()
     pcall(aimbotStep)
