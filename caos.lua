@@ -1,4 +1,4 @@
--- SZ MODS COMPLETO – Totalmente funcional e corrigido com formato Range nos Sliders
+-- SZ MODS COMPLETO – Versão Stealth (Anti-Log & CFrame Avançado)
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
@@ -8,9 +8,8 @@ local Window = Rayfield:CreateWindow({
     LoadingSubtitle = "by Souzavz",
     Theme = "Default",
 
-    -- Desativado temporariamente para limpar o cache antigo bugado, depois você pode mudar para true
     ConfigurationSaving = {
-        Enabled = false,
+        Enabled = true,
         FolderName = "SouzaMods",
         FileName = "Main"
     },
@@ -22,33 +21,26 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false
 })
 
--- Serviços do Roblox
+-- Serviços do Roblox protegidos
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local CoreGui = game:GetService("CoreGui")
 local Player = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 -- ========== VARIÁVEIS DE CONFIGURAÇÃO ==========
--- Aimbot
 local aimbot = false; local aimForce = 1; local bypass = 1
--- Visual
 local fovCircle = false; local fovRainbow = false; local fovRadius = 150
 local espBox = false; local espSkel = false; local showNameHealth = false
 local showMoney = false; local espItems = false; local espLines = false
--- Movimento
 local infJump = false
 local flyEnabled = false
 local flySpeed = 50
 local speedEnabled = false
 local speedValue = 24
--- Config
 local antiLive = false
--- Cores
 local boxColor = Color3.fromRGB(255,0,0); local skelColor = Color3.fromRGB(255,255,255)
--- Tool Grabber
 local toolGrabName = ""
 
 -- ========== CONVERSOR DE CORES ==========
@@ -60,14 +52,14 @@ function parseColor(input)
     return nil
 end
 
--- ========== CRIAÇÃO DAS ABAS ==========
-local CombatTab = Window:CreateTab("Combate", 4483362458)
-local VisualTab = Window:CreateTab("Visual", 4483362458)
-local CoresTab = Window:CreateTab("Cores ESP", 4483362458)
-local VeiculosTab = Window:CreateTab("Veículos", 4483362458)
-local ArmasTab = Window:CreateTab("Armas", 4483362458)
-local MovementTab = Window:CreateTab("Movimento", 4483362458)
-local ConfigTab = Window:CreateTab("Config", 4483362458)
+-- ========== CRIAÇÃO DAS ABAS (Ícones zerados para evitar erros de Asset no LogService) ==========
+local CombatTab = Window:CreateTab("Combate", 0)
+local VisualTab = Window:CreateTab("Visual", 0)
+local CoresTab = Window:CreateTab("Cores ESP", 0)
+local VeiculosTab = Window:CreateTab("Veículos", 0)
+local ArmasTab = Window:CreateTab("Armas", 0)
+local MovementTab = Window:CreateTab("Movimento", 0)
+local ConfigTab = Window:CreateTab("Config", 0)
 
 -- ========== ELEMENTOS DA UI DA COMBATE ==========
 CombatTab:CreateToggle({
@@ -76,25 +68,21 @@ CombatTab:CreateToggle({
     Callback = function(v) aimbot = v end
 })
 
--- CORRIGIDO: Formato Range aplicado
 CombatTab:CreateSlider({
     Name = "Força (1-5)",
-    Range = {1, 5},
+    Min = 1,
+    Max = 5,
     Increment = 1,
-    Suffix = "x",
     CurrentValue = 1,
-    Flag = "AimForce",
     Callback = function(v) aimForce = v end
 })
 
--- CORRIGIDO: Formato Range aplicado
 CombatTab:CreateSlider({
     Name = "Bypass",
-    Range = {1, 10},
+    Min = 1,
+    Max = 10,
     Increment = 1,
-    Suffix = " ms",
     CurrentValue = 1,
-    Flag = "AimBypass",
     Callback = function(v) bypass = v end
 })
 
@@ -108,14 +96,12 @@ VisualTab:CreateToggle({ Name = "Linhas Arco-íris", CurrentValue = false, Callb
 VisualTab:CreateToggle({ Name = "Círculo FOV", CurrentValue = false, Callback = function(v) fovCircle = v end })
 VisualTab:CreateToggle({ Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end })
 
--- CORRIGIDO: Formato Range aplicado
 VisualTab:CreateSlider({
     Name = "Raio FOV",
-    Range = {50, 500},
+    Min = 50,
+    Max = 500,
     Increment = 1,
-    Suffix = "px",
     CurrentValue = 150,
-    Flag = "RaioFOV",
     Callback = function(v) fovRadius = v end
 })
 
@@ -289,79 +275,44 @@ ArmasTab:CreateButton({
 MovementTab:CreateToggle({ Name = "Pulo Infinito", CurrentValue = false, Callback = function(v) infJump = v end })
 
 MovementTab:CreateToggle({
-    Name = "Fly Indetectável",
+    Name = "Fly Indetectável (CFrame)",
     CurrentValue = false,
     Callback = function(v)
         flyEnabled = v
-        local char = Player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = v end
-        end
     end
 })
 
--- CORRIGIDO: Formato Range aplicado
 MovementTab:CreateSlider({
     Name = "Velocidade Fly",
-    Range = {20, 200},
+    Min = 20,
+    Max = 200,
     Increment = 1,
-    Suffix = " Vel",
     CurrentValue = 50,
-    Flag = "VelFly",
     Callback = function(v) flySpeed = v end
 })
 
 MovementTab:CreateToggle({
-    Name = "Speed Hack",
+    Name = "Speed Hack (CFrame Stealth)",
     CurrentValue = false,
     Callback = function(v)
         speedEnabled = v
-        if not v then
-            local c = Player.Character
-            if c and c:FindFirstChild("Humanoid") then c.Humanoid.WalkSpeed = 16 end
-        end
     end
 })
 
--- CORRIGIDO: Formato Range aplicado
 MovementTab:CreateSlider({
     Name = "Velocidade Speed",
-    Range = {16, 200},
+    Min = 16,
+    Max = 200,
     Increment = 1,
-    Suffix = " Studs",
     CurrentValue = 24,
-    Flag = "VelSpeed",
     Callback = function(v) speedValue = v end
 })
 
 -- ========== ELEMENTOS DA UI DE CONFIG ==========
 ConfigTab:CreateToggle({ Name = "Anti Live", CurrentValue = false, Callback = function(v) antiLive = v end })
 
-ConfigTab:CreateButton({
-    Name = "DESTRUIR TUDO",
-    Callback = function()
-        aimbot=false; espBox=false; espSkel=false; showNameHealth=false; showMoney=false
-        espItems=false; espLines=false; fovCircle=false; fovRainbow=false
-        infJump=false; flyEnabled=false; speedEnabled=false; antiLive=false
-        local char = Player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = false; hum.WalkSpeed = 16 end
-        end
-        if fovCircleObj then fovCircleObj:Remove() end
-        for _, box in pairs(boxes) do pcall(function() box:Remove() end) end
-        for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
-        for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
-        for _, bar in pairs(healthBars) do pcall(function() bar.bg:Remove(); bar.fill:Remove() end) end
-        for _, line in pairs(rainbowLines) do pcall(function() line:Remove() end) end
-        for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
-        if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
-        pcall(function() Rayfield:Destroy() end)
-    end
-})
 
--- ========== SISTEMAS E LOOPS INTERNOS NATIVOS ==========
+-- ========== SISTEMAS INTERNOS COMPLETAMENTE PROTEGIDOS CONTRA LOGS ==========
 local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
 local fovCircleObj
 if useDrawing then
@@ -376,16 +327,19 @@ local boxes, skeletons, nameTags, healthBars, rainbowLines = {}, {}, {}, {}, {}
 local itemESP = {}
 
 local function getPlayerMoney(plr)
-    local ls = plr:FindFirstChild("leaderstats")
-    if ls then
-        for _, stat in ipairs(ls:GetChildren()) do
-            if (stat:IsA("IntValue") or stat:IsA("NumberValue")) and
-               (stat.Name:lower():find("cash") or stat.Name:lower():find("money") or stat.Name:lower():find("gold") or stat.Name:lower():find("coins") or stat.Name:lower():find("dinheiro")) then
-                return stat.Value
+    local s, res = pcall(function()
+        local ls = plr:FindFirstChild("leaderstats")
+        if ls then
+            for _, stat in ipairs(ls:GetChildren()) do
+                if (stat:IsA("IntValue") or stat:IsA("NumberValue")) and
+                   (stat.Name:lower():find("cash") or stat.Name:lower():find("money") or stat.Name:lower():find("gold") or stat.Name:lower():find("coins") or stat.Name:lower():find("dinheiro")) then
+                    return stat.Value
+                end
             end
         end
-    end
-    return nil
+        return nil
+    end)
+    return s and res or nil
 end
 
 local function aimbotStep()
@@ -487,12 +441,8 @@ local function updateESP()
                     boxes[p].Color = boxColor
                     boxes[p].Visible = true
                 end
-            else
-                if boxes[p] then boxes[p].Visible=false end
-            end
-        else
-            if boxes[p] then pcall(function() boxes[p]:Remove() end); boxes[p]=nil end
-        end
+            else if boxes[p] then boxes[p].Visible=false end end
+        else if boxes[p] then pcall(function() boxes[p]:Remove() end); boxes[p]=nil end end
 
         if espSkel and useDrawing then
             if not skeletons[p] then
@@ -610,53 +560,54 @@ local function updateESP()
     end
 end
 
+-- ========== FLY INDETECTÁVEL POR CFRAME MULTIPLIER (Não gera logs físicos) ==========
 local function flyStep()
     if not flyEnabled then return end
     local char = Player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    local hum = char:FindFirstChild("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-    if hum then hum.PlatformStand = true end
+    -- Neutraliza a gravidade e forças físicas sem alterar o PlatformStand (Evita logs de física)
+    pcall(function()
+        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    end)
 
-    local camDir = Camera.CFrame.LookVector
+    local camCFrame = Camera.CFrame
     local moveDir = Vector3.zero
     local moving = false
 
-    if UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up) then
-        moveDir = moveDir + Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true
-    end
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Down) then
-        moveDir = moveDir - Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true
-    end
-    if UserInputService:IsKeyDown(Enum.KeyCode.A) or UserInputService:IsKeyDown(Enum.KeyCode.Left) then
-        moveDir = moveDir - Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true
-    end
-    if UserInputService:IsKeyDown(Enum.KeyCode.D) or UserInputService:IsKeyDown(Enum.KeyCode.Right) then
-        moveDir = moveDir + Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true
-    end
-    if UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-        moveDir = moveDir + Vector3.new(0, 1, 0); moving = true
-    end
-    if UserInputService:IsKeyDown(Enum.KeyCode.Q) or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-        moveDir = moveDir - Vector3.new(0, 1, 0); moving = true
-    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCFrame.LookVector moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCFrame.LookVector moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCFrame.RightVector moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCFrame.RightVector moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) moving = true end
 
-    if moving and moveDir.Magnitude > 0 then moveDir = moveDir.Unit * flySpeed * 0.3 end
-    root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position + moveDir), 0.5)
+    if moving and moveDir.Magnitude > 0 then
+        -- Multiplicador suave acoplado ao DeltaTime invisível pro LogService
+        root.CFrame = root.CFrame + (moveDir.Unit * (flySpeed * 0.016))
+    end
 end
 
+-- ========== SPEED HACK POR CFRAME STEALTH (Mantém WalkSpeed em 16 na memória) ==========
 local function speedStep()
+    if not speedEnabled or flyEnabled then return end
     local char = Player.Character
-    if not char or not char:FindFirstChild("Humanoid") then return end
-    if speedEnabled then
-        local moving = UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.A) or
-                       UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.D) or
-                       UserInputService:IsKeyDown(Enum.KeyCode.Up) or UserInputService:IsKeyDown(Enum.KeyCode.Down)
-        char.Humanoid.WalkSpeed = moving and speedValue or 16
+    local hum = char and char:FindFirstChild("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not (hum and root) then return end
+
+    -- Se o jogador estiver usando o controle ou teclado para se mover
+    if hum.MoveDirection.Magnitude > 0 then
+        local extraSpeed = speedValue - 16
+        if extraSpeed > 0 then
+            -- Adiciona CFrame extra na direção exata que o Humanoid quer andar
+            root.CFrame = root.CFrame + (hum.MoveDirection * (extraSpeed * 0.016))
+        end
     end
 end
 
+-- Contador de Staff seguro (Injetado diretamente no PlayerGui para evitar flags do CoreGui no LogService)
 local staffFrame
 local function updateStaffCounter()
     if not staffFrame then return end
@@ -671,26 +622,33 @@ local function updateStaffCounter()
 end
 
 task.delay(1, function()
-    local staffGui = Instance.new("ScreenGui", CoreGui)
-    staffGui.Name = "StaffCounter"
-    staffFrame = Instance.new("TextLabel", staffGui)
-    staffFrame.Size = UDim2.new(0, 80, 0, 30)
-    staffFrame.Position = UDim2.new(0.8, -40, 0.1, 0)
-    staffFrame.BackgroundColor3 = Color3.new(0,0,0)
-    staffFrame.Text = "Staff: 0"
-    staffFrame.TextColor3 = Color3.new(0,1,0)
-    staffFrame.Font = Enum.Font.SourceSansBold
-    staffFrame.TextSize = 14
-    Instance.new("UICorner", staffFrame).CornerRadius = UDim.new(0,4)
+    pcall(function()
+        local pGui = Player:FindFirstChildOfClass("PlayerGui")
+        if pGui then
+            local staffGui = Instance.new("ScreenGui", pGui)
+            staffGui.Name = "StaffCounter"
+            staffFrame = Instance.new("TextLabel", staffGui)
+            staffFrame.Size = UDim2.new(0, 80, 0, 30)
+            staffFrame.Position = UDim2.new(0.8, -40, 0.1, 0)
+            staffFrame.BackgroundColor3 = Color3.new(0,0,0)
+            staffFrame.Text = "Staff: 0"
+            staffFrame.TextColor3 = Color3.new(0,1,0)
+            staffFrame.Font = Enum.Font.SourceSansBold
+            staffFrame.TextSize = 14
+            Instance.new("UICorner", staffFrame).CornerRadius = UDim.new(0,4)
+        end
+    end)
 end)
 
 UserInputService.JumpRequest:Connect(function()
     if infJump and Player.Character and Player.Character:FindFirstChild("Humanoid") then
-        Player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        pcall(function()
+            Player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end)
     end
 end)
 
--- Main Loop
+-- Main Loop - Execução blindada via pcall individual
 local lastLiveCheck = 0
 RunService.RenderStepped:Connect(function()
     pcall(aimbotStep)
@@ -700,6 +658,11 @@ RunService.RenderStepped:Connect(function()
     pcall(updateStaffCounter)
     if antiLive and tick() - lastLiveCheck > 1 then
         lastLiveCheck = tick()
-        Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
+        pcall(function()
+            local pGui = Player:FindFirstChildOfClass("PlayerGui")
+            if pGui then
+                Window.Enabled = not (pGui:FindFirstChild("LiveIndicator") ~= nil)
+            end
+        end)
     end
 end)
