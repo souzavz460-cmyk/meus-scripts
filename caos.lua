@@ -1,4 +1,4 @@
--- Snow S4zx Mod - ESP Profissional + Tracer V7 (linhas do chão) + Correções
+-- Snow S4zx Mod - Versão Final (ESP profissional, Tracer V7, todas funções)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -155,7 +155,7 @@ function carregarSnowS4zx()
     safeToggle(AimbotTab, "WALLCK", false, function(v) wallCheck = v end)
     safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
 
-    -- ESP (sem Chams, sem Linhas Arco-íris, sem Tracers antigos)
+    -- ESP
     safeToggle(ESPTab, "2D Box", false, function(v) espBox = v end)
     safeToggle(ESPTab, "Skeleton", false, function(v) espSkel = v end)
     safeToggle(ESPTab, "Name", false, function(v) espName = v end)
@@ -269,9 +269,10 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- ESP atualizada (com Tracer V7)
+    -- ESP atualizada (com Tracer V7 e barras laterais)
     local function updateESP()
         if not useDrawing then return end
+
         -- Limpeza segura
         for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
         for p, data in pairs(skeletons) do
@@ -283,8 +284,9 @@ function carregarSnowS4zx()
         for p, line in pairs(tracerLines) do if not p or not p.Parent then pcall(function() line:Remove() end); tracerLines[p]=nil end end
         for part, obj in pairs(itemESP) do if not part or not part.Parent then pcall(function() obj:Remove() end); itemESP[part]=nil end end
 
-        -- Ponto de origem do Tracer V7 (centro inferior da tela)
-        local tracerOrigin = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 5)
+        -- Tamanho da tela (mobile se adapta)
+        local screenSize = Camera.ViewportSize
+        local tracerOrigin = Vector2.new(screenSize.X / 2, screenSize.Y - 5)
 
         local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
 
@@ -299,14 +301,19 @@ function carregarSnowS4zx()
                     if isVal then
                         if not itemESP[part] then
                             pcall(function()
-                                local circle = Drawing.new("Circle"); circle.Radius=4; circle.Color=Color3.new(1,1,0); circle.Filled=true
+                                local circle = Drawing.new("Circle"); circle.Radius = 5
+                                circle.Color = Color3.new(1,1,0); circle.Filled = true
                                 itemESP[part] = circle
                             end)
                         end
                         if itemESP[part] then
                             local pos, on = Camera:WorldToViewportPoint(part.Position)
-                            if on then itemESP[part].Position=Vector2.new(pos.X,pos.Y); itemESP[part].Visible=true
-                            else itemESP[part].Visible=false end
+                            if on then
+                                itemESP[part].Position = Vector2.new(pos.X, pos.Y)
+                                itemESP[part].Visible = true
+                            else
+                                itemESP[part].Visible = false
+                            end
                         end
                     end
                 end
@@ -326,20 +333,24 @@ function carregarSnowS4zx()
             local dist = myRoot and (myRoot.Position - root.Position).Magnitude or 0
 
             if not hum or health <= 0 then
-                if boxes2D[p] then boxes2D[p].Visible=false end
-                if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line.Visible=false end end
-                if nameTags[p] then nameTags[p].Visible=false end
-                if healthBars[p] then healthBars[p].bg.Visible=false; healthBars[p].fill.Visible=false end
-                if distanceTags[p] then distanceTags[p].Visible=false end
-                if tracerLines[p] then tracerLines[p].Visible=false end
+                if boxes2D[p] then boxes2D[p].Visible = false end
+                if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line.Visible = false end end
+                if nameTags[p] then nameTags[p].Visible = false end
+                if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
+                if distanceTags[p] then distanceTags[p].Visible = false end
+                if tracerLines[p] then tracerLines[p].Visible = false end
                 continue
             end
 
-            -- Tracer V7 (do chão até o inimigo)
+            -- Posições base do personagem na tela
+            local headScreenPos, headVisible = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.8, 0))
+            local rootScreenPos, rootVisible = Camera:WorldToViewportPoint(root.Position)
+            local feetScreenPos, feetVisible = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+
+            -- Tracer V7 (do chão)
             if tracerV7 then
-                local rootPos, rootOnScreen = Camera:WorldToViewportPoint(root.Position)
-                if rootOnScreen then
-                    local enemyScreenPos = Vector2.new(rootPos.X, rootPos.Y)
+                if rootVisible then
+                    local enemyPos = Vector2.new(rootScreenPos.X, rootScreenPos.Y)
                     if not tracerLines[p] then
                         pcall(function()
                             local line = Drawing.new("Line")
@@ -350,7 +361,7 @@ function carregarSnowS4zx()
                     end
                     if tracerLines[p] then
                         tracerLines[p].From = tracerOrigin
-                        tracerLines[p].To = enemyScreenPos
+                        tracerLines[p].To = enemyPos
                         tracerLines[p].Visible = true
                     end
                 else
@@ -360,21 +371,24 @@ function carregarSnowS4zx()
                 if tracerLines[p] then pcall(function() tracerLines[p]:Remove() end); tracerLines[p]=nil end
             end
 
-            -- Box
-            if espBox then
-                local top = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.5,0))
-                local bot = Camera:WorldToViewportPoint(root.Position - Vector3.new(0,3,0))
-                if top and bot then
-                    local h = math.abs(top.Y-bot.Y); local w = h*0.45; local cx = (top.X+bot.X)/2
-                    if not boxes2D[p] then
-                        pcall(function() local box = Drawing.new("Square"); box.Thickness=2; box.Filled=false; boxes2D[p]=box end)
-                    end
-                    if boxes2D[p] then
-                        boxes2D[p].Position = Vector2.new(cx-w/2, top.Y)
-                        boxes2D[p].Size = Vector2.new(w, h)
-                        boxes2D[p].Color = boxColor
-                        boxes2D[p].Visible = true
-                    end
+            -- Box 2D (quadrado proporcional ao corpo)
+            if espBox and headVisible and feetVisible then
+                local bodyHeight = math.abs(headScreenPos.Y - feetScreenPos.Y)
+                local bodyWidth = bodyHeight * 0.45
+                local centerX = (headScreenPos.X + feetScreenPos.X) / 2
+                if not boxes2D[p] then
+                    pcall(function()
+                        local box = Drawing.new("Square")
+                        box.Thickness = 2
+                        box.Filled = false
+                        boxes2D[p] = box
+                    end)
+                end
+                if boxes2D[p] then
+                    boxes2D[p].Position = Vector2.new(centerX - bodyWidth/2, headScreenPos.Y - bodyHeight*0.1)
+                    boxes2D[p].Size = Vector2.new(bodyWidth, bodyHeight)
+                    boxes2D[p].Color = boxColor
+                    boxes2D[p].Visible = true
                 end
             else
                 if boxes2D[p] then pcall(function() boxes2D[p]:Remove() end); boxes2D[p]=nil end
@@ -400,16 +414,20 @@ function carregarSnowS4zx()
                             {"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"}
                         }
                         for _, pair in ipairs(pairs) do
-                            local a=char:FindFirstChild(pair[1]); local b=char:FindFirstChild(pair[2])
+                            local a = char:FindFirstChild(pair[1]); local b = char:FindFirstChild(pair[2])
                             if a and b then table.insert(bones, {a,b}) end
                         end
                     end
                     for i, parts in ipairs(bones) do
-                        pcall(function() local line=Drawing.new("Line"); line.Thickness=1; skeletons[p][i]={line=line, a=parts[1], b=parts[2]} end)
+                        pcall(function()
+                            local line = Drawing.new("Line")
+                            line.Thickness = 1
+                            skeletons[p][i] = {line = line, a = parts[1], b = parts[2]}
+                        end)
                     end
                 end
                 for _, data in ipairs(skeletons[p]) do
-                    local a,b = data.a, data.b
+                    local a, b = data.a, data.b
                     if a.Parent and b.Parent then
                         local aPos, aVis = Camera:WorldToViewportPoint(a.Position)
                         local bPos, bVis = Camera:WorldToViewportPoint(b.Position)
@@ -422,78 +440,108 @@ function carregarSnowS4zx()
                     else data.line.Visible = false end
                 end
             else
-                if skeletons[p] then for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
+                if skeletons[p] then
+                    for _, d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end
+                    skeletons[p] = nil
+                end
             end
 
-            -- Name (com vida e distância integrados se ativos)
-            if espName then
-                local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.8,0))
-                if headPos then
-                    if not nameTags[p] then
-                        pcall(function() local tag=Drawing.new("Text"); tag.Center=true; tag.Size=13; tag.Outline=true; tag.OutlineColor=Color3.new(0,0,0); nameTags[p]=tag end)
-                    end
-                    if nameTags[p] then
-                        local text = p.Name
-                        if showMoney then
-                            local ls = p:FindFirstChild("leaderstats")
-                            if ls then for _, stat in ipairs(ls:GetChildren()) do
-                                if (stat:IsA("IntValue") or stat:IsA("NumberValue")) and (stat.Name:lower():find("cash") or stat.Name:lower():find("money") or stat.Name:lower():find("gold")) then
-                                    text = text .. " $"..stat.Value break
+            -- Name + Distance + Money (integrados)
+            if espName and headVisible then
+                if not nameTags[p] then
+                    pcall(function()
+                        local tag = Drawing.new("Text")
+                        tag.Center = true
+                        tag.Size = 14
+                        tag.Outline = true
+                        tag.OutlineColor = Color3.new(0,0,0)
+                        nameTags[p] = tag
+                    end)
+                end
+                if nameTags[p] then
+                    local text = p.Name
+                    if showMoney then
+                        local ls = p:FindFirstChild("leaderstats")
+                        if ls then
+                            for _, stat in ipairs(ls:GetChildren()) do
+                                if (stat:IsA("IntValue") or stat:IsA("NumberValue")) and
+                                   (stat.Name:lower():find("cash") or stat.Name:lower():find("money") or stat.Name:lower():find("gold")) then
+                                    text = text .. " $"..stat.Value
+                                    break
                                 end
-                            end end
+                            end
                         end
-                        if espDistance and dist > 0 then
-                            text = text .. " [" .. math.floor(dist) .. "m]"
-                        end
-                        nameTags[p].Text = text
-                        nameTags[p].Position = Vector2.new(headPos.X, headPos.Y-8)
-                        nameTags[p].Color = Color3.new(1,1,1)
-                        nameTags[p].Visible = true
                     end
+                    if espDistance and dist > 0 then
+                        text = text .. " [" .. math.floor(dist) .. "m]"
+                    end
+                    nameTags[p].Text = text
+                    nameTags[p].Position = Vector2.new(headScreenPos.X, headScreenPos.Y - 22)
+                    nameTags[p].Color = Color3.new(1,1,1)
+                    nameTags[p].Visible = true
                 end
             else
                 if nameTags[p] then pcall(function() nameTags[p]:Remove() end); nameTags[p]=nil end
             end
 
-            -- Health Bar
-            if espHealth then
-                local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.8,0))
-                if headPos then
-                    local bw, bh = 50, 4
-                    local bx, by = headPos.X - bw/2, headPos.Y + 5
-                    if not healthBars[p] then
-                        pcall(function()
-                            local bg=Drawing.new("Line"); bg.Color=Color3.new(0.15,0.15,0.15); bg.Thickness=bh
-                            local fill=Drawing.new("Line"); fill.Color=Color3.new(0,1,0); fill.Thickness=bh
-                            healthBars[p]={bg=bg, fill=fill}
-                        end)
-                    end
-                    if healthBars[p] then
-                        healthBars[p].bg.From=Vector2.new(bx,by); healthBars[p].bg.To=Vector2.new(bx+bw,by); healthBars[p].bg.Visible=true
-                        local percent=math.clamp(health/maxHealth,0,1)
-                        local fw=bw*percent
-                        healthBars[p].fill.From=Vector2.new(bx,by); healthBars[p].fill.To=Vector2.new(bx+fw,by)
-                        healthBars[p].fill.Color=percent>0.5 and Color3.new(0,1,0) or (percent>0.25 and Color3.new(1,1,0) or Color3.new(1,0,0))
-                        healthBars[p].fill.Visible=true
-                    end
+            -- Health Bar (barra ao lado do personagem)
+            if espHealth and headVisible and feetVisible then
+                local barWidth = 4
+                local barHeight = math.abs(headScreenPos.Y - feetScreenPos.Y) * 0.8
+                local barX = headScreenPos.X + (math.abs(headScreenPos.X - feetScreenPos.X) * 0.5) + 10
+                local barY = math.min(headScreenPos.Y, feetScreenPos.Y) + 5
+
+                if not healthBars[p] then
+                    pcall(function()
+                        local bg = Drawing.new("Square")
+                        bg.Filled = true
+                        bg.Color = Color3.new(0.15, 0.15, 0.15)
+                        bg.Thickness = 0
+                        local fill = Drawing.new("Square")
+                        fill.Filled = true
+                        fill.Color = Color3.new(0,1,0)
+                        fill.Thickness = 0
+                        healthBars[p] = {bg = bg, fill = fill}
+                    end)
+                end
+                if healthBars[p] then
+                    healthBars[p].bg.Position = Vector2.new(barX, barY)
+                    healthBars[p].bg.Size = Vector2.new(barWidth, barHeight)
+                    healthBars[p].bg.Visible = true
+
+                    local percent = math.clamp(health / maxHealth, 0, 1)
+                    local fillHeight = barHeight * percent
+                    local fillY = barY + barHeight - fillHeight
+                    healthBars[p].fill.Position = Vector2.new(barX, fillY)
+                    healthBars[p].fill.Size = Vector2.new(barWidth, fillHeight)
+                    healthBars[p].fill.Color = percent > 0.5 and Color3.new(0,1,0) or
+                                              (percent > 0.25 and Color3.new(1,1,0) or Color3.new(1,0,0))
+                    healthBars[p].fill.Visible = true
                 end
             else
-                if healthBars[p] then pcall(function() healthBars[p].bg:Remove(); healthBars[p].fill:Remove() end); healthBars[p]=nil end
+                if healthBars[p] then
+                    pcall(function() healthBars[p].bg:Remove(); healthBars[p].fill:Remove() end)
+                    healthBars[p] = nil
+                end
             end
 
-            -- Distance (só se não estiver integrado no Name)
-            if espDistance and not espName and dist > 0 then
-                local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.8,0))
-                if headPos then
-                    if not distanceTags[p] then
-                        pcall(function() local tag=Drawing.new("Text"); tag.Center=true; tag.Size=12; tag.Outline=true; tag.OutlineColor=Color3.new(0,0,0); distanceTags[p]=tag end)
-                    end
-                    if distanceTags[p] then
-                        distanceTags[p].Text = math.floor(dist).."m"
-                        distanceTags[p].Position = Vector2.new(headPos.X, headPos.Y+10)
-                        distanceTags[p].Color = Color3.new(1,1,1)
-                        distanceTags[p].Visible = true
-                    end
+            -- Distance (só se não integrado no Name)
+            if espDistance and not espName and dist > 0 and headVisible then
+                if not distanceTags[p] then
+                    pcall(function()
+                        local tag = Drawing.new("Text")
+                        tag.Center = true
+                        tag.Size = 12
+                        tag.Outline = true
+                        tag.OutlineColor = Color3.new(0,0,0)
+                        distanceTags[p] = tag
+                    end)
+                end
+                if distanceTags[p] then
+                    distanceTags[p].Text = math.floor(dist).."m"
+                    distanceTags[p].Position = Vector2.new(headScreenPos.X, headScreenPos.Y + 10)
+                    distanceTags[p].Color = Color3.new(1,1,1)
+                    distanceTags[p].Visible = true
                 end
             else
                 if distanceTags[p] then pcall(function() distanceTags[p]:Remove() end); distanceTags[p]=nil end
@@ -502,10 +550,14 @@ function carregarSnowS4zx()
 
         -- FOV Circle
         if fovCircleObj then
-            fovCircleObj.Position = Camera.ViewportSize/2
+            fovCircleObj.Position = screenSize / 2
             fovCircleObj.Radius = fovRadius
             fovCircleObj.Visible = fovCircle
-            if fovCircle and fovRainbow then fovCircleObj.Color = Color3.fromHSV((tick()%5)/5,1,1) else fovCircleObj.Color = Color3.new(1,1,1) end
+            if fovCircle and fovRainbow then
+                fovCircleObj.Color = Color3.fromHSV((tick() % 5) / 5, 1, 1)
+            else
+                fovCircleObj.Color = Color3.new(1,1,1)
+            end
         end
     end
 
