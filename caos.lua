@@ -1,159 +1,164 @@
--- S4zx - Script Completo com Sistema de Key
--- Cole este script inteiro no seu executor
-
--- ==================== CONFIGURAÇÃO DA API ====================
-local API_KEY_URL = "https://script.google.com/macros/s/SEU_ID_AQUI/exec?key="
+-- Snow S4zx Mod - Key System via GitHub + Todas as funções
+local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2025"
 
--- ==================== FUNÇÃO DE VALIDAÇÃO ====================
+-- Função de validação
 local function validarKey(key)
     if key == DONO_KEY then
         return true, "Key do Dono (Permanente)"
     end
     
-    local ok, resposta = pcall(function()
-        return game:HttpGet(API_KEY_URL .. key)
+    local ok, json = pcall(function()
+        return game:HttpGet(KEYS_URL)
     end)
     
-    if ok and resposta and resposta ~= "" then
-        local dados = game:GetService("HttpService"):JSONDecode(resposta)
-        if dados.valido then
-            return true, dados.msg
-        else
-            return false, dados.msg
-        end
+    if not ok or json == "" then
+        return false, "Erro ao conectar ao servidor de keys"
     end
     
-    return false, "Erro ao conectar com o servidor de keys"
+    local keys
+    pcall(function()
+        keys = game:GetService("HttpService"):JSONDecode(json)
+    end)
+    
+    if not keys then
+        return false, "Formato de keys inválido"
+    end
+    
+    local data = keys[key]
+    if not data then
+        return false, "Key inválida"
+    end
+    
+    if data.dias == "perm" then
+        return true, "Key permanente"
+    end
+    
+    -- Converte data dd/mm/aaaa para timestamp
+    local dia, mes, ano = data.criada:match("(%d+)/(%d+)/(%d+)")
+    if not dia then return false, "Data inválida" end
+    
+    local criada = os.time({year=tonumber(ano), month=tonumber(mes), day=tonumber(dia)})
+    local expira = criada + (tonumber(data.dias) * 86400)
+    local agora = os.time()
+    
+    if agora <= expira then
+        local diasRestantes = math.ceil((expira - agora) / 86400)
+        return true, "Key válida! Dias restantes: " .. diasRestantes
+    else
+        return false, "Key expirada"
+    end
 end
 
--- ==================== INTERFACE DE LOGIN ====================
-local function loginScreen()
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "S4zxLogin"
-    gui.ResetOnSpawn = false
-    gui.Parent = game:GetService("CoreGui")
-
-    local bg = Instance.new("Frame")
+-- Tela de login
+local function mostrarLogin()
+    local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    gui.Name = "SnowLogin"
+    
+    local bg = Instance.new("Frame", gui)
     bg.Size = UDim2.new(0, 300, 0, 220)
     bg.Position = UDim2.new(0.5, -150, 0.5, -110)
     bg.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     bg.BorderSizePixel = 0
-    bg.Parent = gui
     Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 12)
-
-    local title = Instance.new("TextLabel")
+    
+    local title = Instance.new("TextLabel", bg)
     title.Size = UDim2.new(1, 0, 0, 40)
     title.Position = UDim2.new(0, 0, 0, 10)
-    title.BackgroundTransparency = 1
-    title.Text = "S4zx - Login"
-    title.TextColor3 = Color3.fromRGB(255, 0, 85)
+    title.Text = "Snow S4zx"
+    title.TextColor3 = Color3.fromRGB(0, 200, 255)
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 24
-    title.Parent = bg
-
-    local input = Instance.new("TextBox")
+    title.TextSize = 28
+    title.BackgroundTransparency = 1
+    
+    local input = Instance.new("TextBox", bg)
     input.Size = UDim2.new(1, -40, 0, 40)
     input.Position = UDim2.new(0, 20, 0, 60)
-    input.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    input.TextColor3 = Color3.fromRGB(255, 255, 255)
     input.PlaceholderText = "Cole sua key aqui..."
+    input.TextColor3 = Color3.new(1,1,1)
+    input.BackgroundColor3 = Color3.fromRGB(30,30,40)
     input.Font = Enum.Font.SourceSans
     input.TextSize = 16
     input.ClearTextOnFocus = false
-    input.Parent = bg
     Instance.new("UICorner", input).CornerRadius = UDim.new(0, 8)
-
-    local status = Instance.new("TextLabel")
+    
+    local status = Instance.new("TextLabel", bg)
     status.Size = UDim2.new(1, 0, 0, 20)
     status.Position = UDim2.new(0, 0, 0, 110)
-    status.BackgroundTransparency = 1
     status.Text = ""
-    status.TextColor3 = Color3.fromRGB(255, 255, 255)
+    status.TextColor3 = Color3.new(1,1,1)
     status.Font = Enum.Font.SourceSans
     status.TextSize = 13
-    status.Parent = bg
-
-    local btn = Instance.new("TextButton")
+    status.BackgroundTransparency = 1
+    
+    local btn = Instance.new("TextButton", bg)
     btn.Size = UDim2.new(1, -40, 0, 40)
     btn.Position = UDim2.new(0, 20, 0, 140)
-    btn.BackgroundColor3 = Color3.fromRGB(255, 0, 85)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Text = "ENTRAR"
+    btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    btn.TextColor3 = Color3.new(1,1,1)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 18
     btn.BorderSizePixel = 0
-    btn.Parent = bg
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-
-    local closeBtn = Instance.new("TextButton")
+    
+    local closeBtn = Instance.new("TextButton", bg)
     closeBtn.Size = UDim2.new(0, 30, 0, 30)
     closeBtn.Position = UDim2.new(1, -35, 0, 5)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     closeBtn.Text = "X"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+    closeBtn.TextColor3 = Color3.new(1,1,1)
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.TextSize = 14
     closeBtn.BorderSizePixel = 0
-    closeBtn.Parent = bg
-    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1, 0)
+    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
     closeBtn.Activated:Connect(function() gui:Destroy() end)
-
-    -- Função de login
+    
     local function tentarLogin()
-        local key = input.Text:gsub("%s+", "") -- remove espaços
+        local key = input.Text:gsub("%s+", "")
         if key == "" then
-            status.Text = "Digite uma key!"
-            status.TextColor3 = Color3.fromRGB(255, 200, 0)
+            status.Text = "Digite uma key"
+            status.TextColor3 = Color3.fromRGB(255,200,0)
             return
         end
         
-        status.Text = "Validando..."
-        status.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.Text = "AGUARDE..."
-        btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        
-        -- Delay para dar feedback visual
-        task.wait(0.5)
+        btn.BackgroundColor3 = Color3.fromRGB(100,100,100)
+        task.wait(0.3)
         
         local valida, msg = validarKey(key)
-        
         if valida then
             status.Text = "✅ " .. msg
-            status.TextColor3 = Color3.fromRGB(0, 255, 100)
-            task.wait(1)
+            status.TextColor3 = Color3.fromRGB(0,255,100)
+            task.wait(1.5)
             gui:Destroy()
-            -- Carrega o S4zx completo
-            carregarS4zx()
+            carregarSnowS4zx()
         else
             status.Text = "❌ " .. msg
-            status.TextColor3 = Color3.fromRGB(255, 50, 50)
+            status.TextColor3 = Color3.fromRGB(255,50,50)
             btn.Text = "ENTRAR"
-            btn.BackgroundColor3 = Color3.fromRGB(255, 0, 85)
+            btn.BackgroundColor3 = Color3.fromRGB(0,200,255)
         end
     end
-
+    
     btn.Activated:Connect(tentarLogin)
     input.FocusLost:Connect(function(enterPressed)
         if enterPressed then tentarLogin() end
     end)
 end
 
--- ==================== CARREGAR S4ZX COMPLETO ====================
-function carregarS4zx()
-    -- Aqui você cola TODO o código do S4zx (Aimbot, ESP, Fly, Duplicador, etc.)
-    -- Por ser muito extenso, vou colocar a estrutura básica com Rayfield
-    
+-- Função principal (só carrega após login válido)
+function carregarSnowS4zx()
     local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
     
     local Window = Rayfield:CreateWindow({
-        Name = "S4zx",
-        LoadingTitle = "S4zx",
+        Name = "Snow S4zx",
+        LoadingTitle = "Snow S4zx",
         LoadingSubtitle = "by Souza",
         ConfigurationSaving = { Enabled = false },
         KeySystem = false
     })
-
+    
     -- ==================== SERVIÇOS ====================
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
@@ -165,6 +170,7 @@ function carregarS4zx()
 
     -- ==================== VARIÁVEIS ====================
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
+    local wallCheck = false; local silentAimEnabled = false
     local fovCircle = false; local fovRainbow = false
     local espBox = false; local espSkel = false; local espName = false
     local espDistance = false; local espHealth = false; local espTracers = false
@@ -175,8 +181,6 @@ function carregarS4zx()
     local antiLive = false
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255); local chamsColor = Color3.fromRGB(0,255,0)
-    local silentAimEnabled = false
-    local wallCheck = false
     local dupeToolName = ""
     local flingForce = 300
 
@@ -274,7 +278,7 @@ function carregarS4zx()
         return nil
     end
 
-    -- ==================== FUNÇÕES PRINCIPAIS (resumidas para caber) ====================
+    -- ==================== FUNÇÕES PRINCIPAIS ====================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local fovCircleObj
     if useDrawing then
@@ -341,7 +345,7 @@ function carregarS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- ESP atualizada (completa como antes)
+    -- ESP
     local function updateESP()
         if not useDrawing then return end
         -- Cleanup
@@ -600,7 +604,7 @@ function carregarS4zx()
         end
     end
 
-    -- Funções de veículo
+    -- Vehicle functions
     function flingNearestVehicle()
         local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local root = char.HumanoidRootPart
@@ -753,8 +757,8 @@ function carregarS4zx()
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
     end)
 
-    print("S4zx carregado com sucesso!")
+    print("Snow S4zx carregado com sucesso!")
 end
 
 -- Iniciar tela de login
-loginScreen()
+mostrarLogin()
