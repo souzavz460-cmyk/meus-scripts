@@ -1,4 +1,4 @@
--- Snow S4zx Mod - Speed CFrame indetectável + S4zx Farm (coleta automática de lixo)
+-- Snow S4zx Mod - Foco em Speed CFrame + Fly Indetectável (sem Armas, Dinheiro, Car)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -133,19 +133,12 @@ function carregarSnowS4zx()
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255)
     local dupeToolName = ""; local flingForce = 300
-    local moneyAmount = 0
-    local grabToolName = ""
-    local moneyRemotePath = ""
-    local weaponRemotePath = ""
 
-    -- Abas
+    -- Abas (removidas: DINHEIRO, ARMAS, CAR)
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
     local AimbotTab = safeTab("AIMBOT", 4483362458)
     local ESPTab = safeTab("ESP", 4483362458)
     local VisualTab = safeTab("VISUAL", 4483362458)
-    local CarTab = safeTab("CAR", 4483362458)
-    local MoneyTab = safeTab("DINHEIRO", 4483362458)
-    local ArmTab = safeTab("ARMAS", 4483362458)
     local ScannerTab = safeTab("SCANNER", 4483362458)
     local DupTab = safeTab("DUPLICADOR", 4483362458)
     local MoveTab = safeTab("MOVIMENTO", 4483362458)
@@ -182,43 +175,6 @@ function carregarSnowS4zx()
     safeInput(VisualTab, "Cor Tracer V7", "branco", function(v) local c=parseColor(v) if c then tracerColor=c end end)
     safeToggle(VisualTab, "FOV Círculo", false, function(v) fovCircle = v end)
     safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
-
-    -- CAR
-    safeButton(CarTab, "🚀 Fling Carro", function() flingNearestVehicle() end)
-    safeButton(CarTab, "🔓 Destrancar", function() unlockNearestVehicle() end)
-
-    -- DINHEIRO (RemoteEvent)
-    safeInput(MoneyTab, "Quantia de Dinheiro", "1000", function(v) moneyAmount = tonumber(v) or 0 end)
-    safeInput(MoneyTab, "Caminho do Remote (ex: Remotes.Ganhar)", "", function(v) moneyRemotePath = v end)
-    safeButton(MoneyTab, "💰 Puxar Dinheiro (Remote)", function()
-        local amount = moneyAmount
-        if amount <= 0 or moneyRemotePath == "" then return end
-        local remote = findRemote(moneyRemotePath)
-        if remote then
-            pcall(function()
-                remote:FireServer(amount)
-                Rayfield:Notify({Title="Snow S4zx", Content="✅ Remote disparado com $"..amount, Duration=3, Image=4483362458})
-            end)
-        else
-            Rayfield:Notify({Title="Snow S4zx", Content="❌ Remote não encontrado", Duration=3, Image=4483362458})
-        end
-    end)
-
-    -- ARMAS (RemoteEvent)
-    safeInput(ArmTab, "Caminho do Remote (ex: Remotes.PegarArma)", "", function(v) weaponRemotePath = v end)
-    safeInput(ArmTab, "Nome da Arma (argumento)", "AK-47", function(v) grabToolName = v end)
-    safeButton(ArmTab, "🔫 Puxar Arma (Remote)", function()
-        if weaponRemotePath == "" or grabToolName == "" then return end
-        local remote = findRemote(weaponRemotePath)
-        if remote then
-            pcall(function()
-                remote:FireServer(grabToolName)
-                Rayfield:Notify({Title="Snow S4zx", Content="✅ Remote disparado para pegar "..grabToolName, Duration=3, Image=4483362458})
-            end)
-        else
-            Rayfield:Notify({Title="Snow S4zx", Content="❌ Remote não encontrado", Duration=3, Image=4483362458})
-        end
-    end)
 
     -- SCANNER
     local loggedRemotes = {}
@@ -264,17 +220,6 @@ function carregarSnowS4zx()
         Rayfield:Notify({Title="Snow S4zx", Content="Log limpo!", Duration=2})
     end)
 
-    function findRemote(path)
-        local parts = path:split(".")
-        local current = game
-        for _, part in ipairs(parts) do
-            current = current:FindFirstChild(part)
-            if not current then return nil end
-        end
-        if current:IsA("RemoteEvent") then return current end
-        return nil
-    end
-
     function getAllRemotes()
         local list = {}
         local function scan(parent)
@@ -295,7 +240,7 @@ function carregarSnowS4zx()
     safeInput(DupTab, "Nome da Ferramenta", "", function(v) dupeToolName = v end)
     safeButton(DupTab, "✨ Duplicar", function() duplicateTool() end)
 
-    -- MOVIMENTO
+    -- MOVIMENTO (foco em Speed CFrame e Fly)
     safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
     safeToggle(MoveTab, "Fly Avançado", false, function(v)
         flyEnabled = v
@@ -306,7 +251,7 @@ function carregarSnowS4zx()
     safeToggle(MoveTab, "Speed Hack (CFrame)", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
 
-    -- S4zx Farm (Auto coleta de lixo)
+    -- S4zx Farm
     safeToggle(FarmTab, "S4zx Farm", false, function(v) s4zxFarm = v end)
     safeSlider(FarmTab, "Velocidade Farm", 30, 100, 50, function(v) farmSpeed = v end)
 
@@ -388,7 +333,7 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- ESP (mesma da anterior, sem alterações)
+    -- ESP (mesma lógica visual)
     local function updateESP()
         if not useDrawing then return end
 
@@ -624,62 +569,6 @@ function carregarSnowS4zx()
         end
     end
 
-    function flingNearestVehicle()
-        local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local root = char.HumanoidRootPart
-        local nearest, nearestDist = nil, math.huge
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
-                local car = obj:FindFirstAncestorOfClass("Model")
-                if car then
-                    local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
-                    if p then
-                        local d = (p.Position - root.Position).Magnitude
-                        if d < nearestDist then nearestDist=d; nearest=car end
-                    end
-                end
-            end
-        end
-        if nearest then
-            local primary = nearest:FindFirstChild("PrimaryPart") or nearest:FindFirstChildWhichIsA("BasePart")
-            if primary then
-                pcall(function()
-                    primary.CFrame = root.CFrame * CFrame.new(0, 3, -5)
-                    task.wait(0.1)
-                    local bv = Instance.new("BodyVelocity"); bv.MaxForce = Vector3.new(1e9,1e9,1e9)
-                    bv.Velocity = root.CFrame.LookVector * 500 + Vector3.new(0, 300, 0)
-                    bv.Parent = primary; game.Debris:AddItem(bv, 0.8)
-                    Rayfield:Notify({Title="Snow S4zx", Content="🚀 Veículo arremessado!", Duration=2, Image=4483362458})
-                end)
-            end
-        end
-    end
-
-    function unlockNearestVehicle()
-        local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local root = char.HumanoidRootPart
-        local nearest, nearestDist = nil, math.huge
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
-                local car = obj:FindFirstAncestorOfClass("Model")
-                if car then
-                    local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
-                    if p then
-                        local d = (p.Position - root.Position).Magnitude
-                        if d < nearestDist then nearestDist=d; nearest=car end
-                    end
-                end
-            end
-        end
-        if nearest then
-            for _, seat in ipairs(nearest:GetDescendants()) do
-                if seat:IsA("Seat") or seat:IsA("VehicleSeat") then
-                    pcall(function() seat:SetAttribute("Locked",false); if seat:FindFirstChild("Lock") then seat.Lock:Destroy() end end)
-                end
-            end
-        end
-    end
-
     function duplicateTool()
         local toolToDupe
         if dupeToolName ~= "" then
@@ -696,14 +585,13 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Speed CFrame (indetectável)
+    -- Speed CFrame (anda rápido sem mudar WalkSpeed)
     local lastSpeedUpdate = 0
     local function speedStep()
         if not speedEnabled then return end
         local char = Player.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local root = char.HumanoidRootPart
-        -- Restaura WalkSpeed normal para disfarçar
         local hum = char:FindFirstChild("Humanoid")
         if hum then hum.WalkSpeed = 16 end
 
@@ -735,7 +623,7 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Fly CFrame (já existente, mantido)
+    -- Fly CFrame (indetectável)
     local function flyStep()
         if not flyEnabled then return end
         local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -755,19 +643,18 @@ function carregarSnowS4zx()
         end
     end
 
-    -- S4zx Farm (coleta de lixo)
+    -- S4zx Farm
     local farmSpeed = 50
     local function findNearestTrash()
         local char = Player.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
         local root = char.HumanoidRootPart
         local nearest = nil
-        local nearestDist = 50 -- alcance máximo
+        local nearestDist = 50
         for _, part in ipairs(Workspace:GetDescendants()) do
             if part:IsA("BasePart") and part.Name ~= "" then
                 local name = part.Name:lower()
                 if name:find("lixo") or name:find("trash") or name:find("saco") or name:find("papel") or name:find("garrafa") or name:find("lata") then
-                    -- ignora se já foi coletado (transparency alto ou parent sumiu)
                     if part.Transparency < 0.9 and part.Parent and part.Parent ~= nil then
                         local dist = (part.Position - root.Position).Magnitude
                         if dist < nearestDist then
@@ -793,13 +680,11 @@ function carregarSnowS4zx()
         local targetPos = trash.Position
         local distance = (targetPos - root.Position).Magnitude
 
-        -- Move o personagem até o lixo (CFrame suave)
         if distance > 4 then
             local direction = (targetPos - root.Position).Unit
             local newPos = root.Position + direction * (farmSpeed * 0.15)
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
         elseif distance <= 4 then
-            -- Tenta coletar: se tiver uma ferramenta, ativa; senão, apenas toca
             local tool = char:FindFirstChildWhichIsA("Tool")
             if tool then
                 if tick() - lastFarmAction > 0.5 then
@@ -807,7 +692,6 @@ function carregarSnowS4zx()
                     lastFarmAction = tick()
                 end
             else
-                -- Simula um toque movendo o RootPart rapidamente para o centro do lixo e de volta
                 if tick() - lastFarmAction > 0.5 then
                     pcall(function()
                         root.CFrame = CFrame.new(targetPos) * CFrame.new(0, 2, 0)
@@ -874,7 +758,7 @@ function carregarSnowS4zx()
         if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16 end
     end)
 
-    print("Snow S4zx carregado – Speed CFrame, S4zx Farm, e todas as funções!")
+    print("Snow S4zx carregado – Speed CFrame + Fly Indetectável + S4zx Farm!")
 end
 
 mostrarLogin()
