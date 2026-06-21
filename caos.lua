@@ -1,4 +1,4 @@
--- Snow S4zx Mod - Corrigido: ESPs, Speed, Fly, sem Destruir Tudo
+-- Snow S4zx Mod - ESP Profissional + Tracer V7 (linhas do chão) + Correções
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -122,8 +122,8 @@ function carregarSnowS4zx()
     local wallCheck = false; local silentAimEnabled = false
     local fovCircle = false; local fovRainbow = false
     local espBox = false; local espSkel = false; local espName = false
-    local espDistance = false; local espHealth = false; local espTracers = false
-    local espItems = false; local espLines = false; local showMoney = false
+    local espDistance = false; local espHealth = false; local tracerV7 = false
+    local espItems = false; local showMoney = false
     local infJump = false; local flyEnabled = false; local flySpeed = 50
     local speedEnabled = false; local speedValue = 24
     local antiLive = false
@@ -141,7 +141,7 @@ function carregarSnowS4zx()
     local MoveTab = safeTab("MOVIMENTO", 4483362458)
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
-    -- Controles com sliders corrigidos (Range={min,max}, Flag única, sem Suffix)
+    -- Controles com sliders corrigidos
     local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
     local function safeSlider(tab, name, min, max, d, cb) if tab then pcall(function() tab:CreateSlider({Name=name, Range={min, max}, Increment=1, CurrentValue=d, Callback=cb, Flag=name:gsub("%s","_")}) end) end end
     local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
@@ -155,21 +155,20 @@ function carregarSnowS4zx()
     safeToggle(AimbotTab, "WALLCK", false, function(v) wallCheck = v end)
     safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
 
-    -- ESP
+    -- ESP (sem Chams, sem Linhas Arco-íris, sem Tracers antigos)
     safeToggle(ESPTab, "2D Box", false, function(v) espBox = v end)
     safeToggle(ESPTab, "Skeleton", false, function(v) espSkel = v end)
     safeToggle(ESPTab, "Name", false, function(v) espName = v end)
     safeToggle(ESPTab, "Distance", false, function(v) espDistance = v end)
-    safeToggle(ESPTab, "Health", false, function(v) espHealth = v end)
-    safeToggle(ESPTab, "Tracers", false, function(v) espTracers = v end)
+    safeToggle(ESPTab, "Health Bar", false, function(v) espHealth = v end)
+    safeToggle(ESPTab, "Tracer V7 (do chão)", false, function(v) tracerV7 = v end)
     safeToggle(ESPTab, "Itens", false, function(v) espItems = v end)
-    safeToggle(ESPTab, "Linhas Arco-íris", false, function(v) espLines = v end)
     safeToggle(ESPTab, "Dinheiro", false, function(v) showMoney = v end)
 
     -- VISUAL
     safeInput(VisualTab, "Cor Box", "verde", function(v) local c=parseColor(v) if c then boxColor=c end end)
     safeInput(VisualTab, "Cor Skeleton", "rosa", function(v) local c=parseColor(v) if c then skelColor=c end end)
-    safeInput(VisualTab, "Cor Tracers", "branco", function(v) local c=parseColor(v) if c then tracerColor=c end end)
+    safeInput(VisualTab, "Cor Tracer V7", "branco", function(v) local c=parseColor(v) if c then tracerColor=c end end)
     safeToggle(VisualTab, "FOV Círculo", false, function(v) fovCircle = v end)
     safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
 
@@ -192,7 +191,7 @@ function carregarSnowS4zx()
     safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v; if not v then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid.WalkSpeed=16 end end end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
 
-    -- CONFIG (sem Destruir Tudo)
+    -- CONFIG
     safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
 
     function parseColor(input)
@@ -203,7 +202,7 @@ function carregarSnowS4zx()
         return nil
     end
 
-    -- ==================== FUNÇÕES PRINCIPAIS (CORRIGIDAS) ====================
+    -- ==================== FUNÇÕES PRINCIPAIS (ESPs CORRIGIDAS) ====================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local fovCircleObj
     if useDrawing then
@@ -213,7 +212,7 @@ function carregarSnowS4zx()
             fovCircleObj.Color=Color3.new(1,1,1); fovCircleObj.Filled=false
         end)
     end
-    local boxes2D, skeletons, tracers, nameTags, healthBars, distanceTags, rainbowLines = {}, {}, {}, {}, {}, {}, {}
+    local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
     local itemESP = {}
 
     -- Aimbot
@@ -270,37 +269,22 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- ESP (com proteção contra bug)
+    -- ESP atualizada (com Tracer V7)
     local function updateESP()
         if not useDrawing then return end
         -- Limpeza segura
-        for p, box in pairs(boxes2D) do
-            if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end
-        end
+        for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
         for p, data in pairs(skeletons) do
-            if not p or not p.Parent then
-                for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end
-                skeletons[p]=nil
-            end
+            if not p or not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
         end
-        for p, tag in pairs(nameTags) do
-            if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end
-        end
-        for p, bar in pairs(healthBars) do
-            if not p or not p.Parent then pcall(function() bar.bg:Remove(); bar.fill:Remove() end); healthBars[p]=nil end
-        end
-        for p, line in pairs(tracers) do
-            if not p or not p.Parent then pcall(function() line:Remove() end); tracers[p]=nil end
-        end
-        for p, tag in pairs(distanceTags) do
-            if not p or not p.Parent then pcall(function() tag:Remove() end); distanceTags[p]=nil end
-        end
-        for p, line in pairs(rainbowLines) do
-            if not p or not p.Parent then pcall(function() line:Remove() end); rainbowLines[p]=nil end
-        end
-        for part, obj in pairs(itemESP) do
-            if not part or not part.Parent then pcall(function() obj:Remove() end); itemESP[part]=nil end
-        end
+        for p, tag in pairs(nameTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
+        for p, bar in pairs(healthBars) do if not p or not p.Parent then pcall(function() bar.bg:Remove(); bar.fill:Remove() end); healthBars[p]=nil end end
+        for p, tag in pairs(distanceTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); distanceTags[p]=nil end end
+        for p, line in pairs(tracerLines) do if not p or not p.Parent then pcall(function() line:Remove() end); tracerLines[p]=nil end end
+        for part, obj in pairs(itemESP) do if not part or not part.Parent then pcall(function() obj:Remove() end); itemESP[part]=nil end end
+
+        -- Ponto de origem do Tracer V7 (centro inferior da tela)
+        local tracerOrigin = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 5)
 
         local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
 
@@ -315,7 +299,7 @@ function carregarSnowS4zx()
                     if isVal then
                         if not itemESP[part] then
                             pcall(function()
-                                local circle = Drawing.new("Circle"); circle.Radius=5; circle.Color=Color3.new(1,1,0); circle.Filled=true
+                                local circle = Drawing.new("Circle"); circle.Radius=4; circle.Color=Color3.new(1,1,0); circle.Filled=true
                                 itemESP[part] = circle
                             end)
                         end
@@ -346,10 +330,34 @@ function carregarSnowS4zx()
                 if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line.Visible=false end end
                 if nameTags[p] then nameTags[p].Visible=false end
                 if healthBars[p] then healthBars[p].bg.Visible=false; healthBars[p].fill.Visible=false end
-                if tracers[p] then tracers[p].Visible=false end
                 if distanceTags[p] then distanceTags[p].Visible=false end
-                if rainbowLines[p] then rainbowLines[p].Visible=false end
+                if tracerLines[p] then tracerLines[p].Visible=false end
                 continue
+            end
+
+            -- Tracer V7 (do chão até o inimigo)
+            if tracerV7 then
+                local rootPos, rootOnScreen = Camera:WorldToViewportPoint(root.Position)
+                if rootOnScreen then
+                    local enemyScreenPos = Vector2.new(rootPos.X, rootPos.Y)
+                    if not tracerLines[p] then
+                        pcall(function()
+                            local line = Drawing.new("Line")
+                            line.Thickness = 1
+                            line.Color = tracerColor
+                            tracerLines[p] = line
+                        end)
+                    end
+                    if tracerLines[p] then
+                        tracerLines[p].From = tracerOrigin
+                        tracerLines[p].To = enemyScreenPos
+                        tracerLines[p].Visible = true
+                    end
+                else
+                    if tracerLines[p] then tracerLines[p].Visible = false end
+                end
+            else
+                if tracerLines[p] then pcall(function() tracerLines[p]:Remove() end); tracerLines[p]=nil end
             end
 
             -- Box
@@ -417,26 +425,7 @@ function carregarSnowS4zx()
                 if skeletons[p] then for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
             end
 
-            -- Tracers
-            if espTracers and myRoot then
-                local myPos = Camera:WorldToViewportPoint(myRoot.Position)
-                local enemyPos = Camera:WorldToViewportPoint(root.Position)
-                if myPos and enemyPos then
-                    if not tracers[p] then
-                        pcall(function() local line=Drawing.new("Line"); line.Thickness=1; tracers[p]=line end)
-                    end
-                    if tracers[p] then
-                        tracers[p].From = Vector2.new(myPos.X, myPos.Y)
-                        tracers[p].To = Vector2.new(enemyPos.X, enemyPos.Y)
-                        tracers[p].Color = tracerColor
-                        tracers[p].Visible = true
-                    end
-                end
-            else
-                if tracers[p] then pcall(function() tracers[p]:Remove() end); tracers[p]=nil end
-            end
-
-            -- Name
+            -- Name (com vida e distância integrados se ativos)
             if espName then
                 local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.8,0))
                 if headPos then
@@ -453,6 +442,9 @@ function carregarSnowS4zx()
                                 end
                             end end
                         end
+                        if espDistance and dist > 0 then
+                            text = text .. " [" .. math.floor(dist) .. "m]"
+                        end
                         nameTags[p].Text = text
                         nameTags[p].Position = Vector2.new(headPos.X, headPos.Y-8)
                         nameTags[p].Color = Color3.new(1,1,1)
@@ -463,7 +455,7 @@ function carregarSnowS4zx()
                 if nameTags[p] then pcall(function() nameTags[p]:Remove() end); nameTags[p]=nil end
             end
 
-            -- Health
+            -- Health Bar
             if espHealth then
                 local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.8,0))
                 if headPos then
@@ -489,15 +481,15 @@ function carregarSnowS4zx()
                 if healthBars[p] then pcall(function() healthBars[p].bg:Remove(); healthBars[p].fill:Remove() end); healthBars[p]=nil end
             end
 
-            -- Distance
-            if espDistance and dist > 0 then
+            -- Distance (só se não estiver integrado no Name)
+            if espDistance and not espName and dist > 0 then
                 local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,1.8,0))
                 if headPos then
                     if not distanceTags[p] then
                         pcall(function() local tag=Drawing.new("Text"); tag.Center=true; tag.Size=12; tag.Outline=true; tag.OutlineColor=Color3.new(0,0,0); distanceTags[p]=tag end)
                     end
                     if distanceTags[p] then
-                        distanceTags[p].Text = math.floor(dist).." studs ("..math.floor(dist/3.5).."m)"
+                        distanceTags[p].Text = math.floor(dist).."m"
                         distanceTags[p].Position = Vector2.new(headPos.X, headPos.Y+10)
                         distanceTags[p].Color = Color3.new(1,1,1)
                         distanceTags[p].Visible = true
@@ -505,23 +497,6 @@ function carregarSnowS4zx()
                 end
             else
                 if distanceTags[p] then pcall(function() distanceTags[p]:Remove() end); distanceTags[p]=nil end
-            end
-
-            -- Rainbow lines
-            if espLines and myRoot then
-                local myPos = Camera:WorldToViewportPoint(myRoot.Position)
-                local enemyPos = Camera:WorldToViewportPoint(head.Position)
-                if myPos and enemyPos then
-                    if not rainbowLines[p] then
-                        pcall(function() local line=Drawing.new("Line"); line.Thickness=2; rainbowLines[p]=line end)
-                    end
-                    if rainbowLines[p] then
-                        rainbowLines[p].From = Vector2.new(myPos.X, myPos.Y)
-                        rainbowLines[p].To = Vector2.new(enemyPos.X, enemyPos.Y)
-                        rainbowLines[p].Color = Color3.fromHSV((tick()*50%255)/255,1,1)
-                        rainbowLines[p].Visible = true
-                    end
-                end
             end
         end
 
@@ -603,7 +578,7 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Fly (andando mas voando - indetectável)
+    -- Fly (andando no ar)
     local function flyStep()
         if not flyEnabled then return end
         local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -623,7 +598,7 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Speed Hack (andando rápido - indetectável)
+    -- Speed Hack
     local function speedStep()
         local char = Player.Character; if not char or not char:FindFirstChild("Humanoid") then return end
         local hum = char.Humanoid
@@ -685,12 +660,10 @@ function carregarSnowS4zx()
         for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
         for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
         for _, bar in pairs(healthBars) do pcall(function() bar.bg:Remove(); bar.fill:Remove() end) end
-        for _, line in pairs(tracers) do pcall(function() line:Remove() end) end
+        for _, line in pairs(tracerLines) do pcall(function() line:Remove() end) end
         for _, tag in pairs(distanceTags) do pcall(function() tag:Remove() end) end
         for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
-        for _, line in pairs(rainbowLines) do pcall(function() line:Remove() end) end
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
-        -- Restaura estado do personagem
         local c = Player.Character
         if c and c:FindFirstChild("Humanoid") then
             c.Humanoid.PlatformStand = false
