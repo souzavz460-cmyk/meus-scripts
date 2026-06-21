@@ -1,4 +1,4 @@
--- Snow S4zx Mod - Foco em Speed CFrame + Fly Indetectável (sem Armas, Dinheiro, Car)
+-- Snow S4zx Mod - Speed Mobile, Farm melhorado, Auto Click, Anti AFK (sem Duplicador)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -132,17 +132,22 @@ function carregarSnowS4zx()
     local antiLive = false
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255)
-    local dupeToolName = ""; local flingForce = 300
+    -- Novas funções
+    local autoClick = false
+    local autoEquip = false
+    local autoEquipName = ""
+    local antiAfk = false
+    local farmRemotePath = ""
 
-    -- Abas (removidas: DINHEIRO, ARMAS, CAR)
+    -- Abas
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
     local AimbotTab = safeTab("AIMBOT", 4483362458)
     local ESPTab = safeTab("ESP", 4483362458)
     local VisualTab = safeTab("VISUAL", 4483362458)
     local ScannerTab = safeTab("SCANNER", 4483362458)
-    local DupTab = safeTab("DUPLICADOR", 4483362458)
     local MoveTab = safeTab("MOVIMENTO", 4483362458)
     local FarmTab = safeTab("S4zx Farm", 4483362458)
+    local ExtrasTab = safeTab("EXTRAS", 4483362458)
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
     -- Controles
@@ -184,7 +189,6 @@ function carregarSnowS4zx()
         local msg = "🔥 " .. remote:GetFullName() .. "(" .. table.concat(args, ", ") .. ")"
         Rayfield:Notify({Title="Remote Detectado", Content=msg, Duration=2, Image=4483362458})
     end
-
     local function hookRemotes()
         local remotes = getAllRemotes()
         for _, remote in ipairs(remotes) do
@@ -200,12 +204,8 @@ function carregarSnowS4zx()
         end
     end
     task.spawn(function()
-        while true do
-            hookRemotes()
-            task.wait(2)
-        end
+        while true do hookRemotes(); task.wait(2) end
     end)
-
     safeButton(ScannerTab, "📋 Listar Remotes (F9)", function()
         local list = ""
         for _, remote in ipairs(getAllRemotes()) do
@@ -224,9 +224,7 @@ function carregarSnowS4zx()
         local list = {}
         local function scan(parent)
             for _, child in ipairs(parent:GetChildren()) do
-                if child:IsA("RemoteEvent") then
-                    table.insert(list, child)
-                end
+                if child:IsA("RemoteEvent") then table.insert(list, child) end
                 scan(child)
             end
         end
@@ -236,11 +234,7 @@ function carregarSnowS4zx()
         return list
     end
 
-    -- DUPLICADOR
-    safeInput(DupTab, "Nome da Ferramenta", "", function(v) dupeToolName = v end)
-    safeButton(DupTab, "✨ Duplicar", function() duplicateTool() end)
-
-    -- MOVIMENTO (foco em Speed CFrame e Fly)
+    -- MOVIMENTO (Speed Mobile, Fly)
     safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
     safeToggle(MoveTab, "Fly Avançado", false, function(v)
         flyEnabled = v
@@ -248,12 +242,19 @@ function carregarSnowS4zx()
         if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = v end
     end)
     safeSlider(MoveTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
-    safeToggle(MoveTab, "Speed Hack (CFrame)", false, function(v) speedEnabled = v end)
+    safeToggle(MoveTab, "Speed Hack (Mobile/PC)", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
 
     -- S4zx Farm
     safeToggle(FarmTab, "S4zx Farm", false, function(v) s4zxFarm = v end)
     safeSlider(FarmTab, "Velocidade Farm", 30, 100, 50, function(v) farmSpeed = v end)
+    safeInput(FarmTab, "Remote de Coleta (opcional)", "", function(v) farmRemotePath = v end)
+
+    -- EXTRAS (Auto Click, Auto Equip, Anti Afk)
+    safeToggle(ExtrasTab, "Auto Click", false, function(v) autoClick = v end)
+    safeToggle(ExtrasTab, "Auto Equip", false, function(v) autoEquip = v end)
+    safeInput(ExtrasTab, "Nome da Ferramenta (Auto Equip)", "", function(v) autoEquipName = v end)
+    safeToggle(ExtrasTab, "Anti AFK", false, function(v) antiAfk = v end)
 
     -- CONFIG
     safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
@@ -333,10 +334,9 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- ESP (mesma lógica visual)
+    -- ESP (completa)
     local function updateESP()
         if not useDrawing then return end
-
         for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
         for p, data in pairs(skeletons) do if not p or not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end end
         for p, tag in pairs(nameTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
@@ -569,61 +569,25 @@ function carregarSnowS4zx()
         end
     end
 
-    function duplicateTool()
-        local toolToDupe
-        if dupeToolName ~= "" then
-            local backpack = Player:FindFirstChild("Backpack")
-            if backpack then for _, item in ipairs(backpack:GetChildren()) do if item:IsA("Tool") and item.Name:lower() == dupeToolName:lower() then toolToDupe=item break end end end
-            if not toolToDupe and Player.Character then for _, item in ipairs(Player.Character:GetChildren()) do if item:IsA("Tool") and item.Name:lower() == dupeToolName:lower() then toolToDupe=item break end end end
-        else
-            if Player.Character then for _, item in ipairs(Player.Character:GetChildren()) do if item:IsA("Tool") then toolToDupe=item break end end end
-        end
-        if toolToDupe then
-            local clone = toolToDupe:Clone()
-            local backpack = Player:FindFirstChild("Backpack")
-            if backpack then clone.Parent = backpack end
-        end
-    end
-
-    -- Speed CFrame (anda rápido sem mudar WalkSpeed)
-    local lastSpeedUpdate = 0
+    -- Speed Hack Mobile (usa Humanoid.MoveDirection)
     local function speedStep()
         if not speedEnabled then return end
         local char = Player.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local root = char.HumanoidRootPart
         local hum = char:FindFirstChild("Humanoid")
-        if hum then hum.WalkSpeed = 16 end
+        if not hum then return end
+        -- Mantém o WalkSpeed normal para não ser detectado
+        hum.WalkSpeed = 16
 
-        local now = tick()
-        if now - lastSpeedUpdate < 0.05 then return end
-        lastSpeedUpdate = now
-
-        local moving = false
-        local moveDir = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up) then
-            moveDir = moveDir + Vector3.new(Camera.CFrame.LookVector.X, 0, Camera.CFrame.LookVector.Z).Unit
-            moving = true
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Down) then
-            moveDir = moveDir - Vector3.new(Camera.CFrame.LookVector.X, 0, Camera.CFrame.LookVector.Z).Unit
-            moving = true
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) or UserInputService:IsKeyDown(Enum.KeyCode.Left) then
-            moveDir = moveDir - (Camera.CFrame.RightVector * Vector3.new(1,0,1)).Unit
-            moving = true
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) or UserInputService:IsKeyDown(Enum.KeyCode.Right) then
-            moveDir = moveDir + (Camera.CFrame.RightVector * Vector3.new(1,0,1)).Unit
-            moving = true
-        end
-        if moving and moveDir.Magnitude > 0 then
-            local newPos = root.Position + moveDir.Unit * (speedValue * 0.35)
+        local moveDir = hum.MoveDirection
+        if moveDir.Magnitude > 0 then
+            local newPos = root.Position + moveDir * (speedValue * 0.06)  -- ajuste fino para mobile
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.8)
         end
     end
 
-    -- Fly CFrame (indetectável)
+    -- Fly (mantido)
     local function flyStep()
         if not flyEnabled then return end
         local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -643,7 +607,7 @@ function carregarSnowS4zx()
         end
     end
 
-    -- S4zx Farm
+    -- S4zx Farm (melhorado)
     local farmSpeed = 50
     local function findNearestTrash()
         local char = Player.Character
@@ -654,7 +618,7 @@ function carregarSnowS4zx()
         for _, part in ipairs(Workspace:GetDescendants()) do
             if part:IsA("BasePart") and part.Name ~= "" then
                 local name = part.Name:lower()
-                if name:find("lixo") or name:find("trash") or name:find("saco") or name:find("papel") or name:find("garrafa") or name:find("lata") then
+                if name:find("lixo") or name:find("trash") or name:find("saco") or name:find("papel") or name:find("garrafa") or name:find("lata") or name:find("entulho") or name:find("resto") then
                     if part.Transparency < 0.9 and part.Parent and part.Parent ~= nil then
                         local dist = (part.Position - root.Position).Magnitude
                         if dist < nearestDist then
@@ -685,6 +649,18 @@ function carregarSnowS4zx()
             local newPos = root.Position + direction * (farmSpeed * 0.15)
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
         elseif distance <= 4 then
+            -- Se houver um RemoteEvent configurado, usa-o
+            if farmRemotePath ~= "" then
+                local remote = findRemote(farmRemotePath)
+                if remote then
+                    if tick() - lastFarmAction > 0.8 then
+                        pcall(function() remote:FireServer() end)
+                        lastFarmAction = tick()
+                    end
+                    return
+                end
+            end
+            -- Caso contrário, tenta ativar a ferramenta
             local tool = char:FindFirstChildWhichIsA("Tool")
             if tool then
                 if tick() - lastFarmAction > 0.5 then
@@ -702,6 +678,57 @@ function carregarSnowS4zx()
                 end
             end
         end
+    end
+
+    -- Auto Click
+    local function autoClickStep()
+        if not autoClick then return end
+        local char = Player.Character
+        if not char then return end
+        local tool = char:FindFirstChildWhichIsA("Tool")
+        if tool then
+            pcall(function() tool:Activate() end)
+        end
+        task.wait(0.1)  -- intervalo entre cliques
+    end
+
+    -- Auto Equip
+    local function autoEquipStep()
+        if not autoEquip or autoEquipName == "" then return end
+        local backpack = Player:FindFirstChild("Backpack")
+        if backpack then
+            for _, item in ipairs(backpack:GetChildren()) do
+                if item:IsA("Tool") and item.Name:lower() == autoEquipName:lower() then
+                    pcall(function() item.Parent = Player.Character end)
+                    break
+                end
+            end
+        end
+    end
+
+    -- Anti AFK
+    local lastAfkTime = 0
+    local function antiAfkStep()
+        if not antiAfk then return end
+        if tick() - lastAfkTime < 120 then return end  -- a cada 2 minutos
+        lastAfkTime = tick()
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local root = char.HumanoidRootPart
+            root.CFrame = root.CFrame * CFrame.new(0, 1, 0) * CFrame.new(0, -1, 0)  -- pequeno pulo
+        end
+    end
+
+    -- Função auxiliar para RemoteEvent
+    function findRemote(path)
+        local parts = path:split(".")
+        local current = game
+        for _, part in ipairs(parts) do
+            current = current:FindFirstChild(part)
+            if not current then return nil end
+        end
+        if current:IsA("RemoteEvent") then return current end
+        return nil
     end
 
     local staffFrame
@@ -736,10 +763,20 @@ function carregarSnowS4zx()
         speedStep()
         flyStep()
         farmStep()
+        antiAfkStep()
         updateStaffCounter()
         if antiLive and tick()-lastLiveCheck > 1 then
             lastLiveCheck = tick()
             Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
+        end
+    end)
+
+    -- Thread separada para Auto Click e Auto Equip
+    task.spawn(function()
+        while true do
+            autoClickStep()
+            autoEquipStep()
+            task.wait(0.5)
         end
     end)
 
@@ -758,7 +795,7 @@ function carregarSnowS4zx()
         if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16 end
     end)
 
-    print("Snow S4zx carregado – Speed CFrame + Fly Indetectável + S4zx Farm!")
+    print("Snow S4zx carregado – Speed Mobile, Farm, Auto Click, Anti AFK!")
 end
 
 mostrarLogin()
