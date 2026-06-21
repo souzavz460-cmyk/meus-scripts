@@ -1,4 +1,4 @@
--- Snow S4zx Mod - Completo com Money Grabber, Fling realista, Key 2026
+-- Snow S4zx Mod - Money Grabber funcional + Tool Grabber real
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -107,10 +107,7 @@ function carregarSnowS4zx()
         LoadingSubtitle = "by Souza",
         ConfigurationSaving = { Enabled = false },
         KeySystem = false,
-        MobileButton = {
-            Enabled = true,
-            Name = "Snow S4zx"
-        }
+        MobileButton = { Enabled = true, Name = "Snow S4zx" }
     })
     
     local Players = game:GetService("Players")
@@ -135,6 +132,7 @@ function carregarSnowS4zx()
     local tracerColor = Color3.fromRGB(255,255,255)
     local dupeToolName = ""; local flingForce = 300
     local moneyAmount = 0
+    local grabToolName = ""
 
     -- Abas
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -143,6 +141,7 @@ function carregarSnowS4zx()
     local VisualTab = safeTab("VISUAL", 4483362458)
     local CarTab = safeTab("CAR", 4483362458)
     local MoneyTab = safeTab("DINHEIRO", 4483362458)
+    local ArmTab = safeTab("ARMAS", 4483362458)
     local DupTab = safeTab("DUPLICADOR", 4483362458)
     local MoveTab = safeTab("MOVIMENTO", 4483362458)
     local ConfigTab = safeTab("CONFIG", 4483362458)
@@ -182,31 +181,96 @@ function carregarSnowS4zx()
     safeButton(CarTab, "🚀 Fling Carro", function() flingNearestVehicle() end)
     safeButton(CarTab, "🔓 Destrancar", function() unlockNearestVehicle() end)
 
-    -- DINHEIRO
+    -- DINHEIRO (corrigido)
     safeInput(MoneyTab, "Quantia de Dinheiro", "1000", function(v) moneyAmount = tonumber(v) or 0 end)
     safeButton(MoneyTab, "💰 Puxar Dinheiro", function()
         local amount = moneyAmount
         if amount <= 0 then return end
-        local ls = Player:FindFirstChild("leaderstats")
-        if not ls then return end
-        for _, stat in ipairs(ls:GetChildren()) do
-            if (stat:IsA("IntValue") or stat:IsA("NumberValue")) and
-               (stat.Name:lower():find("cash") or stat.Name:lower():find("money") or 
-                stat.Name:lower():find("gold") or stat.Name:lower():find("coins") or
-                stat.Name:lower():find("dinheiro") or stat.Name:lower():find("verba")) then
-                stat.Value = stat.Value + amount
-                Rayfield:Notify({
-                    Title = "Snow S4zx",
-                    Content = "✅ Adicionado $"..amount.." à sua conta!",
-                    Duration = 3,
-                    Image = 4483362458
-                })
-                return
+        -- Busca mais ampla
+        local stats = Player:FindFirstChild("leaderstats") or Player:FindFirstChild("stats") or Player:FindFirstChild("Data")
+        if not stats then
+            -- Tenta encontrar em algum lugar
+            for _, child in ipairs(Player:GetChildren()) do
+                if child:IsA("Folder") and (child.Name:lower():find("leader") or child.Name:lower():find("stat") or child.Name:lower():find("data")) then
+                    stats = child
+                    break
+                end
             end
+        end
+        if stats then
+            local done = false
+            for _, stat in ipairs(stats:GetChildren()) do
+                if (stat:IsA("IntValue") or stat:IsA("NumberValue") or stat:IsA("DoubleConstrainedValue")) and
+                   (stat.Name:lower():find("cash") or stat.Name:lower():find("money") or 
+                    stat.Name:lower():find("gold") or stat.Name:lower():find("coins") or
+                    stat.Name:lower():find("dinheiro") or stat.Name:lower():find("verba") or
+                    stat.Name:lower():find("saldo") or stat.Name:lower():find("pontos") or
+                    stat.Name:lower():find("reais") or stat.Name:lower():find("credits")) then
+                    stat.Value = stat.Value + amount
+                    done = true
+                    break
+                end
+            end
+            if not done then
+                -- Se não achou nome específico, tenta qualquer NumberValue/IntValue
+                for _, stat in ipairs(stats:GetChildren()) do
+                    if (stat:IsA("IntValue") or stat:IsA("NumberValue")) and not done then
+                        stat.Value = stat.Value + amount
+                        done = true
+                        break
+                    end
+                end
+            end
+            if done then
+                Rayfield:Notify({Title="Snow S4zx", Content="✅ Adicionado $"..amount.." à sua conta!", Duration=3, Image=4483362458})
+            else
+                Rayfield:Notify({Title="Snow S4zx", Content="❌ Nenhum valor de dinheiro encontrado.", Duration=3, Image=4483362458})
+            end
+        else
+            Rayfield:Notify({Title="Snow S4zx", Content="❌ Sistema de dinheiro não encontrado.", Duration=3, Image=4483362458})
         end
     end)
 
-    -- DUPLICADOR
+    -- ARMAS (Tool Grabber real)
+    safeInput(ArmTab, "Nome da Arma", "AK-47", function(v) grabToolName = v end)
+    safeButton(ArmTab, "🔫 Puxar Arma do Mapa", function()
+        local name = grabToolName
+        if name == "" then return end
+        local backpack = Player:FindFirstChild("Backpack")
+        if not backpack then
+            Rayfield:Notify({Title="Snow S4zx", Content="❌ Mochila não encontrada.", Duration=3, Image=4483362458})
+            return
+        end
+        -- Busca em todos os lugares
+        local locations = {
+            Workspace, game:GetService("ReplicatedStorage"), game:GetService("ServerStorage"),
+            game:GetService("Lighting"), game:GetService("StarterPack"), game:GetService("StarterGear")
+        }
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character then table.insert(locations, plr.Character) end
+            local bp = plr:FindFirstChild("Backpack")
+            if bp then table.insert(locations, bp) end
+        end
+        local nameLower = name:lower()
+        local found = false
+        for _, loc in ipairs(locations) do
+            for _, obj in ipairs(loc:GetDescendants()) do
+                if obj:IsA("Tool") and obj.Name:lower() == nameLower then
+                    pcall(function() obj.Parent = backpack end)
+                    found = (obj.Parent == backpack)
+                    if found then break end
+                end
+            end
+            if found then break end
+        end
+        if found then
+            Rayfield:Notify({Title="Snow S4zx", Content="✅ "..name.." puxada para o inventário!", Duration=3, Image=4483362458})
+        else
+            Rayfield:Notify({Title="Snow S4zx", Content="❌ "..name.." não encontrada.", Duration=3, Image=4483362458})
+        end
+    end)
+
+    -- DUPLICADOR (permanece)
     safeInput(DupTab, "Nome da Ferramenta", "", function(v) dupeToolName = v end)
     safeButton(DupTab, "✨ Duplicar", function() duplicateTool() end)
 
@@ -559,12 +623,7 @@ function carregarSnowS4zx()
                     local bv = Instance.new("BodyVelocity"); bv.MaxForce = Vector3.new(1e9,1e9,1e9)
                     bv.Velocity = root.CFrame.LookVector * 500 + Vector3.new(0, 300, 0)
                     bv.Parent = primary; game.Debris:AddItem(bv, 0.8)
-                    Rayfield:Notify({
-                        Title = "Snow S4zx",
-                        Content = "🚀 Veículo arremessado!",
-                        Duration = 2,
-                        Image = 4483362458
-                    })
+                    Rayfield:Notify({Title="Snow S4zx", Content="🚀 Veículo arremessado!", Duration=2, Image=4483362458})
                 end)
             end
         end
