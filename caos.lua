@@ -1,4 +1,4 @@
--- Snow S4zx Mod Ultimate – Speed, Fly, ESP Profissional + Novas Funções (sem Hitbox Expander)
+-- Snow S4zx Mod Ultimate – Speed Hack Funcional + Todas as funções
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -135,13 +135,11 @@ function carregarSnowS4zx()
     local antiAfk = false; local farmRemotePath = ""
     local noclip = false
     local waypoint = nil; local tpWaypoint = false
-    local antiStun = false
-    local antiFire = false
+    local antiStun = false; local antiFire = false
     local reach = false; local reachDistance = 15
     local spinbot = false; local spinSpeed = 10
     local fovChanger = false; local customFOV = 90
-    local infiniteAmmo = false
-    local autoReload = false
+    local infiniteAmmo = false; local autoReload = false
 
     -- Abas
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -587,18 +585,27 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Speed Hack (funcional mobile/PC)
+    -- ==================== SPEED HACK FUNCIONAL (CORRIGIDO) ====================
     local function speedStep()
         if not speedEnabled then return end
         local char = Player.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local hum = char:FindFirstChild("Humanoid")
-        if hum then hum.WalkSpeed = 16 end
+        if not hum then return end
         local root = char.HumanoidRootPart
-        local moveDir = hum and hum.MoveDirection or Vector3.zero
+
+        -- Mantém WalkSpeed normal (16) para disfarçar
+        hum.WalkSpeed = 16
+
+        -- Obtém direção de movimento (funciona em mobile e PC)
+        local moveDir = hum.MoveDirection
         if moveDir.Magnitude > 0 then
-            local offset = moveDir.Unit * (speedValue * 0.12)
-            root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position + offset), 0.7)
+            -- Calcula o deslocamento baseado na velocidade configurada
+            -- speedValue = studs por segundo, assumindo 60 fps: delta = speedValue / 60
+            local delta = speedValue / 60
+            local newPos = root.Position + moveDir.Unit * delta
+            -- Move suavemente usando Lerp
+            root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.8)
         end
     end
 
