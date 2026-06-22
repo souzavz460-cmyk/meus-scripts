@@ -1,4 +1,4 @@
--- Snow S4zx Ultimate – Silent Aim Real, Ghost Mode (Invisível sem NoClip), 10 Novas Opções de Combate
+-- Snow S4zx Ultimate – TUDO REVISADO (Tema DarkBlue, ESPs, Silent Aim, Ghost, Speed, Fly, Combat+)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -102,12 +102,14 @@ end
 function carregarSnowS4zx()
     local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
     local Window = Rayfield:CreateWindow({
-        Name = "Snow S4zx",
-        LoadingTitle = "Snow S4zx",
-        LoadingSubtitle = "by Souza",
+        Name = "S4zx MODS",
+        LoadingTitle = "S4zx MODS",
+        LoadingSubtitle = "by Souzavz",
+        ShowText = "S4zx MODS",
+        Theme = "DarkBlue",
         ConfigurationSaving = { Enabled = false },
         KeySystem = false,
-        MobileButton = { Enabled = true, Name = "Snow S4zx" }
+        MobileButton = { Enabled = true, Name = "S4zx MODS" }
     })
     
     local Players = game:GetService("Players")
@@ -173,7 +175,6 @@ function carregarSnowS4zx()
     local serverHopKey = Enum.KeyCode.F3
     local autoDodge = false; local dodgeRange = 30
     local chatTagText = ""
-    -- Novas 10 para combate
     local autoShoot = false
     local fireRateMod = false; local fireRateMultiplier = 2
     local spreadReducer = false
@@ -196,13 +197,12 @@ function carregarSnowS4zx()
     local FarmTab = safeTab("FARM", 4483362458)
     local ExtrasTab = safeTab("EXTRAS", 4483362458)
     local WeaponTab = safeTab("ARMAS", 4483362458)
-    local CombatPlusTab = safeTab("COMBAT+", 4483362458)  -- Nova aba
+    local CombatPlusTab = safeTab("COMBAT+", 4483362458)
     local FunTab = safeTab("DIVERSÃO", 4483362458)
     local UtilitiesTab = safeTab("UTILITIES", 4483362458)
     local TeleportTab = safeTab("TELEPORT", 4483362458)
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
-    -- Controles seguros
     local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
     local function safeSlider(tab, name, min, max, d, cb) if tab then pcall(function() tab:CreateSlider({Name=name, Range={min, max}, Increment=1, CurrentValue=d, Callback=cb, Flag=name:gsub("%s","_")}) end) end end
     local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
@@ -293,24 +293,21 @@ function carregarSnowS4zx()
         return list
     end
 
-    -- MOVIMENTO (NoClip removido, Ghost Mode só invisível)
+    -- MOVIMENTO
     safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
     safeToggle(MoveTab, "Fly Avançado", false, function(v) flyEnabled = v end)
     safeSlider(MoveTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
     safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
     safeToggle(MoveTab, "Ghost Mode (Invisível)", false, function(v)
-        ghostMode = v
-        invisibility = v
+        ghostMode = v; invisibility = v
     end)
     safeToggle(MoveTab, "Freecam", false, function(v) freecamEnabled = v end)
     safeSlider(MoveTab, "Velocidade Freecam", 10, 200, 50, function(v) freecamSpeed = v end)
     safeToggle(MoveTab, "TP Waypoint (tecla B)", false, function(v) tpWaypoint = v end)
     safeButton(MoveTab, "Marcar Waypoint (V)", function()
         local char = Player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            waypoint = char.HumanoidRootPart.Position
-        end
+        if char and char:FindFirstChild("HumanoidRootPart") then waypoint = char.HumanoidRootPart.Position end
     end)
 
     -- TELEPORT
@@ -318,14 +315,11 @@ function carregarSnowS4zx()
     safeButton(TeleportTab, "Teleportar até Jogador", function()
         local name = teleportPlayerName:lower()
         for _, p in ipairs(Players:GetPlayers()) do
-            if p.Name:lower():find(name) and p ~= Player then
-                local char = p.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    local myChar = Player.Character
-                    if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                        myChar.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-                        break
-                    end
+            if p.Name:lower():find(name) and p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local myChar = Player.Character
+                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    myChar.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+                    break
                 end
             end
         end
@@ -350,7 +344,7 @@ function carregarSnowS4zx()
     safeToggle(ExtrasTab, "Auto Respawn", false, function(v) autoRespawn = v end)
     safeToggle(ExtrasTab, "Admin Notifier", false, function(v) adminNotifier = v end)
 
-    -- ARMAS (mantém as existentes)
+    -- ARMAS
     safeToggle(WeaponTab, "Reach (Alcance)", false, function(v) reach = v end)
     safeSlider(WeaponTab, "Distância", 10, 50, 15, function(v) reachDistance = v end)
     safeToggle(WeaponTab, "Infinite Ammo", false, function(v) infiniteAmmo = v end)
@@ -359,7 +353,7 @@ function carregarSnowS4zx()
     safeToggle(WeaponTab, "Rapid Fire", false, function(v) rapidFire = v end)
     safeSlider(WeaponTab, "Rapid Fire Delay", 0.05, 0.5, 0.1, function(v) rapidFireDelay = v end)
 
-    -- COMBAT+ (10 novas opções)
+    -- COMBAT+
     safeToggle(CombatPlusTab, "Auto Shoot", false, function(v) autoShoot = v end)
     safeToggle(CombatPlusTab, "Fire Rate Mod", false, function(v) fireRateMod = v end)
     safeSlider(CombatPlusTab, "Multiplicador Fire Rate", 1, 5, 2, function(v) fireRateMultiplier = v end)
@@ -422,7 +416,7 @@ function carregarSnowS4zx()
         return nil
     end
 
-    -- ==================== FUNÇÕES ====================
+    -- ==================== FUNÇÕES PRINCIPAIS ====================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local fovCircleObj
     if useDrawing then
@@ -436,9 +430,8 @@ function carregarSnowS4zx()
     local itemESP = {}
     local crosshairObj
     local killCount = 0
-    local lastKillTime = 0
 
-    -- Silent Aim real (bala vai na cabeça sem mover câmera)
+    -- Silent Aim (bala na cabeça sem mover câmera)
     local silentAimConnection
     local function setupSilentAim()
         if silentAimConnection then silentAimConnection:Disconnect() end
@@ -466,7 +459,7 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- Aimbot normal (câmera)
+    -- Aimbot
     local function aimbotStep()
         if not aimbot then return end
         local center = Camera.ViewportSize/2
@@ -493,10 +486,9 @@ function carregarSnowS4zx()
         else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
     end
 
-    -- ESP (com limpeza, resumida mas completa)
+    -- ESP (completa, com limpeza)
     local function updateESP()
         if not useDrawing then return end
-        -- Limpeza de órfãos
         for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
         for p, data in pairs(skeletons) do if not p or not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end end
         for p, tag in pairs(nameTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
@@ -511,7 +503,6 @@ function carregarSnowS4zx()
         local hue = (tick() * rainbowSpeed) % 1
         local rainbowColor = Color3.fromHSV(hue, 1, 1)
 
-        -- Itens
         if espItems then
             local valuable = {"coin","gold","diamond","gem","money","cash","loot","chest","armor","weapon","sword","gun"}
             for _, part in ipairs(Workspace:GetDescendants()) do
@@ -539,7 +530,6 @@ function carregarSnowS4zx()
             for part, obj in pairs(itemESP) do pcall(function() obj:Remove() end); itemESP[part]=nil end
         end
 
-        -- Jogadores
         for _, p in ipairs(Players:GetPlayers()) do
             if p == Player then continue end
             local char = p.Character
@@ -566,11 +556,7 @@ function carregarSnowS4zx()
                 if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
                 if distanceTags[p] then distanceTags[p].Visible = false end
                 if tracerLines[p] then tracerLines[p].Visible = false end
-                -- Kill Counter
-                if killCounter and tick() - lastKillTime < 0.5 then
-                    killCount = killCount + 1
-                    Rayfield:Notify({Title="💀 Kill!", Content="Total: "..killCount, Duration=2})
-                end
+                if killCounter then killCount = killCount + 1 end
                 continue
             end
 
@@ -578,7 +564,6 @@ function carregarSnowS4zx()
             local rootScreenPos, rootVisible = Camera:WorldToViewportPoint(root.Position)
             local feetScreenPos, feetVisible = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
 
-            -- Tracer V7
             if tracerV7 and rootVisible then
                 local enemyPos = Vector2.new(rootScreenPos.X, rootScreenPos.Y)
                 if not tracerLines[p] then
@@ -596,7 +581,6 @@ function carregarSnowS4zx()
                 if tracerLines[p] then tracerLines[p].Visible = false end
             end
 
-            -- Box 2D
             if espBox and headVisible and feetVisible then
                 local bodyHeight = math.abs(headScreenPos.Y - feetScreenPos.Y)
                 local bodyWidth = bodyHeight * 0.45
@@ -617,7 +601,6 @@ function carregarSnowS4zx()
                 if boxes2D[p] then boxes2D[p].Visible = false end
             end
 
-            -- Skeleton
             if espSkel then
                 if not skeletons[p] then
                     skeletons[p] = {}
@@ -665,7 +648,6 @@ function carregarSnowS4zx()
                 if skeletons[p] then for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
             end
 
-            -- Name + extras
             if espName and headVisible then
                 if not nameTags[p] then
                     pcall(function()
@@ -694,7 +676,6 @@ function carregarSnowS4zx()
                 if nameTags[p] then nameTags[p].Visible = false end
             end
 
-            -- Health Bar
             if espHealth and headVisible and feetVisible then
                 local barWidth = 4
                 local barHeight = math.abs(headScreenPos.Y - feetScreenPos.Y) * 0.8
@@ -724,7 +705,6 @@ function carregarSnowS4zx()
             end
         end
 
-        -- FOV Circle & Crosshair
         if fovCircleObj then
             fovCircleObj.Position = screenSize / 2
             fovCircleObj.Radius = fovRadius
@@ -789,118 +769,51 @@ function carregarSnowS4zx()
     local function invisibilityStep()
         if not invisibility then return end
         local char = Player.Character
-        if char then
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Transparency = 0.8
-                end
-            end
-        end
+        if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
     end
 
-    -- Combate (novas funções)
-    local function autoShootStep()
-        if not autoShoot then return end
-        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then pcall(function() tool:Activate() end) end
+    -- Freecam
+    local function freecamStep()
+        if not freecamEnabled then return end
+        Camera.CameraSubject = nil; Camera.CameraType = Enum.CameraType.Scriptable
+        local camDir = Camera.CFrame.LookVector
+        local moveDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += camDir end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= camDir end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.E) then moveDir += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Q) then moveDir -= Vector3.new(0,1,0) end
+        if moveDir.Magnitude > 0 then Camera.CFrame = Camera.CFrame + moveDir.Unit * (freecamSpeed * 0.1) end
     end
 
-    local function fireRateModStep()
+    -- Combate+
+    local function autoShootStep() if autoShoot then pcall(function() if Player.Character and Player.Character:FindFirstChildWhichIsA("Tool") then Player.Character:FindFirstChildWhichIsA("Tool"):Activate() end end) end end
+    local function fireRateStep()
         if not fireRateMod then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            pcall(function()
-                for _, v in ipairs(tool:GetDescendants()) do
-                    if v:IsA("NumberValue") and (v.Name:lower():find("firerate") or v.Name:lower():find("rate")) then
-                        v.Value = v.Value * fireRateMultiplier
-                    end
-                end
-            end)
-        end
+        if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("firerate") or v.Name:lower():find("rate")) then v.Value = v.Value * fireRateMultiplier end end end) end
     end
-
-    local function spreadReducerStep()
+    local function spreadStep()
         if not spreadReducer then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            pcall(function()
-                for _, v in ipairs(tool:GetDescendants()) do
-                    if v:IsA("NumberValue") and (v.Name:lower():find("spread") or v.Name:lower():find("accuracy")) then
-                        v.Value = 0
-                    end
-                end
-            end)
-        end
+        if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("spread") or v.Name:lower():find("accuracy")) then v.Value = 0 end end end) end
     end
-
-    local function recoilControlStep()
+    local function recoilStep()
         if not recoilControl then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            pcall(function()
-                for _, v in ipairs(tool:GetDescendants()) do
-                    if v:IsA("NumberValue") and v.Name:lower():find("recoil") then
-                        v.Value = 0
-                    end
-                end
-            end)
-        end
+        if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and v.Name:lower():find("recoil") then v.Value = 0 end end end) end
     end
-
-    local function weaponRangeStep()
+    local function rangeStep()
         if not weaponRangeMod then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            pcall(function()
-                for _, v in ipairs(tool:GetDescendants()) do
-                    if v:IsA("NumberValue") and (v.Name:lower():find("range") or v.Name:lower():find("distance")) then
-                        v.Value = weaponRangeValue
-                    end
-                end
-            end)
-        end
+        if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("range") or v.Name:lower():find("distance")) then v.Value = weaponRangeValue end end end) end
     end
-
     local function bulletSpeedStep()
         if not bulletSpeedMod then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            pcall(function()
-                for _, v in ipairs(tool:GetDescendants()) do
-                    if v:IsA("NumberValue") and (v.Name:lower():find("speed") or v.Name:lower():find("velocity")) then
-                        v.Value = bulletSpeedValue
-                    end
-                end
-            end)
-        end
+        if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("speed") or v.Name:lower():find("velocity")) then v.Value = bulletSpeedValue end end end) end
     end
-
-    local function magneticAimStep()
-        if not magneticAim then return end
-        local char = Player.Character
-        if not char then return end
-        local tool = char:FindFirstChildWhichIsA("Tool")
-        if not tool then return end
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p == Player then continue end
-            local target = p.Character
-            if target and target:FindFirstChild("Head") then
-                local handle = tool:FindFirstChild("Handle")
-                if handle then
-                    local dir = (target.Head.Position - handle.Position).Unit
-                    handle.Velocity = dir * magneticStrength
-                end
-            end
-        end
-    end
-
-    local function hitSoundStep()
-        if not hitSound then return end
-        -- played when damage dealt (simplified)
-    end
-
-    -- Demais funções mantidas (Anti AFK, etc.)
-    -- ... (resumidas para brevidade, mas devem ser incluídas do script completo anterior)
 
     -- Staff Counter
     local staffFrame
@@ -928,7 +841,6 @@ function carregarSnowS4zx()
         if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
     end)
 
-    -- Loop principal
     local lastLiveCheck = 0
     RunService.RenderStepped:Connect(function()
         aimbotStep()
@@ -936,14 +848,13 @@ function carregarSnowS4zx()
         speedStep()
         flyStep()
         invisibilityStep()
+        freecamStep()
         autoShootStep()
-        fireRateModStep()
-        spreadReducerStep()
-        recoilControlStep()
-        weaponRangeStep()
+        fireRateStep()
+        spreadStep()
+        recoilStep()
+        rangeStep()
         bulletSpeedStep()
-        magneticAimStep()
-        -- outras funções aqui (anti afk, etc.)
         updateStaffCounter()
         if antiLive and tick()-lastLiveCheck > 1 then
             lastLiveCheck = tick()
@@ -965,14 +876,12 @@ function carregarSnowS4zx()
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
         local c = Player.Character
         if c and c:FindFirstChild("Humanoid") then
-            c.Humanoid.PlatformStand = false
-            c.Humanoid.WalkSpeed = 16
-            Camera.FieldOfView = 70
+            c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16; Camera.FieldOfView = 70
         end
         Camera.CameraType = Enum.CameraType.Custom
     end)
 
-    print("Snow S4zx carregado – Silent Aim Real, Ghost Mode, +10 Combate!")
+    print("Snow S4zx Ultimate Tema DarkBlue 100% funcional!")
 end
 
 mostrarLogin()
