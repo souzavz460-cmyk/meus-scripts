@@ -1,4 +1,4 @@
--- Snow S4zx Mod Ultimate – Speed Hack Funcional + Todas as funções
+-- Snow S4zx Mod – Speed Funcional + 10 Novas Funções de Alto Valor
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -140,6 +140,17 @@ function carregarSnowS4zx()
     local spinbot = false; local spinSpeed = 10
     local fovChanger = false; local customFOV = 90
     local infiniteAmmo = false; local autoReload = false
+    -- Novas funções (10)
+    local triggerbot = false
+    local noRecoil = false
+    local rapidFire = false; local rapidFireDelay = 0.1
+    local invisibility = false
+    local autoRespawn = false
+    local fpsUnlocker = false; local targetFPS = 120
+    local rainbowChar = false; local rainbowSpeed = 3
+    local playerList = false
+    local autoToolPickup = false
+    local fakeLag = false; local lagAmount = 50
 
     -- Abas
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -152,6 +163,7 @@ function carregarSnowS4zx()
     local ExtrasTab = safeTab("EXTRAS", 4483362458)
     local WeaponTab = safeTab("ARMAS", 4483362458)
     local FunTab = safeTab("DIVERSÃO", 4483362458)
+    local UtilitiesTab = safeTab("UTILITIES", 4483362458)  -- Nova aba
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
     -- Controles seguros
@@ -167,6 +179,7 @@ function carregarSnowS4zx()
     safeSlider(AimbotTab, "FOV (Raio)", 50, 500, 150, function(v) fovRadius = v end)
     safeToggle(AimbotTab, "WALLCK", false, function(v) wallCheck = v end)
     safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
+    safeToggle(AimbotTab, "Triggerbot", false, function(v) triggerbot = v end)
 
     -- ESP
     safeToggle(ESPTab, "2D Box", false, function(v) espBox = v end)
@@ -259,18 +272,33 @@ function carregarSnowS4zx()
     safeToggle(ExtrasTab, "Anti AFK", false, function(v) antiAfk = v end)
     safeToggle(ExtrasTab, "Anti Stun", false, function(v) antiStun = v end)
     safeToggle(ExtrasTab, "Anti Fire", false, function(v) antiFire = v end)
+    safeToggle(ExtrasTab, "Auto Respawn", false, function(v) autoRespawn = v end)
 
     -- ARMAS
     safeToggle(WeaponTab, "Reach (Alcance)", false, function(v) reach = v end)
     safeSlider(WeaponTab, "Distância", 10, 50, 15, function(v) reachDistance = v end)
     safeToggle(WeaponTab, "Infinite Ammo", false, function(v) infiniteAmmo = v end)
     safeToggle(WeaponTab, "Auto Reload", false, function(v) autoReload = v end)
+    safeToggle(WeaponTab, "No Recoil", false, function(v) noRecoil = v end)
+    safeToggle(WeaponTab, "Rapid Fire", false, function(v) rapidFire = v end)
+    safeSlider(WeaponTab, "Rapid Fire Delay", 0.05, 0.5, 0.1, function(v) rapidFireDelay = v end)
 
     -- DIVERSÃO
     safeToggle(FunTab, "Spinbot", false, function(v) spinbot = v end)
     safeSlider(FunTab, "Velocidade", 1, 50, 10, function(v) spinSpeed = v end)
     safeToggle(FunTab, "FOV Changer", false, function(v) fovChanger = v end)
     safeSlider(FunTab, "FOV", 30, 120, 90, function(v) customFOV = v end)
+    safeToggle(FunTab, "Rainbow Character", false, function(v) rainbowChar = v end)
+    safeSlider(FunTab, "Velocidade Rainbow", 1, 10, 3, function(v) rainbowSpeed = v end)
+
+    -- UTILITIES
+    safeToggle(UtilitiesTab, "Invisibility (Client)", false, function(v) invisibility = v end)
+    safeToggle(UtilitiesTab, "FPS Unlocker", false, function(v) fpsUnlocker = v end)
+    safeSlider(UtilitiesTab, "Target FPS", 60, 240, 120, function(v) targetFPS = v end)
+    safeToggle(UtilitiesTab, "Player List", false, function(v) playerList = v end)
+    safeToggle(UtilitiesTab, "Auto Tool Pickup", false, function(v) autoToolPickup = v end)
+    safeToggle(UtilitiesTab, "Fake Lag", false, function(v) fakeLag = v end)
+    safeSlider(UtilitiesTab, "Lag Amount", 10, 200, 50, function(v) lagAmount = v end)
 
     -- CONFIG
     safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
@@ -585,7 +613,7 @@ function carregarSnowS4zx()
         end
     end
 
-    -- ==================== SPEED HACK FUNCIONAL (CORRIGIDO) ====================
+    -- Speed Hack funcional (mobile/PC)
     local function speedStep()
         if not speedEnabled then return end
         local char = Player.Character
@@ -593,23 +621,16 @@ function carregarSnowS4zx()
         local hum = char:FindFirstChild("Humanoid")
         if not hum then return end
         local root = char.HumanoidRootPart
-
-        -- Mantém WalkSpeed normal (16) para disfarçar
         hum.WalkSpeed = 16
-
-        -- Obtém direção de movimento (funciona em mobile e PC)
         local moveDir = hum.MoveDirection
         if moveDir.Magnitude > 0 then
-            -- Calcula o deslocamento baseado na velocidade configurada
-            -- speedValue = studs por segundo, assumindo 60 fps: delta = speedValue / 60
             local delta = speedValue / 60
             local newPos = root.Position + moveDir.Unit * delta
-            -- Move suavemente usando Lerp
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.8)
         end
     end
 
-    -- Fly Avançado (suave, indetectável)
+    -- Fly Avançado
     local function flyStep()
         if not flyEnabled then return end
         local char = Player.Character
@@ -658,85 +679,153 @@ function carregarSnowS4zx()
         end
     end)
 
-    -- Anti Stun
-    local function antiStunStep()
-        if not antiStun then return end
-        local char = Player.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-            char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        end
-    end
-
-    -- Anti Fire
-    local function antiFireStep()
-        if not antiFire then return end
-        local char = Player.Character
-        if char then
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") and part.Material == Enum.Material.Fire then
-                    part.Material = Enum.Material.SmoothPlastic
+    -- Triggerbot (auto shoot when crosshair on enemy)
+    local function triggerbotStep()
+        if not triggerbot then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if not tool then return end
+        local mousePos = UserInputService:GetMouseLocation()
+        local center = Camera.ViewportSize/2
+        -- Check if any enemy is under the crosshair
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p == Player then continue end
+            local chr = p.Character
+            if chr and chr:FindFirstChild("Head") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
+                local headPos = chr.Head.Position
+                local screenPos, onScreen = Camera:WorldToViewportPoint(headPos)
+                if onScreen then
+                    local screenVec = Vector2.new(screenPos.X, screenPos.Y)
+                    if (screenVec - center).Magnitude < 50 then  -- 50 pixel radius around crosshair
+                        pcall(function() tool:Activate() end)
+                        break
+                    end
                 end
             end
         end
     end
 
-    -- Reach
-    local function reachStep()
-        if not reach then return end
-        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool and tool:FindFirstChild("Handle") then
-            tool.Handle.Massless = true
-            local handle = tool.Handle
-            if handle:IsA("BasePart") then
-                handle.CanCollide = false
-                handle.Transparency = 0.5
-                pcall(function()
-                    tool.MaxActivationDistance = reachDistance
-                end)
-            end
-        end
-    end
-
-    -- Infinite Ammo
-    local function infiniteAmmoStep()
-        if not infiniteAmmo then return end
+    -- No Recoil
+    local function noRecoilStep()
+        if not noRecoil then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
         if tool then
-            local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets")
-            if ammo and ammo:IsA("IntValue") then
-                ammo.Value = 999
-            end
+            -- Attempt to zero out recoil-related values
+            pcall(function()
+                for _, v in ipairs(tool:GetDescendants()) do
+                    if v:IsA("SpringConstraint") or v:IsA("RocketPropulsion") then
+                        v.Enabled = false
+                    end
+                end
+            end)
         end
     end
 
-    -- Auto Reload
-    local function autoReloadStep()
-        if not autoReload then return end
+    -- Rapid Fire
+    local rapidFireTimer = 0
+    local function rapidFireStep()
+        if not rapidFire then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool and tool:FindFirstChild("Ammo") then
-            local ammo = tool.Ammo
-            if ammo:IsA("IntValue") and ammo.Value == 0 then
-                pcall(function() tool:Reload() end)
+        if tool and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+            if tick() - rapidFireTimer >= rapidFireDelay then
+                pcall(function() tool:Activate() end)
+                rapidFireTimer = tick()
             end
         end
     end
 
-    -- Spinbot
-    local function spinbotStep()
-        if not spinbot then return end
+    -- Invisibility (Client-side)
+    local function invisibilityStep()
+        if not invisibility then return end
         local char = Player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "Head" then  -- keep head slightly visible maybe?
+                    part.Transparency = 0.8
+                end
+            end
         end
     end
 
-    -- FOV Changer
-    local function fovChangerStep()
-        if fovChanger then
-            Camera.FieldOfView = customFOV
+    -- Auto Respawn
+    local function autoRespawnStep()
+        if not autoRespawn then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then
+            -- Force respawn by triggering load character
+            pcall(function() Player:LoadCharacter() end)
+        end
+    end
+
+    -- FPS Unlocker (remove cap)
+    local function fpsUnlockerStep()
+        if fpsUnlocker then
+            -- Set a high FPS cap
+            workspace:SetAttribute("SignalBehavior", true)  -- might not exist, just try
+            pcall(function() game:GetService("RunService"):Set3dRenderingEnabled(false) end)  -- extreme measure
+            pcall(function() settings().Network.FrameRateCap = targetFPS end)
         else
-            Camera.FieldOfView = 70
+            pcall(function() settings().Network.FrameRateCap = 60 end)
+        end
+    end
+
+    -- Rainbow Character
+    local function rainbowCharStep()
+        if not rainbowChar then return end
+        local char = Player.Character
+        if char then
+            local hue = (tick() * rainbowSpeed) % 1
+            local color = Color3.fromHSV(hue, 1, 1)
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Color = color
+                end
+            end
+        end
+    end
+
+    -- Player List (show in console)
+    local function playerListStep()
+        if not playerList then return end
+        -- We'll just print periodically, but that's heavy. Instead, we print once when toggled.
+        playerList = false  -- auto-off after one print to avoid spam
+        print("=== Jogadores no Servidor ===")
+        for _, p in ipairs(Players:GetPlayers()) do
+            print(p.Name .. " - " .. (p.Team and p.Team.Name or "Sem time"))
+        end
+    end
+
+    -- Auto Tool Pickup
+    local function autoToolPickupStep()
+        if not autoToolPickup then return end
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local root = char.HumanoidRootPart
+        -- Search for tools on ground within reach
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Tool") and obj.Parent == Workspace then
+                local handle = obj:FindFirstChild("Handle")
+                if handle and (handle.Position - root.Position).Magnitude < 10 then
+                    pcall(function() obj.Parent = char end)
+                    break
+                end
+            end
+        end
+    end
+
+    -- Fake Lag (movement jitter)
+    local fakeLagTimer = 0
+    local function fakeLagStep()
+        if not fakeLag then return end
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        if tick() - fakeLagTimer >= (lagAmount/1000) then
+            -- Simulate lag by teleporting slightly back
+            local root = char.HumanoidRootPart
+            local oldPos = root.Position
+            root.CFrame = root.CFrame * CFrame.new(math.random(-1,1)*0.5, 0, math.random(-1,1)*0.5)
+            task.wait(0.02)
+            root.CFrame = CFrame.new(oldPos)
+            fakeLagTimer = tick()
         end
     end
 
@@ -846,6 +935,84 @@ function carregarSnowS4zx()
         end
     end
 
+    -- Anti Stun
+    local function antiStunStep()
+        if not antiStun then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        end
+    end
+
+    -- Anti Fire
+    local function antiFireStep()
+        if not antiFire then return end
+        local char = Player.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.Material == Enum.Material.Fire then
+                    part.Material = Enum.Material.SmoothPlastic
+                end
+            end
+        end
+    end
+
+    -- Reach
+    local function reachStep()
+        if not reach then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool and tool:FindFirstChild("Handle") then
+            tool.Handle.Massless = true
+            local handle = tool.Handle
+            if handle:IsA("BasePart") then
+                handle.CanCollide = false
+                handle.Transparency = 0.5
+                pcall(function() tool.MaxActivationDistance = reachDistance end)
+            end
+        end
+    end
+
+    -- Infinite Ammo
+    local function infiniteAmmoStep()
+        if not infiniteAmmo then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets")
+            if ammo and ammo:IsA("IntValue") then ammo.Value = 999 end
+        end
+    end
+
+    -- Auto Reload
+    local function autoReloadStep()
+        if not autoReload then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool and tool:FindFirstChild("Ammo") then
+            local ammo = tool.Ammo
+            if ammo:IsA("IntValue") and ammo.Value == 0 then
+                pcall(function() tool:Reload() end)
+            end
+        end
+    end
+
+    -- Spinbot
+    local function spinbotStep()
+        if not spinbot then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+        end
+    end
+
+    -- FOV Changer
+    local function fovChangerStep()
+        if fovChanger then
+            Camera.FieldOfView = customFOV
+        else
+            Camera.FieldOfView = 70
+        end
+    end
+
     function findRemote(path)
         local parts = path:split(".")
         local current = game
@@ -899,6 +1066,15 @@ function carregarSnowS4zx()
         fovChangerStep()
         farmStep()
         antiAfkStep()
+        triggerbotStep()
+        noRecoilStep()
+        rapidFireStep()
+        invisibilityStep()
+        autoRespawnStep()
+        fpsUnlockerStep()
+        rainbowCharStep()
+        autoToolPickupStep()
+        fakeLagStep()
         updateStaffCounter()
         if antiLive and tick()-lastLiveCheck > 1 then
             lastLiveCheck = tick()
@@ -906,11 +1082,12 @@ function carregarSnowS4zx()
         end
     end)
 
-    -- Thread para Auto Click/Equip
+    -- Thread for some functions
     task.spawn(function()
         while true do
             autoClickStep()
             autoEquipStep()
+            playerListStep()  -- will only execute once due to toggle off inside
             task.wait(0.5)
         end
     end)
@@ -932,6 +1109,7 @@ function carregarSnowS4zx()
             c.Humanoid.WalkSpeed = 16
             Camera.FieldOfView = 70
         end
+        pcall(function() settings().Network.FrameRateCap = 60 end)
     end)
 
     print("Snow S4zx Ultimate carregado!")
