@@ -660,25 +660,52 @@ function carregarInterface()
             end
         end
         
-        -- Fly
-        local function flyStep()
-            if not flyEnabled then return end
-            local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local root = char.HumanoidRootPart
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = true end
-            local camDir = Camera.CFrame.LookVector
-            local moveDir = Vector3.zero
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
-            if UserInputService:IsKeyDown(Enum.KeyCode.E) then moveDir += Vector3.new(0,1,0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then moveDir -= Vector3.new(0,1,0) end
-            if moveDir.Magnitude > 0 then
-                root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position + moveDir.Unit * (flySpeed * 0.2)), 0.5)
-            end
-        end
+        local flyStartY = nil  -- armazena a altura inicial do voo
+
+local function flyStep()
+    if not flyEnabled then
+        flyStartY = nil
+        return
+    end
+
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then hum.PlatformStand = true end
+
+    -- Guarda a altura inicial quando começa a voar
+    if not flyStartY then
+        flyStartY = root.Position.Y
+    end
+
+    local camDir = Camera.CFrame.LookVector
+    local moveDir = Vector3.zero
+    local moving = false
+
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+
+    local verticalChange = 0
+    if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalChange = 1; moving = true end
+    if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalChange = -1; moving = true end
+
+    -- Atualiza a altura alvo apenas se teclas de subida/descida forem usadas
+    if verticalChange ~= 0 then
+        flyStartY = flyStartY + verticalChange * (flySpeed * 0.15)
+    end
+
+    -- Posição final: mantém a altura alvo
+    local newPos = root.Position
+    if moving and moveDir.Magnitude > 0 then
+        newPos = root.Position + moveDir.Unit * (flySpeed * 0.2)
+    end
+    newPos = Vector3.new(newPos.X, flyStartY, newPos.Z)
+
+    root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
+end
         
         -- Ghost Mode
         local function invisibilityStep()
