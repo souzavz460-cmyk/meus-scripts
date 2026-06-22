@@ -1,8 +1,8 @@
--- Snow S4zx Mod – Versão Final com Bypass Avançado e Auto Farm de Clique
+-- Snow S4zx Mod – Versão Final (AutoClick removido, AutoFarm sem clique virtual, sem interferência no céu)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- Tela de Login (ScreenGui simples e garantida)
+-- Tela de Login (ScreenGui)
 local function mostrarLogin()
     local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
     gui.Name = "SnowLogin"
@@ -151,7 +151,6 @@ function carregarInterface()
         MobileButton = { Enabled = true, Name = "S4zx MODS" }
     })
     
-    -- Serviços e variáveis básicas
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
@@ -160,9 +159,8 @@ function carregarInterface()
     local Player = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
-    local TeleportService = game:GetService("TeleportService")
     
-    -- Variáveis de estado
+    -- Variáveis de estado (AutoClick removido, sem clique virtual no farm)
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
     local wallCheck = false; local silentAimEnabled = false
     local fovCircle = false; local fovRainbow = false
@@ -187,10 +185,9 @@ function carregarInterface()
     local streamerMode = false
     local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
     
-    -- Variáveis de bypass
+    -- Bypass
     local lastCleanup = 0
     local CLEANUP_INTERVAL = 2.0
-    local lastFarmClick = 0
     
     -- Fly auxiliar
     local flyStartY = nil
@@ -213,7 +210,7 @@ function carregarInterface()
     local function safeSlider(tab, name, min, max, d, cb) if tab then pcall(function() tab:CreateSlider({Name=name, Range={min, max}, Increment=1, CurrentValue=d, Callback=cb, Flag=name:gsub("%s","_")}) end) end end
     local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
     
-    -- AIMBOT (Sem Wallshot)
+    -- AIMBOT
     safeToggle(AimbotTab, "AIMBOT", false, function(v) aimbot = v end)
     safeSlider(AimbotTab, "Força (1-5)", 1, 5, 1, function(v) aimForce = v end)
     safeSlider(AimbotTab, "Bypass", 1, 10, 1, function(v) bypass = v end)
@@ -240,7 +237,7 @@ function carregarInterface()
     safeToggle(VisualTab, "FOV Círculo", false, function(v) fovCircle = v end)
     safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
     
-    -- RAINBOW
+    -- RAINBOW (mantido, mas você pode desativar qualquer um se interferir)
     safeToggle(RainbowTab, "Rainbow Box", false, function(v) rainbowBox = v end)
     safeToggle(RainbowTab, "Rainbow Skeleton", false, function(v) rainbowSkel = v end)
     safeToggle(RainbowTab, "Rainbow Tracer", false, function(v) rainbowTracer = v end)
@@ -276,7 +273,7 @@ function carregarInterface()
     safeToggle(CarTab, "Fly Car", false, function(v) flyCarEnabled = v end)
     safeSlider(CarTab, "Velocidade Fly Car", 20, 200, 50, function(v) flyCarSpeed = v end)
     
-    -- EXTRAS
+    -- EXTRAS (AutoClick removido)
     safeToggle(ExtrasTab, "Anti AFK", false, function(v) antiAfk = v end)
     safeToggle(ExtrasTab, "Anti Stun", false, function(v) antiStun = v end)
     safeToggle(ExtrasTab, "Anti Fire", false, function(v) antiFire = v end)
@@ -299,9 +296,8 @@ function carregarInterface()
         return nil
     end
     
-    -- ==================== FUNÇÕES (executadas em segundo plano) ====================
+    -- ==================== FUNÇÕES ====================
     task.spawn(function()
-        -- Drawing API
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
         if useDrawing then
@@ -314,9 +310,8 @@ function carregarInterface()
         local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
         local itemESP = {}
         local crosshairObj
-        local killCount = 0
         
-        -- Silent Aim (bala na cabeça sem mover câmera)
+        -- Silent Aim
         local silentAimConnection
         local function setupSilentAim()
             if silentAimConnection then silentAimConnection:Disconnect() end
@@ -343,7 +338,7 @@ function carregarInterface()
             end)
         end
         
-        -- Aimbot (WallCheck corrigido)
+        -- Aimbot
         local function aimbotStep()
             if not aimbot then return end
             local center = Camera.ViewportSize/2
@@ -371,10 +366,9 @@ function carregarInterface()
             else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
         end
         
-        -- ESP (completa)
+        -- ESP
         local function updateESP()
             if not useDrawing then return end
-            -- Limpeza
             for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
             for p, data in pairs(skeletons) do if not p or not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end end
             for p, tag in pairs(nameTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
@@ -389,7 +383,6 @@ function carregarInterface()
             local hue = (tick() * rainbowSpeed) % 1
             local rainbowColor = Color3.fromHSV(hue, 1, 1)
 
-            -- Itens
             if espItems then
                 local valuable = {"coin","gold","diamond","gem","money","cash","loot","chest","armor","weapon","sword","gun","moeda","ouro","diamante","arma","baú"}
                 for _, part in ipairs(Workspace:GetDescendants()) do
@@ -417,7 +410,6 @@ function carregarInterface()
                 for part, obj in pairs(itemESP) do pcall(function() obj:Remove() end); itemESP[part]=nil end
             end
 
-            -- Jogadores
             for _, p in ipairs(Players:GetPlayers()) do
                 if p == Player then continue end
                 local char = p.Character
@@ -449,7 +441,6 @@ function carregarInterface()
                     if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
                     if distanceTags[p] then distanceTags[p].Visible = false end
                     if tracerLines[p] then tracerLines[p].Visible = false end
-                    if killCounter then killCount = killCount + 1 end
                     continue
                 end
 
@@ -457,7 +448,6 @@ function carregarInterface()
                 local rootScreenPos, rootVisible = Camera:WorldToViewportPoint(root.Position)
                 local feetScreenPos, feetVisible = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
 
-                -- Tracer V7
                 if tracerV7 and rootVisible then
                     local enemyPos = Vector2.new(rootScreenPos.X, rootScreenPos.Y)
                     if not tracerLines[p] then
@@ -475,7 +465,6 @@ function carregarInterface()
                     if tracerLines[p] then tracerLines[p].Visible = false end
                 end
 
-                -- Box 2D
                 if espBox and headVisible and feetVisible then
                     local bodyHeight = math.abs(headScreenPos.Y - feetScreenPos.Y)
                     local bodyWidth = bodyHeight * 0.45
@@ -496,7 +485,6 @@ function carregarInterface()
                     if boxes2D[p] then boxes2D[p].Visible = false end
                 end
 
-                -- Skeleton
                 if espSkel then
                     if not skeletons[p] then
                         skeletons[p] = {}
@@ -544,7 +532,6 @@ function carregarInterface()
                     if skeletons[p] then for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
                 end
 
-                -- Name + Arma + Dinheiro + Distância
                 if espName and headVisible then
                     if not nameTags[p] then
                         pcall(function()
@@ -574,7 +561,6 @@ function carregarInterface()
                     if nameTags[p] then nameTags[p].Visible = false end
                 end
 
-                -- Health Bar
                 if espHealth and headVisible and feetVisible then
                     local barWidth = 4
                     local barHeight = math.abs(headScreenPos.Y - feetScreenPos.Y) * 0.8
@@ -604,7 +590,6 @@ function carregarInterface()
                 end
             end
 
-            -- FOV Circle
             if fovCircleObj then
                 fovCircleObj.Position = screenSize / 2
                 fovCircleObj.Radius = fovRadius
@@ -612,7 +597,6 @@ function carregarInterface()
                 if fovCircle and fovRainbow then fovCircleObj.Color = rainbowColor else fovCircleObj.Color = Color3.new(1,1,1) end
             end
             
-            -- Crosshair
             if customCrosshair then
                 if not crosshairObj then
                     pcall(function()
@@ -630,7 +614,7 @@ function carregarInterface()
             end
         end
         
-        -- Speed Hack (CFrame)
+        -- Speed
         local function speedStep()
             if not speedEnabled then return end
             local char = Player.Character
@@ -647,7 +631,7 @@ function carregarInterface()
             end
         end
         
-        -- Fly (mantém altura)
+        -- Fly
         local function flyStep()
             if not flyEnabled then flyStartY = nil; return end
             local char = Player.Character
@@ -673,14 +657,14 @@ function carregarInterface()
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
         end
         
-        -- Ghost Mode
+        -- Ghost
         local function invisibilityStep()
             if not invisibility then return end
             local char = Player.Character
             if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
         end
         
-        -- Auto Farm (clique no lixo)
+        -- Farm (sem clique virtual)
         local function findNearestTrash()
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -717,25 +701,11 @@ function carregarInterface()
                 root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
                 return
             end
-            -- Próximo o suficiente: tenta coletar
+            -- Sem clique virtual: apenas tenta ativar a ferramenta
             local tool = char:FindFirstChildWhichIsA("Tool")
-            if tool then
-                if tick() - lastFarmAction > 0.5 then
-                    pcall(function() tool:Activate() end)
-                    lastFarmAction = tick()
-                end
-            else
-                -- Sem ferramenta: simula clique do mouse no lixo
-                local screenPos, onScreen = Camera:WorldToViewportPoint(trash.Position)
-                if onScreen and tick() - lastFarmClick > 1.0 then
-                    pcall(function()
-                        local vim = game:GetService("VirtualInputManager")
-                        vim:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 0)
-                        task.wait(0.05)
-                        vim:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 0)
-                    end)
-                    lastFarmClick = tick()
-                end
+            if tool and tick() - lastFarmAction > 0.5 then
+                pcall(function() tool:Activate() end)
+                lastFarmAction = tick()
             end
         end
         
@@ -787,7 +757,7 @@ function carregarInterface()
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
         end
         
-        -- Bypass avançado
+        -- Bypass
         local function bypassCleanup()
             local now = tick()
             if now - lastCleanup < CLEANUP_INTERVAL then return end
@@ -927,7 +897,7 @@ function carregarInterface()
             if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
         end)
         
-        -- Loop principal
+        -- Loop
         local lastLiveCheck = 0
         RunService.RenderStepped:Connect(function()
             pcall(aimbotStep)
@@ -954,7 +924,6 @@ function carregarInterface()
             pcall(updateStaffCounter)
             pcall(bypassCleanup)
             
-            -- Silent Aim
             if silentAimEnabled and not silentAimConnection then
                 pcall(setupSilentAim)
             elseif not silentAimEnabled and silentAimConnection then
@@ -968,7 +937,7 @@ function carregarInterface()
             end
         end)
         
-        -- Limpeza final
+        -- Limpeza
         script.Destroying:Connect(function()
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
@@ -989,5 +958,4 @@ function carregarInterface()
     end)
 end
 
--- Iniciar
 mostrarLogin()
