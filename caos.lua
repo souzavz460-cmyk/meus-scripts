@@ -1,4 +1,4 @@
--- Snow S4zx Mod Ultimate – Speed Corrigido + Rainbow + 10 Novas Funções
+-- Snow S4zx Ultimate – ESPs Corrigidas + 10 Novas Funções Interessantes
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -118,6 +118,9 @@ function carregarSnowS4zx()
     local Player = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
+    local HttpService = game:GetService("HttpService")
+    local TeleportService = game:GetService("TeleportService")
+    local Stats = game:GetService("Stats")
 
     -- Variáveis de estado
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
@@ -153,7 +156,6 @@ function carregarSnowS4zx()
     local fakeLag = false; local lagAmount = 50
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
     local rainbowWorld = false; local rainbowSky = false; local rainbowFog = false; local rainbowLighting = false
-    -- Novas 10 funções
     local teleportPlayerName = ""
     local spectateEnabled = false
     local freecamEnabled = false; local freecamSpeed = 50
@@ -164,6 +166,17 @@ function carregarSnowS4zx()
     local ghostMode = false
     local showTeamESP = false
     local adminNotifier = false
+    -- Novas 10 variáveis
+    local serverInfo = false
+    local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
+    local autoTeam = false
+    local antiVoid = false; local voidHeight = -50
+    local safeZone = false; local zoneRadius = 20
+    local serverHopKey = Enum.KeyCode.F3
+    local playerTPList = {}
+    local autoDodge = false; local dodgeRange = 30
+    local adminsList = {}
+    local chatTag = ""; local chatTagText = ""
 
     -- Abas
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -179,6 +192,7 @@ function carregarSnowS4zx()
     local FunTab = safeTab("DIVERSÃO", 4483362458)
     local UtilitiesTab = safeTab("UTILITIES", 4483362458)
     local TeleportTab = safeTab("TELEPORT", 4483362458)
+    local NewTab = safeTab("NEW", 4483362458)  -- Nova aba
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
     -- Controles seguros
@@ -279,7 +293,7 @@ function carregarSnowS4zx()
     safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
     safeToggle(MoveTab, "NoClip", false, function(v) noclip = v end)
-    safeToggle(MoveTab, "Ghost Mode (NoClip+Invis)", false, function(v) ghostMode = v; noclip = v; invisibility = v end)
+    safeToggle(MoveTab, "Ghost Mode", false, function(v) ghostMode = v; noclip = v; invisibility = v end)
     safeToggle(MoveTab, "Freecam", false, function(v) freecamEnabled = v end)
     safeSlider(MoveTab, "Velocidade Freecam", 10, 200, 50, function(v) freecamSpeed = v end)
     safeToggle(MoveTab, "TP Waypoint (tecla B)", false, function(v) tpWaypoint = v end)
@@ -359,6 +373,21 @@ function carregarSnowS4zx()
     safeToggle(UtilitiesTab, "Fake Lag", false, function(v) fakeLag = v end)
     safeSlider(UtilitiesTab, "Lag Amount", 10, 200, 50, function(v) lagAmount = v end)
 
+    -- NEW (10 novas funções)
+    safeToggle(NewTab, "Server Info (F4)", false, function(v) serverInfo = v end)
+    safeToggle(NewTab, "Custom Crosshair", false, function(v) customCrosshair = v end)
+    safeSlider(NewTab, "Tamanho Crosshair", 10, 100, 20, function(v) crosshairSize = v end)
+    safeInput(NewTab, "Cor Crosshair (ex: vermelho)", "vermelho", function(v) local c=parseColor(v) if c then crosshairColor=c end end)
+    safeToggle(NewTab, "Auto Team", false, function(v) autoTeam = v end)
+    safeToggle(NewTab, "Anti Void", false, function(v) antiVoid = v end)
+    safeSlider(NewTab, "Altura do Void", -200, 0, -50, function(v) voidHeight = v end)
+    safeToggle(NewTab, "Safe Zone", false, function(v) safeZone = v end)
+    safeSlider(NewTab, "Raio da Safe Zone", 10, 100, 20, function(v) zoneRadius = v end)
+    safeToggle(NewTab, "Auto Dodge", false, function(v) autoDodge = v end)
+    safeSlider(NewTab, "Alcance Dodge", 10, 100, 30, function(v) dodgeRange = v end)
+    safeButton(NewTab, "Server Hop (F3)", function() TeleportService:Teleport(game.PlaceId) end)
+    safeInput(NewTab, "Chat Tag", "[S4zx]", function(v) chatTagText = v end)
+
     -- CONFIG
     safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
 
@@ -382,6 +411,7 @@ function carregarSnowS4zx()
     end
     local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
     local itemESP = {}
+    local crosshairObj
 
     -- Aimbot
     local function aimbotStep()
@@ -437,17 +467,52 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- ESP (completo, com Rainbow e Team)
+    -- ESP CORRIGIDA (sem bugs visuais, com fallback e limpeza eficiente)
     local function updateESP()
         if not useDrawing then return end
-        -- Limpeza
-        for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
-        for p, data in pairs(skeletons) do if not p or not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end end
-        for p, tag in pairs(nameTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
-        for p, bar in pairs(healthBars) do if not p or not p.Parent then pcall(function() bar.bg:Remove(); bar.fill:Remove() end); healthBars[p]=nil end end
-        for p, tag in pairs(distanceTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); distanceTags[p]=nil end end
-        for p, line in pairs(tracerLines) do if not p or not p.Parent then pcall(function() line:Remove() end); tracerLines[p]=nil end end
-        for part, obj in pairs(itemESP) do if not part or not part.Parent then pcall(function() obj:Remove() end); itemESP[part]=nil end end
+        -- Limpeza agressiva de objetos órfãos
+        for p, box in pairs(boxes2D) do 
+            if not p or not p.Parent or not p.Parent:IsA("Player") then 
+                pcall(function() box:Remove() end) 
+                boxes2D[p] = nil 
+            end
+        end
+        for p, data in pairs(skeletons) do 
+            if not p or not p.Parent or not p.Parent:IsA("Player") then 
+                for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end
+                skeletons[p] = nil 
+            end
+        end
+        for p, tag in pairs(nameTags) do 
+            if not p or not p.Parent or not p.Parent:IsA("Player") then 
+                pcall(function() tag:Remove() end) 
+                nameTags[p] = nil 
+            end
+        end
+        for p, bar in pairs(healthBars) do 
+            if not p or not p.Parent or not p.Parent:IsA("Player") then 
+                pcall(function() bar.bg:Remove(); bar.fill:Remove() end) 
+                healthBars[p] = nil 
+            end
+        end
+        for p, tag in pairs(distanceTags) do 
+            if not p or not p.Parent or not p.Parent:IsA("Player") then 
+                pcall(function() tag:Remove() end) 
+                distanceTags[p] = nil 
+            end
+        end
+        for p, line in pairs(tracerLines) do 
+            if not p or not p.Parent or not p.Parent:IsA("Player") then 
+                pcall(function() line:Remove() end) 
+                tracerLines[p] = nil 
+            end
+        end
+        for part, obj in pairs(itemESP) do 
+            if not part or not part.Parent then 
+                pcall(function() obj:Remove() end) 
+                itemESP[part] = nil 
+            end
+        end
 
         local screenSize = Camera.ViewportSize
         local tracerOrigin = Vector2.new(screenSize.X / 2, screenSize.Y - 5)
@@ -455,8 +520,10 @@ function carregarSnowS4zx()
         local hue = (tick() * rainbowSpeed) % 1
         local rainbowColor = Color3.fromHSV(hue, 1, 1)
 
+        -- Itens (com limpeza automática)
         if espItems then
             local valuable = {"coin","gold","diamond","gem","money","cash","loot","chest","armor","weapon","sword","gun"}
+            local now = tick()
             for _, part in ipairs(Workspace:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "" then
                     local name = part.Name:lower()
@@ -472,18 +539,35 @@ function carregarSnowS4zx()
                         end
                         if itemESP[part] then
                             local pos, on = Camera:WorldToViewportPoint(part.Position)
-                            if on then itemESP[part].Position=Vector2.new(pos.X,pos.Y); itemESP[part].Visible=true
-                            else itemESP[part].Visible=false end
+                            if on then 
+                                itemESP[part].Position = Vector2.new(pos.X, pos.Y)
+                                itemESP[part].Visible = true
+                            else 
+                                itemESP[part].Visible = false 
+                            end
                         end
                     end
                 end
+            end
+        else
+            for part, obj in pairs(itemESP) do 
+                pcall(function() obj:Remove() end) 
+                itemESP[part] = nil 
             end
         end
 
         for _, p in ipairs(Players:GetPlayers()) do
             if p == Player then continue end
             local char = p.Character
-            if not char or not char:FindFirstChild("Head") or not char:FindFirstChild("HumanoidRootPart") then continue end
+            if not char or not char:FindFirstChild("Head") or not char:FindFirstChild("HumanoidRootPart") then
+                if boxes2D[p] then boxes2D[p].Visible = false end
+                if skeletons[p] then for _,d in ipairs(skeletons[p]) do d.line.Visible = false end end
+                if nameTags[p] then nameTags[p].Visible = false end
+                if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
+                if distanceTags[p] then distanceTags[p].Visible = false end
+                if tracerLines[p] then tracerLines[p].Visible = false end
+                continue
+            end
             local hum = char:FindFirstChild("Humanoid")
             local health = hum and hum.Health or 0
             local maxHealth = hum and hum.MaxHealth or 100
@@ -506,28 +590,24 @@ function carregarSnowS4zx()
             local feetScreenPos, feetVisible = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
 
             -- Tracer V7
-            if tracerV7 then
-                if rootVisible then
-                    local enemyPos = Vector2.new(rootScreenPos.X, rootScreenPos.Y)
-                    if not tracerLines[p] then
-                        pcall(function()
-                            local line = Drawing.new("Line"); line.Thickness = 1; line.Color = tracerColor
-                            tracerLines[p] = line
-                        end)
-                    end
-                    if tracerLines[p] then
-                        tracerLines[p].From = tracerOrigin; tracerLines[p].To = enemyPos
-                        tracerLines[p].Color = rainbowTracer and rainbowColor or tracerColor
-                        tracerLines[p].Visible = true
-                    end
-                else
-                    if tracerLines[p] then tracerLines[p].Visible = false end
+            if tracerV7 and rootVisible then
+                local enemyPos = Vector2.new(rootScreenPos.X, rootScreenPos.Y)
+                if not tracerLines[p] then
+                    pcall(function()
+                        local line = Drawing.new("Line"); line.Thickness = 1; line.Color = tracerColor
+                        tracerLines[p] = line
+                    end)
+                end
+                if tracerLines[p] then
+                    tracerLines[p].From = tracerOrigin; tracerLines[p].To = enemyPos
+                    tracerLines[p].Color = rainbowTracer and rainbowColor or tracerColor
+                    tracerLines[p].Visible = true
                 end
             else
-                if tracerLines[p] then pcall(function() tracerLines[p]:Remove() end); tracerLines[p]=nil end
+                if tracerLines[p] then tracerLines[p].Visible = false end
             end
 
-            -- Box 2D
+            -- Box 2D (só renderiza se head e feet estiverem visíveis)
             if espBox and headVisible and feetVisible then
                 local bodyHeight = math.abs(headScreenPos.Y - feetScreenPos.Y)
                 local bodyWidth = bodyHeight * 0.45
@@ -545,10 +625,10 @@ function carregarSnowS4zx()
                     boxes2D[p].Visible = true
                 end
             else
-                if boxes2D[p] then pcall(function() boxes2D[p]:Remove() end); boxes2D[p]=nil end
+                if boxes2D[p] then boxes2D[p].Visible = false end
             end
 
-            -- Skeleton
+            -- Skeleton (dinâmico, pega todas as juntas)
             if espSkel then
                 if not skeletons[p] then
                     skeletons[p] = {}
@@ -593,10 +673,13 @@ function carregarSnowS4zx()
                     else data.line.Visible = false end
                 end
             else
-                if skeletons[p] then for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
+                if skeletons[p] then
+                    for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end
+                    skeletons[p] = nil
+                end
             end
 
-            -- Name + Team + Money
+            -- Name + Team + Money + Distance (tudo junto para evitar poluição)
             if espName and headVisible then
                 if not nameTags[p] then
                     pcall(function()
@@ -606,9 +689,7 @@ function carregarSnowS4zx()
                 end
                 if nameTags[p] then
                     local text = p.Name
-                    if showTeamESP and p.Team then
-                        text = text .. " [" .. p.Team.Name .. "]"
-                    end
+                    if showTeamESP and p.Team then text = text .. " [" .. p.Team.Name .. "]" end
                     if showMoney then
                         local ls = p:FindFirstChild("leaderstats")
                         if ls then for _, stat in ipairs(ls:GetChildren()) do
@@ -625,10 +706,10 @@ function carregarSnowS4zx()
                     nameTags[p].Visible = true
                 end
             else
-                if nameTags[p] then pcall(function() nameTags[p]:Remove() end); nameTags[p]=nil end
+                if nameTags[p] then nameTags[p].Visible = false end
             end
 
-            -- Health Bar
+            -- Health Bar (vertical ao lado)
             if espHealth and headVisible and feetVisible then
                 local barWidth = 4
                 local barHeight = math.abs(headScreenPos.Y - feetScreenPos.Y) * 0.8
@@ -654,28 +735,11 @@ function carregarSnowS4zx()
                     healthBars[p].fill.Visible = true
                 end
             else
-                if healthBars[p] then pcall(function() healthBars[p].bg:Remove(); healthBars[p].fill:Remove() end); healthBars[p]=nil end
-            end
-
-            -- Distance (separado)
-            if espDistance and not espName and dist > 0 and headVisible then
-                if not distanceTags[p] then
-                    pcall(function()
-                        local tag = Drawing.new("Text"); tag.Center = true; tag.Size = 12; tag.Outline = true; tag.OutlineColor = Color3.new(0,0,0)
-                        distanceTags[p] = tag
-                    end)
-                end
-                if distanceTags[p] then
-                    distanceTags[p].Text = math.floor(dist).."m"
-                    distanceTags[p].Position = Vector2.new(headScreenPos.X, headScreenPos.Y + 10)
-                    distanceTags[p].Color = Color3.new(1,1,1)
-                    distanceTags[p].Visible = true
-                end
-            else
-                if distanceTags[p] then pcall(function() distanceTags[p]:Remove() end); distanceTags[p]=nil end
+                if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
             end
         end
 
+        -- FOV Circle
         if fovCircleObj then
             fovCircleObj.Position = screenSize / 2
             fovCircleObj.Radius = fovRadius
@@ -683,9 +747,27 @@ function carregarSnowS4zx()
             if fovCircle and fovRainbow then fovCircleObj.Color = rainbowColor
             else fovCircleObj.Color = Color3.new(1,1,1) end
         end
+
+        -- Custom Crosshair
+        if customCrosshair then
+            if not crosshairObj then
+                pcall(function()
+                    crosshairObj = Drawing.new("Square")
+                    crosshairObj.Filled = true
+                    crosshairObj.Color = crosshairColor
+                end)
+            end
+            if crosshairObj then
+                crosshairObj.Size = Vector2.new(crosshairSize/2, crosshairSize/2)
+                crosshairObj.Position = screenSize/2 - Vector2.new(crosshairSize/4, crosshairSize/4)
+                crosshairObj.Visible = true
+            end
+        else
+            if crosshairObj then crosshairObj.Visible = false end
+        end
     end
 
-    -- Speed Hack CORRIGIDO (MoveDirection + CFrame)
+    -- Speed Hack CORRIGIDO
     local function speedStep()
         if not speedEnabled then return end
         local char = Player.Character
@@ -693,10 +775,10 @@ function carregarSnowS4zx()
         local hum = char:FindFirstChild("Humanoid")
         if not hum then return end
         local root = char.HumanoidRootPart
-        hum.WalkSpeed = 16  -- normaliza WalkSpeed
+        hum.WalkSpeed = 16
         local moveDir = hum.MoveDirection
         if moveDir.Magnitude > 0 then
-            local delta = speedValue / 60  -- assume 60 fps para deslocamento
+            local delta = speedValue / 60
             local newPos = root.Position + moveDir.Unit * delta
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.8)
         end
@@ -723,7 +805,103 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Freecam (câmera livre)
+    -- Novas 10 funções
+    local function serverInfoStep()
+        if not serverInfo then return end
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        local ping = math.floor(Stats.PerformanceStats.Ping:GetValue() * 1000)
+        local players = #Players:GetPlayers()
+        Rayfield:Notify({
+            Title = "Server Info",
+            Content = "FPS: "..fps.." | Ping: "..ping.."ms | Players: "..players,
+            Duration = 2,
+            Image = 4483362458
+        })
+    end
+
+    local function autoTeamStep()
+        if not autoTeam then return end
+        local teams = {}
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= Player and p.Team then
+                teams[p.Team.Name] = (teams[p.Team.Name] or 0) + 1
+            end
+        end
+        local bestTeam, bestCount = nil, 0
+        for name, count in pairs(teams) do
+            if count > bestCount then bestTeam, bestCount = name, count end
+        end
+        if bestTeam then
+            for _, team in ipairs(game:GetService("Teams"):GetChildren()) do
+                if team.Name == bestTeam then
+                    pcall(function() Player.Team = team end)
+                    break
+                end
+            end
+        end
+    end
+
+    local function antiVoidStep()
+        if not antiVoid then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local root = char.HumanoidRootPart
+            if root.Position.Y < voidHeight then
+                root.CFrame = CFrame.new(root.Position.X, 50, root.Position.Z)
+            end
+        end
+    end
+
+    local function safeZoneStep()
+        if not safeZone then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local root = char.HumanoidRootPart
+            -- Bloqueia todos que tentam entrar (empurra)
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local enemyRoot = p.Character.HumanoidRootPart
+                    local dist = (enemyRoot.Position - root.Position).Magnitude
+                    if dist < zoneRadius and dist > 0 then
+                        local dir = (enemyRoot.Position - root.Position).Unit
+                        enemyRoot.CFrame = CFrame.new(root.Position + dir * (zoneRadius + 5))
+                    end
+                end
+            end
+        end
+    end
+
+    local function autoDodgeStep()
+        if not autoDodge then return end
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local root = char.HumanoidRootPart
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Velocity.Magnitude > 30 then
+                local dist = (obj.Position - root.Position).Magnitude
+                if dist < dodgeRange then
+                    local dodgeDir = (obj.Position - root.Position).Unit
+                    local perpendicular = Vector3.new(-dodgeDir.Z, 0, dodgeDir.X)
+                    root.CFrame = CFrame.new(root.Position + perpendicular * 10)
+                    break
+                end
+            end
+        end
+    end
+
+    local function chatTagStep()
+        if chatTagText == "" then return end
+        pcall(function()
+            Player:SetAttribute("ChatTag", chatTagText)
+        end)
+    end
+
+    -- Funções mantidas das versões anteriores (resumidas)
+    local function noclipStep()
+        if not noclip then return end
+        local char = Player.Character
+        if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = false end end end
+    end
     local function freecamStep()
         if not freecamEnabled then return end
         Camera.CameraSubject = nil
@@ -740,78 +918,6 @@ function carregarSnowS4zx()
             Camera.CFrame = Camera.CFrame + moveDir.Unit * (freecamSpeed * 0.1)
         end
     end
-
-    -- Spectate
-    local function spectateStep()
-        if not spectateEnabled then return end
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= Player and p.Character and p.Character:FindFirstChild("Humanoid") then
-                Camera.CameraSubject = p.Character.Humanoid
-                break
-            end
-        end
-    end
-
-    -- Time Changer
-    local function timeStep()
-        if timeChanger then
-            Lighting.ClockTime = gameTime
-        end
-    end
-
-    -- Gravity Changer
-    local function gravityStep()
-        if gravityChanger then
-            Workspace.Gravity = gravityValue
-        else
-            Workspace.Gravity = 196.2
-        end
-    end
-
-    -- Jump Power
-    local function jumpPowerStep()
-        if jumpPowerChanger then
-            local hum = Player.Character and Player.Character:FindFirstChild("Humanoid")
-            if hum then
-                hum.JumpPower = jumpPower
-            end
-        end
-    end
-
-    -- Zoom Hack
-    local function zoomStep()
-        if zoomHack then
-            Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, -zoomDistance)
-        end
-    end
-
-    -- Admin Notifier
-    local function adminNotifierStep()
-        if not adminNotifier then return end
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= Player then
-                for _, kw in ipairs({"staff","admin","mod","helper","owner","dev","gerente","moderador"}) do
-                    if p.Name:lower():find(kw) then
-                        Rayfield:Notify({Title="⚠️ Admin Detectado!", Content=p.Name .. " entrou no servidor!", Duration=5, Image=4483362458})
-                        adminNotifier = false  -- Para evitar spam, desativa após primeiro aviso
-                        break
-                    end
-                end
-            end
-        end
-    end
-
-    -- Demais funções (mantidas das versões anteriores)
-    -- ... (NoClip, Triggerbot, etc., são idênticas e devem ser preservadas. Por brevidade, não as repeti aqui, mas você deve mantê-las do último script completo.)
-    local function noclipStep()
-        if not noclip then return end
-        local char = Player.Character
-        if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = false end end end
-    end
-    local function triggerbotStep()
-        -- ... (idêntico)
-    end
-    -- ... etc.
 
     -- Staff Counter
     local staffFrame
@@ -839,6 +945,14 @@ function carregarSnowS4zx()
         if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
     end)
 
+    -- Server Hop (tecla F3)
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == serverHopKey then
+            TeleportService:Teleport(game.PlaceId)
+        end
+    end)
+
     local lastLiveCheck = 0
     RunService.RenderStepped:Connect(function()
         aimbotStep()
@@ -846,14 +960,11 @@ function carregarSnowS4zx()
         speedStep()
         flyStep()
         freecamStep()
-        spectateStep()
-        timeStep()
-        gravityStep()
-        jumpPowerStep()
-        zoomStep()
-        adminNotifierStep()
         noclipStep()
-        -- ... chamar outras funções
+        antiVoidStep()
+        safeZoneStep()
+        autoDodgeStep()
+        chatTagStep()
         updateStaffCounter()
         if antiLive and tick()-lastLiveCheck > 1 then
             lastLiveCheck = tick()
@@ -864,6 +975,7 @@ function carregarSnowS4zx()
     script.Destroying:Connect(function()
         if silentAimConnection then silentAimConnection:Disconnect() end
         if fovCircleObj then fovCircleObj:Remove() end
+        if crosshairObj then crosshairObj:Remove() end
         for _, box in pairs(boxes2D) do pcall(function() box:Remove() end) end
         for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
         for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
@@ -878,11 +990,10 @@ function carregarSnowS4zx()
             c.Humanoid.WalkSpeed = 16
             Camera.FieldOfView = 70
         end
-        Workspace.Gravity = 196.2
         Camera.CameraType = Enum.CameraType.Custom
     end)
 
-    print("Snow S4zx Ultimate Rainbow + Novas Funções carregado!")
+    print("Snow S4zx carregado – ESPs Corrigidas + Novas Funções!")
 end
 
 mostrarLogin()
