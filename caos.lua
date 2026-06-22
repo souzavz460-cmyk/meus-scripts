@@ -1,4 +1,4 @@
--- Snow S4zx Mod – Speed Mobile, Fly Avançado, ESP Profissional + 10 Novas Funções
+-- Snow S4zx Mod Ultimate – Speed, Fly, ESP Profissional + Novas Funções (sem Hitbox Expander)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -131,7 +131,6 @@ function carregarSnowS4zx()
     local antiLive = false
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255)
-    -- Novas funções
     local autoClick = false; local autoEquip = false; local autoEquipName = ""
     local antiAfk = false; local farmRemotePath = ""
     local noclip = false
@@ -141,7 +140,6 @@ function carregarSnowS4zx()
     local reach = false; local reachDistance = 15
     local spinbot = false; local spinSpeed = 10
     local fovChanger = false; local customFOV = 90
-    local hitboxExpander = false; local hitboxSize = 3
     local infiniteAmmo = false
     local autoReload = false
 
@@ -220,9 +218,7 @@ function carregarSnowS4zx()
         print("=== REMOTES ===")
         print(list)
     end)
-    safeButton(ScannerTab, "🧹 Limpar Log", function()
-        loggedRemotes = {}
-    end)
+    safeButton(ScannerTab, "🧹 Limpar Log", function() loggedRemotes = {} end)
 
     function getAllRemotes()
         local list = {}
@@ -277,8 +273,6 @@ function carregarSnowS4zx()
     safeSlider(FunTab, "Velocidade", 1, 50, 10, function(v) spinSpeed = v end)
     safeToggle(FunTab, "FOV Changer", false, function(v) fovChanger = v end)
     safeSlider(FunTab, "FOV", 30, 120, 90, function(v) customFOV = v end)
-    safeToggle(FunTab, "Hitbox Expander", false, function(v) hitboxExpander = v end)
-    safeSlider(FunTab, "Tamanho", 1, 5, 3, function(v) hitboxSize = v end)
 
     -- CONFIG
     safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
@@ -636,9 +630,7 @@ function carregarSnowS4zx()
         local char = Player.Character
         if char then
             for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
+                if part:IsA("BasePart") then part.CanCollide = false end
             end
         end
     end
@@ -692,7 +684,6 @@ function carregarSnowS4zx()
             if handle:IsA("BasePart") then
                 handle.CanCollide = false
                 handle.Transparency = 0.5
-                -- Ajustar alcance não diretamente, mas podemos alterar o MaxActivationDistance
                 pcall(function()
                     tool.MaxActivationDistance = reachDistance
                 end)
@@ -739,16 +730,6 @@ function carregarSnowS4zx()
             Camera.FieldOfView = customFOV
         else
             Camera.FieldOfView = 70
-        end
-    end
-
-    -- Hitbox Expander
-    local function hitboxExpanderStep()
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local root = p.Character.HumanoidRootPart
-                root.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-            end
         end
     end
 
@@ -909,7 +890,6 @@ function carregarSnowS4zx()
         autoReloadStep()
         spinbotStep()
         fovChangerStep()
-        hitboxExpanderStep()
         farmStep()
         antiAfkStep()
         updateStaffCounter()
