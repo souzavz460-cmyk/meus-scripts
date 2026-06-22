@@ -1,4 +1,4 @@
--- Snow S4zx Mod – Versão Corrigida (Interface Garantida)
+-- Snow S4zx Mod – Versão Final com Bypass Avançado e Auto Farm de Clique
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -160,8 +160,9 @@ function carregarInterface()
     local Player = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
+    local TeleportService = game:GetService("TeleportService")
     
-    -- Variáveis
+    -- Variáveis de estado
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
     local wallCheck = false; local silentAimEnabled = false
     local fovCircle = false; local fovRainbow = false
@@ -175,17 +176,24 @@ function carregarInterface()
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255)
     local invisibility = false; local ghostMode = false
-    local antiAfk = false; local antiStun = false; local antiFire = false
+    local antiAfk = false; local antiStun = false; local antiFire = false; local autoRespawn = false
     local reach = false; local reachDistance = 15
     local infiniteAmmo = false; local autoReload = false
     local noRecoil = false; local rapidFire = false; local rapidFireDelay = 0.1
     local rainbowChar = false; local rainbowSpeed = 0.5
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
     local rainbowWorld = false; local rainbowSky = false; local rainbowFog = false; local rainbowLighting = false
-    local wallshotEnabled = false
     local flyCarEnabled = false; local flyCarSpeed = 50
     local streamerMode = false
     local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
+    
+    -- Variáveis de bypass
+    local lastCleanup = 0
+    local CLEANUP_INTERVAL = 2.0
+    local lastFarmClick = 0
+    
+    -- Fly auxiliar
+    local flyStartY = nil
     
     -- Abas
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -205,14 +213,13 @@ function carregarInterface()
     local function safeSlider(tab, name, min, max, d, cb) if tab then pcall(function() tab:CreateSlider({Name=name, Range={min, max}, Increment=1, CurrentValue=d, Callback=cb, Flag=name:gsub("%s","_")}) end) end end
     local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
     
-    -- AIMBOT
+    -- AIMBOT (Sem Wallshot)
     safeToggle(AimbotTab, "AIMBOT", false, function(v) aimbot = v end)
     safeSlider(AimbotTab, "Força (1-5)", 1, 5, 1, function(v) aimForce = v end)
     safeSlider(AimbotTab, "Bypass", 1, 10, 1, function(v) bypass = v end)
     safeSlider(AimbotTab, "FOV (Raio)", 50, 500, 150, function(v) fovRadius = v end)
     safeToggle(AimbotTab, "WALLCK (Parede)", false, function(v) wallCheck = v end)
     safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
-    safeToggle(AimbotTab, "WallShot (Tiro Atravessa)", false, function(v) wallshotEnabled = v end)
     
     -- ESP
     safeToggle(ESPTab, "2D Box", false, function(v) espBox = v end)
@@ -246,7 +253,7 @@ function carregarInterface()
     
     -- MOVIMENTO
     safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
-    safeToggle(MoveTab, "Fly Avançado", false, function(v) flyEnabled = v end)
+    safeToggle(MoveTab, "Fly Avançado", false, function(v) flyEnabled = v; if not v then flyStartY = nil end end)
     safeSlider(MoveTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
     safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
@@ -273,6 +280,7 @@ function carregarInterface()
     safeToggle(ExtrasTab, "Anti AFK", false, function(v) antiAfk = v end)
     safeToggle(ExtrasTab, "Anti Stun", false, function(v) antiStun = v end)
     safeToggle(ExtrasTab, "Anti Fire", false, function(v) antiFire = v end)
+    safeToggle(ExtrasTab, "Auto Respawn", false, function(v) autoRespawn = v end)
     
     -- STREAM
     safeToggle(StreamTab, "Modo Streamer", false, function(v)
@@ -306,8 +314,9 @@ function carregarInterface()
         local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
         local itemESP = {}
         local crosshairObj
+        local killCount = 0
         
-        -- Silent Aim
+        -- Silent Aim (bala na cabeça sem mover câmera)
         local silentAimConnection
         local function setupSilentAim()
             if silentAimConnection then silentAimConnection:Disconnect() end
@@ -362,30 +371,7 @@ function carregarInterface()
             else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
         end
         
-        -- WallShot
-        local wallshotConnection
-        local function enableWallshot()
-            if wallshotConnection then return end
-            wallshotConnection = Workspace.DescendantAdded:Connect(function(obj)
-                if not wallshotEnabled then return end
-                if obj:IsA("BasePart") and (obj.Velocity.Magnitude > 50 or obj:GetAttribute("Owner") == Player.Name) then
-                    local parent = obj.Parent
-                    local isCharacter = false
-                    while parent do
-                        if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then isCharacter = true; break end
-                        parent = parent.Parent
-                    end
-                    if not isCharacter then
-                        pcall(function() obj.CanCollide = false; obj.CanQuery = false end)
-                    end
-                end
-            end)
-        end
-        local function disableWallshot()
-            if wallshotConnection then wallshotConnection:Disconnect(); wallshotConnection = nil end
-        end
-        
-        -- ESP
+        -- ESP (completa)
         local function updateESP()
             if not useDrawing then return end
             -- Limpeza
@@ -463,6 +449,7 @@ function carregarInterface()
                     if healthBars[p] then healthBars[p].bg.Visible = false; healthBars[p].fill.Visible = false end
                     if distanceTags[p] then distanceTags[p].Visible = false end
                     if tracerLines[p] then tracerLines[p].Visible = false end
+                    if killCounter then killCount = killCount + 1 end
                     continue
                 end
 
@@ -643,7 +630,7 @@ function carregarInterface()
             end
         end
         
-        -- Speed
+        -- Speed Hack (CFrame)
         local function speedStep()
             if not speedEnabled then return end
             local char = Player.Character
@@ -660,52 +647,31 @@ function carregarInterface()
             end
         end
         
-        local flyStartY = nil  -- armazena a altura inicial do voo
-
-local function flyStep()
-    if not flyEnabled then
-        flyStartY = nil
-        return
-    end
-
-    local char = Player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    local hum = char:FindFirstChild("Humanoid")
-    if hum then hum.PlatformStand = true end
-
-    -- Guarda a altura inicial quando começa a voar
-    if not flyStartY then
-        flyStartY = root.Position.Y
-    end
-
-    local camDir = Camera.CFrame.LookVector
-    local moveDir = Vector3.zero
-    local moving = false
-
-    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
-    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
-    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
-
-    local verticalChange = 0
-    if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalChange = 1; moving = true end
-    if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalChange = -1; moving = true end
-
-    -- Atualiza a altura alvo apenas se teclas de subida/descida forem usadas
-    if verticalChange ~= 0 then
-        flyStartY = flyStartY + verticalChange * (flySpeed * 0.15)
-    end
-
-    -- Posição final: mantém a altura alvo
-    local newPos = root.Position
-    if moving and moveDir.Magnitude > 0 then
-        newPos = root.Position + moveDir.Unit * (flySpeed * 0.2)
-    end
-    newPos = Vector3.new(newPos.X, flyStartY, newPos.Z)
-
-    root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
-end
+        -- Fly (mantém altura)
+        local function flyStep()
+            if not flyEnabled then flyStartY = nil; return end
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local root = char.HumanoidRootPart
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then hum.PlatformStand = true end
+            if not flyStartY then flyStartY = root.Position.Y end
+            local camDir = Camera.CFrame.LookVector
+            local moveDir = Vector3.zero
+            local moving = false
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+            local verticalChange = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalChange = 1; moving = true end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalChange = -1; moving = true end
+            if verticalChange ~= 0 then flyStartY = flyStartY + verticalChange * (flySpeed * 0.15) end
+            local newPos = root.Position
+            if moving and moveDir.Magnitude > 0 then newPos = root.Position + moveDir.Unit * (flySpeed * 0.2) end
+            newPos = Vector3.new(newPos.X, flyStartY, newPos.Z)
+            root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
+        end
         
         -- Ghost Mode
         local function invisibilityStep()
@@ -714,7 +680,7 @@ end
             if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
         end
         
-        -- Farm
+        -- Auto Farm (clique no lixo)
         local function findNearestTrash()
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -749,22 +715,26 @@ end
                 local direction = (targetPos - root.Position).Unit
                 local newPos = root.Position + direction * (farmSpeed * 0.15)
                 root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
-            elseif distance <= 4 then
-                local tool = char:FindFirstChildWhichIsA("Tool")
-                if tool then
-                    if tick() - lastFarmAction > 0.5 then
-                        pcall(function() tool:Activate() end)
-                        lastFarmAction = tick()
-                    end
-                else
-                    if tick() - lastFarmAction > 0.5 then
-                        pcall(function()
-                            root.CFrame = CFrame.new(targetPos) * CFrame.new(0, 2, 0)
-                            task.wait(0.1)
-                            root.CFrame = root.CFrame
-                        end)
-                        lastFarmAction = tick()
-                    end
+                return
+            end
+            -- Próximo o suficiente: tenta coletar
+            local tool = char:FindFirstChildWhichIsA("Tool")
+            if tool then
+                if tick() - lastFarmAction > 0.5 then
+                    pcall(function() tool:Activate() end)
+                    lastFarmAction = tick()
+                end
+            else
+                -- Sem ferramenta: simula clique do mouse no lixo
+                local screenPos, onScreen = Camera:WorldToViewportPoint(trash.Position)
+                if onScreen and tick() - lastFarmClick > 1.0 then
+                    pcall(function()
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 0)
+                        task.wait(0.05)
+                        vim:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 0)
+                    end)
+                    lastFarmClick = tick()
                 end
             end
         end
@@ -815,6 +785,32 @@ end
             if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0,1,0) end
             flyCarBV.Velocity = moveDir.Unit * (flyCarSpeed * 0.5)
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
+        end
+        
+        -- Bypass avançado
+        local function bypassCleanup()
+            local now = tick()
+            if now - lastCleanup < CLEANUP_INTERVAL then return end
+            lastCleanup = now
+            local char = Player.Character
+            if not char then return end
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then hum.WalkSpeed = 16 end
+            if not flyCarEnabled then
+                if flyCarTarget then
+                    local bv = flyCarTarget:FindFirstChild("BodyVelocity")
+                    if bv then bv:Destroy() end
+                    local bg = flyCarTarget:FindFirstChild("BodyGyro")
+                    if bg then bg:Destroy() end
+                end
+            end
+            if not flyEnabled and not invisibility then
+                if hum and hum.PlatformStand then hum.PlatformStand = false end
+            end
+            pcall(function()
+                Player:SetAttribute("SpeedHack", nil)
+                Player:SetAttribute("FlyHack", nil)
+            end)
         end
         
         -- Armas
@@ -880,6 +876,11 @@ end
             local char = Player.Character
             if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") and part.Material == Enum.Material.Fire then part.Material = Enum.Material.SmoothPlastic end end end
         end
+        local function autoRespawnStep()
+            if not autoRespawn then return end
+            local char = Player.Character
+            if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then pcall(function() Player:LoadCharacter() end) end
+        end
         local function rainbowWorldStep()
             if rainbowWorld then Lighting.Ambient = Color3.fromHSV((tick()*rainbowSpeed)%1, 0.8, 0.5) else Lighting.Ambient = Color3.new(0,0,0) end
         end
@@ -943,6 +944,7 @@ end
             pcall(antiAfkStep)
             pcall(antiStunStep)
             pcall(antiFireStep)
+            pcall(autoRespawnStep)
             pcall(flyCarStep)
             pcall(rainbowWorldStep)
             pcall(rainbowSkyStep)
@@ -950,6 +952,7 @@ end
             pcall(rainbowLightingStep)
             pcall(rainbowCharStep)
             pcall(updateStaffCounter)
+            pcall(bypassCleanup)
             
             -- Silent Aim
             if silentAimEnabled and not silentAimConnection then
@@ -959,22 +962,14 @@ end
                 silentAimConnection = nil
             end
             
-            -- WallShot
-            if wallshotEnabled and not wallshotConnection then
-                pcall(enableWallshot)
-            elseif not wallshotEnabled and wallshotConnection then
-                pcall(disableWallshot)
-            end
-            
             if antiLive and tick()-lastLiveCheck > 1 then
                 lastLiveCheck = tick()
                 Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
             end
         end)
         
-        -- Limpeza
+        -- Limpeza final
         script.Destroying:Connect(function()
-            disableWallshot()
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
             if silentAimConnection then silentAimConnection:Disconnect() end
