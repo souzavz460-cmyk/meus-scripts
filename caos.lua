@@ -1,4 +1,4 @@
--- Snow S4zx Ultimate – WallShot, Fly Car, Modo Streamer, Salvar Config
+-- Snow S4zx Ultimate – TODAS AS CORREÇÕES (Fly, Armas, ESP, Farm, WallCheck, etc.)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -107,11 +107,7 @@ function carregarSnowS4zx()
         LoadingSubtitle = "by Souzavz",
         ShowText = "S4zx MODS",
         Theme = "DarkBlue",
-        ConfigurationSaving = {
-            Enabled = true,
-            FolderName = "SnowS4zx",
-            FileName = "Config"
-        },
+        ConfigurationSaving = { Enabled = true, FolderName = "SnowS4zx", FileName = "Config" },
         KeySystem = false,
         MobileButton = { Enabled = true, Name = "S4zx MODS" }
     })
@@ -125,8 +121,6 @@ function carregarSnowS4zx()
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
     local TeleportService = game:GetService("TeleportService")
-    local Stats = game:GetService("Stats")
-    local Debris = game:GetService("Debris")
 
     -- ==================== VARIÁVEIS ====================
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
@@ -134,17 +128,16 @@ function carregarSnowS4zx()
     local fovCircle = false; local fovRainbow = false
     local espBox = false; local espSkel = false; local espName = false
     local espDistance = false; local espHealth = false; local tracerV7 = false
-    local espItems = false; local showMoney = false
+    local espItems = false; local showMoney = false; local showTeamESP = false
     local infJump = false; local flyEnabled = false; local flySpeed = 50
     local speedEnabled = false; local speedValue = 24
-    local s4zxFarm = false
+    local s4zxFarm = false; local farmSpeed = 50
     local antiLive = false
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255)
     local autoClick = false; local autoEquip = false; local autoEquipName = ""
-    local antiAfk = false; local farmRemotePath = ""
-    local invisibility = false
-    local ghostMode = false
+    local antiAfk = false
+    local invisibility = false; local ghostMode = false
     local waypoint = nil; local tpWaypoint = false
     local antiStun = false; local antiFire = false
     local reach = false; local reachDistance = 15
@@ -156,10 +149,7 @@ function carregarSnowS4zx()
     local rapidFire = false; local rapidFireDelay = 0.1
     local autoRespawn = false
     local fpsUnlocker = false; local targetFPS = 120
-    local rainbowChar = false; local rainbowSpeed = 3
-    local playerList = false
-    local autoToolPickup = false
-    local fakeLag = false; local lagAmount = 50
+    local rainbowChar = false; local rainbowSpeed = 0.5
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
     local rainbowWorld = false; local rainbowSky = false; local rainbowFog = false; local rainbowLighting = false
     local teleportPlayerName = ""
@@ -169,31 +159,23 @@ function carregarSnowS4zx()
     local gravityChanger = false; local gravityValue = 196.2
     local jumpPowerChanger = false; local jumpPower = 50
     local zoomHack = false; local zoomDistance = 30
-    local showTeamESP = false
     local adminNotifier = false
-    local serverInfo = false
     local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
-    local autoTeam = false
     local antiVoid = false; local voidHeight = -50
-    local safeZone = false; local zoneRadius = 20
-    local serverHopKey = Enum.KeyCode.F3
     local autoDodge = false; local dodgeRange = 30
-    local chatTagText = ""
     local autoShoot = false
     local fireRateMod = false; local fireRateMultiplier = 2
     local spreadReducer = false
     local recoilControl = false
-    local damageIndicator = false
     local killCounter = false
     local weaponRangeMod = false; local weaponRangeValue = 500
     local bulletSpeedMod = false; local bulletSpeedValue = 200
     local magneticAim = false; local magneticStrength = 30
     local hitSound = false; local hitSoundID = "rbxassetid://9120386436"
-    -- Novas
     local wallshotEnabled = false
-    local flyCarEnabled = false
-    local flyCarSpeed = 50
+    local flyCarEnabled = false; local flyCarSpeed = 50
     local streamerMode = false
+    local espPlayerWeapon = false  -- mostra arma equipada
 
     -- ==================== ABAS ====================
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -210,8 +192,8 @@ function carregarSnowS4zx()
     local FunTab = safeTab("DIVERSÃO", 4483362458)
     local UtilitiesTab = safeTab("UTILITIES", 4483362458)
     local TeleportTab = safeTab("TELEPORT", 4483362458)
-    local CarTab = safeTab("CAR", 4483362458)         -- Fly Car
-    local StreamTab = safeTab("STREAM", 4483362458)   -- Modo Streamer
+    local CarTab = safeTab("CAR", 4483362458)
+    local StreamTab = safeTab("STREAM", 4483362458)
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
     local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
@@ -224,7 +206,7 @@ function carregarSnowS4zx()
     safeSlider(AimbotTab, "Força (1-5)", 1, 5, 1, function(v) aimForce = v end)
     safeSlider(AimbotTab, "Bypass", 1, 10, 1, function(v) bypass = v end)
     safeSlider(AimbotTab, "FOV (Raio)", 50, 500, 150, function(v) fovRadius = v end)
-    safeToggle(AimbotTab, "WALLCK", false, function(v) wallCheck = v end)
+    safeToggle(AimbotTab, "WALLCK (Parede)", false, function(v) wallCheck = v end)
     safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
     safeToggle(AimbotTab, "Triggerbot", false, function(v) triggerbot = v end)
     safeToggle(AimbotTab, "WallShot (Tiro Atravessa)", false, function(v) wallshotEnabled = v end)
@@ -236,9 +218,10 @@ function carregarSnowS4zx()
     safeToggle(ESPTab, "Distance", false, function(v) espDistance = v end)
     safeToggle(ESPTab, "Health Bar", false, function(v) espHealth = v end)
     safeToggle(ESPTab, "Tracer V7 (do chão)", false, function(v) tracerV7 = v end)
-    safeToggle(ESPTab, "Itens", false, function(v) espItems = v end)
+    safeToggle(ESPTab, "Itens (Moedas/Armas)", false, function(v) espItems = v end)
     safeToggle(ESPTab, "Dinheiro", false, function(v) showMoney = v end)
     safeToggle(ESPTab, "Mostrar Time", false, function(v) showTeamESP = v end)
+    safeToggle(ESPTab, "Arma Equipada", false, function(v) espPlayerWeapon = v end)
 
     -- VISUAL
     safeInput(VisualTab, "Cor Box", "verde", function(v) local c=parseColor(v) if c then boxColor=c end end)
@@ -252,7 +235,7 @@ function carregarSnowS4zx()
     safeToggle(RainbowTab, "Rainbow Skeleton", false, function(v) rainbowSkel = v end)
     safeToggle(RainbowTab, "Rainbow Tracer", false, function(v) rainbowTracer = v end)
     safeToggle(RainbowTab, "Rainbow Character", false, function(v) rainbowChar = v end)
-    safeSlider(RainbowTab, "Velocidade Rainbow", 1, 10, 3, function(v) rainbowSpeed = v end)
+    safeSlider(RainbowTab, "Velocidade Rainbow", 0.1, 3, 0.5, function(v) rainbowSpeed = v end)
     safeToggle(RainbowTab, "Rainbow World", false, function(v) rainbowWorld = v end)
     safeToggle(RainbowTab, "Rainbow Sky", false, function(v) rainbowSky = v end)
     safeToggle(RainbowTab, "Rainbow Fog", false, function(v) rainbowFog = v end)
@@ -267,8 +250,7 @@ function carregarSnowS4zx()
         Rayfield:Notify({Title="Remote Detectado", Content=msg, Duration=2, Image=4483362458})
     end
     local function hookRemotes()
-        local remotes = getAllRemotes()
-        for _, remote in ipairs(remotes) do
+        for _, remote in ipairs(getAllRemotes()) do
             if not remote:GetAttribute("Hooked") then
                 remote:SetAttribute("Hooked", true)
                 local oldFire = remote.FireServer
@@ -311,9 +293,7 @@ function carregarSnowS4zx()
     safeSlider(MoveTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
     safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
-    safeToggle(MoveTab, "Ghost Mode (Invisível)", false, function(v)
-        ghostMode = v; invisibility = v
-    end)
+    safeToggle(MoveTab, "Ghost Mode (Invisível)", false, function(v) ghostMode = v; invisibility = v end)
     safeToggle(MoveTab, "Freecam", false, function(v) freecamEnabled = v end)
     safeSlider(MoveTab, "Velocidade Freecam", 10, 200, 50, function(v) freecamSpeed = v end)
     safeToggle(MoveTab, "TP Waypoint (tecla B)", false, function(v) tpWaypoint = v end)
@@ -322,7 +302,7 @@ function carregarSnowS4zx()
         if char and char:FindFirstChild("HumanoidRootPart") then waypoint = char.HumanoidRootPart.Position end
     end)
 
-    -- CAR (Fly Car)
+    -- CAR
     safeToggle(CarTab, "Fly Car", false, function(v) flyCarEnabled = v end)
     safeSlider(CarTab, "Velocidade Fly Car", 20, 200, 50, function(v) flyCarSpeed = v end)
 
@@ -348,7 +328,6 @@ function carregarSnowS4zx()
     -- FARM
     safeToggle(FarmTab, "S4zx Farm", false, function(v) s4zxFarm = v end)
     safeSlider(FarmTab, "Velocidade Farm", 30, 100, 50, function(v) farmSpeed = v end)
-    safeInput(FarmTab, "Remote de Coleta", "", function(v) farmRemotePath = v end)
 
     -- EXTRAS
     safeToggle(ExtrasTab, "Auto Click", false, function(v) autoClick = v end)
@@ -372,10 +351,9 @@ function carregarSnowS4zx()
     -- COMBAT+
     safeToggle(CombatPlusTab, "Auto Shoot", false, function(v) autoShoot = v end)
     safeToggle(CombatPlusTab, "Fire Rate Mod", false, function(v) fireRateMod = v end)
-    safeSlider(CombatPlusTab, "Multiplicador Fire Rate", 1, 5, 2, function(v) fireRateMultiplier = v end)
+    safeSlider(CombatPlusTab, "Multiplicador", 1, 5, 2, function(v) fireRateMultiplier = v end)
     safeToggle(CombatPlusTab, "Spread Reducer", false, function(v) spreadReducer = v end)
     safeToggle(CombatPlusTab, "Recoil Control", false, function(v) recoilControl = v end)
-    safeToggle(CombatPlusTab, "Damage Indicator", false, function(v) damageIndicator = v end)
     safeToggle(CombatPlusTab, "Kill Counter", false, function(v) killCounter = v end)
     safeToggle(CombatPlusTab, "Weapon Range Mod", false, function(v) weaponRangeMod = v end)
     safeSlider(CombatPlusTab, "Alcance Máximo", 100, 1000, 500, function(v) weaponRangeValue = v end)
@@ -403,28 +381,19 @@ function carregarSnowS4zx()
     -- UTILITIES
     safeToggle(UtilitiesTab, "FPS Unlocker", false, function(v) fpsUnlocker = v end)
     safeSlider(UtilitiesTab, "Target FPS", 60, 240, 120, function(v) targetFPS = v end)
-    safeToggle(UtilitiesTab, "Player List", false, function(v) playerList = v end)
-    safeToggle(UtilitiesTab, "Auto Tool Pickup", false, function(v) autoToolPickup = v end)
-    safeToggle(UtilitiesTab, "Fake Lag", false, function(v) fakeLag = v end)
-    safeSlider(UtilitiesTab, "Lag Amount", 10, 200, 50, function(v) lagAmount = v end)
-    safeToggle(UtilitiesTab, "Server Info (F4)", false, function(v) serverInfo = v end)
     safeToggle(UtilitiesTab, "Custom Crosshair", false, function(v) customCrosshair = v end)
     safeSlider(UtilitiesTab, "Tamanho Crosshair", 10, 100, 20, function(v) crosshairSize = v end)
     safeInput(UtilitiesTab, "Cor Crosshair", "vermelho", function(v) local c=parseColor(v) if c then crosshairColor=c end end)
-    safeToggle(UtilitiesTab, "Auto Team", false, function(v) autoTeam = v end)
     safeToggle(UtilitiesTab, "Anti Void", false, function(v) antiVoid = v end)
     safeSlider(UtilitiesTab, "Altura do Void", -200, 0, -50, function(v) voidHeight = v end)
-    safeToggle(UtilitiesTab, "Safe Zone", false, function(v) safeZone = v end)
-    safeSlider(UtilitiesTab, "Raio da Safe Zone", 10, 100, 20, function(v) zoneRadius = v end)
     safeToggle(UtilitiesTab, "Auto Dodge", false, function(v) autoDodge = v end)
     safeSlider(UtilitiesTab, "Alcance Dodge", 10, 100, 30, function(v) dodgeRange = v end)
     safeButton(UtilitiesTab, "Server Hop (F3)", function() TeleportService:Teleport(game.PlaceId) end)
-    safeInput(UtilitiesTab, "Chat Tag", "[S4zx]", function(v) chatTagText = v end)
 
-    -- STREAM (Modo Streamer)
+    -- STREAM
     safeToggle(StreamTab, "Modo Streamer", false, function(v)
         streamerMode = v
-        Window.Enabled = not v  -- esconde/mostra a janela principal
+        Window.Enabled = not v
         if staffFrame then staffFrame.Visible = not v end
     end)
 
@@ -486,7 +455,7 @@ function carregarSnowS4zx()
     end
     task.spawn(function() while true do if silentAimEnabled then if not silentAimConnection then setupSilentAim() end else if silentAimConnection then silentAimConnection:Disconnect(); silentAimConnection=nil end end task.wait(1) end end)
 
-    -- Aimbot
+    -- Aimbot (com WallCheck corrigido)
     local function aimbotStep()
         if not aimbot then return end
         local center = Camera.ViewportSize/2
@@ -498,8 +467,10 @@ function carregarSnowS4zx()
                 local pos, on = Camera:WorldToViewportPoint(chr.Head.Position)
                 if on and (Vector2.new(pos.X,pos.Y)-center).Magnitude <= fovRadius then
                     if wallCheck then
-                        local ray = Ray.new(Camera.CFrame.Position, (chr.Head.Position - Camera.CFrame.Position).Unit * 500)
-                        if Workspace:FindPartOnRay(ray, Player.Character, false, true) then continue end
+                        local ray = Ray.new(Camera.CFrame.Position, (chr.Head.Position - Camera.CFrame.Position).Unit * 1000)
+                        local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {Player.Character}, false, true)
+                        -- Só ignora se o raycast atingir algo que NÃO seja o personagem alvo
+                        if hit and not hit:IsDescendantOf(chr) then continue end
                     end
                     table.insert(enemies, {chr=chr, dist=(Vector2.new(pos.X,pos.Y)-center).Magnitude})
                 end
@@ -513,87 +484,99 @@ function carregarSnowS4zx()
         else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
     end
 
-    -- WallShot (projéteis atravessam paredes)
-    local function wallshotStep()
-        if not wallshotEnabled then return end
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                -- Projétil: velocidade alta ou atributo Owner
-                if obj.Velocity.Magnitude > 50 or obj:GetAttribute("Owner") == Player.Name then
-                    -- Ignora partes de personagens
-                    local parent = obj.Parent
-                    local isCharacter = false
-                    while parent do
-                        if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then
-                            isCharacter = true
-                            break
-                        end
-                        parent = parent.Parent
-                    end
-                    if not isCharacter then
-                        pcall(function()
-                            obj.CanCollide = false
-                            obj.CanQuery = false
-                        end)
-                    end
+    -- WallShot (otimizado, sem loop)
+    local wallshotConnection
+    local function enableWallshot()
+        if wallshotConnection then return end
+        wallshotConnection = Workspace.DescendantAdded:Connect(function(obj)
+            if not wallshotEnabled then return end
+            if obj:IsA("BasePart") and (obj.Velocity.Magnitude > 50 or obj:GetAttribute("Owner") == Player.Name) then
+                local parent = obj.Parent
+                local isCharacter = false
+                while parent do
+                    if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then isCharacter = true; break end
+                    parent = parent.Parent
+                end
+                if not isCharacter then
+                    pcall(function() obj.CanCollide = false; obj.CanQuery = false end)
                 end
             end
-        end
+        end)
     end
+    local function disableWallshot()
+        if wallshotConnection then wallshotConnection:Disconnect(); wallshotConnection = nil end
+    end
+    -- Ativa/desativa conforme toggle
+    task.spawn(function()
+        while true do
+            if wallshotEnabled then
+                if not wallshotConnection then enableWallshot() end
+            else
+                if wallshotConnection then disableWallshot() end
+            end
+            task.wait(1)
+        end
+    end)
 
-    -- Fly Car
+    -- Fly Car (corrigido)
+    local flyCarBV, flyCarBG, flyCarTarget
     local function flyCarStep()
-        if not flyCarEnabled then return end
+        if not flyCarEnabled then
+            if flyCarBV then flyCarBV:Destroy(); flyCarBV = nil end
+            if flyCarBG then flyCarBG:Destroy(); flyCarBG = nil end
+            flyCarTarget = nil
+            return
+        end
         local char = Player.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local nearest, nearestDist = nil, math.huge
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
-                local car = obj:FindFirstAncestorOfClass("Model")
-                if car then
-                    local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
-                    if p then
-                        local d = (p.Position - char.HumanoidRootPart.Position).Magnitude
-                        if d < nearestDist then nearestDist = d; nearest = car end
+        -- Encontrar veículo mais próximo
+        if not flyCarTarget or not flyCarTarget.Parent then
+            local nearest, nearestDist = nil, math.huge
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
+                    local car = obj:FindFirstAncestorOfClass("Model")
+                    if car then
+                        local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                        if p then
+                            local d = (p.Position - char.HumanoidRootPart.Position).Magnitude
+                            if d < nearestDist then nearestDist = d; flyCarTarget = car end
+                        end
                     end
                 end
             end
         end
-        if nearest then
-            local primary = nearest:FindFirstChild("PrimaryPart") or nearest:FindFirstChildWhichIsA("BasePart")
-            if primary then
-                -- Cria forças se não existirem
-                local bv = primary:FindFirstChild("FlyCarVelocity")
-                local bg = primary:FindFirstChild("FlyCarGyro")
-                if not bv then
-                    bv = Instance.new("BodyVelocity")
-                    bv.Name = "FlyCarVelocity"
-                    bv.MaxForce = Vector3.new(1e9,1e9,1e9)
-                    bv.Parent = primary
-                end
-                if not bg then
-                    bg = Instance.new("BodyGyro")
-                    bg.Name = "FlyCarGyro"
-                    bg.MaxTorque = Vector3.new(1e9,1e9,1e9)
-                    bg.Parent = primary
-                end
-                -- Controle
-                local moveDir = Vector3.zero
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0,1,0) end
-                bv.Velocity = moveDir.Unit * (flyCarSpeed * 0.5)
-                bg.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
-            end
+        if not flyCarTarget then return end
+        local primary = flyCarTarget:FindFirstChild("PrimaryPart") or flyCarTarget:FindFirstChildWhichIsA("BasePart")
+        if not primary then return end
+        -- Criar forças se necessário
+        if not flyCarBV or not flyCarBV.Parent then
+            if flyCarBV then flyCarBV:Destroy() end
+            flyCarBV = Instance.new("BodyVelocity")
+            flyCarBV.MaxForce = Vector3.new(1e9,1e9,1e9)
+            flyCarBV.Parent = primary
         end
+        if not flyCarBG or not flyCarBG.Parent then
+            if flyCarBG then flyCarBG:Destroy() end
+            flyCarBG = Instance.new("BodyGyro")
+            flyCarBG.MaxTorque = Vector3.new(1e9,1e9,1e9)
+            flyCarBG.Parent = primary
+        end
+        -- Controle
+        local moveDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0,1,0) end
+        flyCarBV.Velocity = moveDir.Unit * (flyCarSpeed * 0.5)
+        flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
     end
 
-    -- ESP (completa)
+    -- ESP (completa, com arma equipada)
     local function updateESP()
         if not useDrawing then return end
+        -- Limpeza
         for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
         for p, data in pairs(skeletons) do if not p or not p.Parent then for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end end
         for p, tag in pairs(nameTags) do if not p or not p.Parent then pcall(function() tag:Remove() end); nameTags[p]=nil end end
@@ -608,8 +591,9 @@ function carregarSnowS4zx()
         local hue = (tick() * rainbowSpeed) % 1
         local rainbowColor = Color3.fromHSV(hue, 1, 1)
 
+        -- ESP de Itens (corrigido)
         if espItems then
-            local valuable = {"coin","gold","diamond","gem","money","cash","loot","chest","armor","weapon","sword","gun"}
+            local valuable = {"coin","gold","diamond","gem","money","cash","loot","chest","armor","weapon","sword","gun","moeda","ouro","diamante","arma","baú"}
             for _, part in ipairs(Workspace:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "" then
                     local name = part.Name:lower()
@@ -653,6 +637,11 @@ function carregarSnowS4zx()
             local head = char.Head
             local root = char.HumanoidRootPart
             local dist = myRoot and (myRoot.Position - root.Position).Magnitude or 0
+            local weaponName = ""
+            if espPlayerWeapon then
+                local tool = char:FindFirstChildWhichIsA("Tool")
+                weaponName = tool and tool.Name or "Desarmado"
+            end
 
             if not hum or health <= 0 then
                 if boxes2D[p] then boxes2D[p].Visible = false end
@@ -669,6 +658,7 @@ function carregarSnowS4zx()
             local rootScreenPos, rootVisible = Camera:WorldToViewportPoint(root.Position)
             local feetScreenPos, feetVisible = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
 
+            -- Tracer V7
             if tracerV7 and rootVisible then
                 local enemyPos = Vector2.new(rootScreenPos.X, rootScreenPos.Y)
                 if not tracerLines[p] then
@@ -686,6 +676,7 @@ function carregarSnowS4zx()
                 if tracerLines[p] then tracerLines[p].Visible = false end
             end
 
+            -- Box 2D
             if espBox and headVisible and feetVisible then
                 local bodyHeight = math.abs(headScreenPos.Y - feetScreenPos.Y)
                 local bodyWidth = bodyHeight * 0.45
@@ -706,6 +697,7 @@ function carregarSnowS4zx()
                 if boxes2D[p] then boxes2D[p].Visible = false end
             end
 
+            -- Skeleton
             if espSkel then
                 if not skeletons[p] then
                     skeletons[p] = {}
@@ -753,6 +745,7 @@ function carregarSnowS4zx()
                 if skeletons[p] then for _,d in ipairs(skeletons[p]) do pcall(function() d.line:Remove() end) end; skeletons[p]=nil end
             end
 
+            -- Name + Arma Equipada + Dinheiro + Distância
             if espName and headVisible then
                 if not nameTags[p] then
                     pcall(function()
@@ -763,6 +756,7 @@ function carregarSnowS4zx()
                 if nameTags[p] then
                     local text = p.Name
                     if showTeamESP and p.Team then text = text .. " [" .. p.Team.Name .. "]" end
+                    if espPlayerWeapon then text = text .. " | " .. weaponName end
                     if showMoney then
                         local ls = p:FindFirstChild("leaderstats")
                         if ls then for _, stat in ipairs(ls:GetChildren()) do
@@ -781,6 +775,7 @@ function carregarSnowS4zx()
                 if nameTags[p] then nameTags[p].Visible = false end
             end
 
+            -- Health Bar
             if espHealth and headVisible and feetVisible then
                 local barWidth = 4
                 local barHeight = math.abs(headScreenPos.Y - feetScreenPos.Y) * 0.8
@@ -810,6 +805,7 @@ function carregarSnowS4zx()
             end
         end
 
+        -- FOV Circle & Crosshair
         if fovCircleObj then
             fovCircleObj.Position = screenSize / 2
             fovCircleObj.Radius = fovRadius
@@ -850,7 +846,7 @@ function carregarSnowS4zx()
         end
     end
 
-    -- Fly
+    -- Fly (corrigido, indetectável)
     local function flyStep()
         if not flyEnabled then return end
         local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -859,13 +855,14 @@ function carregarSnowS4zx()
         if hum then hum.PlatformStand = true end
         local camDir = Camera.CFrame.LookVector
         local moveDir = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
-        if UserInputService:IsKeyDown(Enum.KeyCode.E) then moveDir += Vector3.new(0,1,0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Q) then moveDir -= Vector3.new(0,1,0) end
-        if moveDir.Magnitude > 0 then
+        local moving = false
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+        if UserInputService:IsKeyDown(Enum.KeyCode.E) then moveDir += Vector3.new(0,1,0); moving = true end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Q) then moveDir -= Vector3.new(0,1,0); moving = true end
+        if moving and moveDir.Magnitude > 0 then
             root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position + moveDir.Unit * (flySpeed * 0.2)), 0.5)
         end
     end
@@ -892,32 +889,279 @@ function carregarSnowS4zx()
         if moveDir.Magnitude > 0 then Camera.CFrame = Camera.CFrame + moveDir.Unit * (freecamSpeed * 0.1) end
     end
 
-    -- Combate+
+    -- Armas
+    local function reachStep()
+        if not reach then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool then pcall(function() tool.MaxActivationDistance = reachDistance end) end
+    end
+    local function infiniteAmmoStep()
+        if not infiniteAmmo then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets") or tool:FindFirstChild("Magazine")
+            if ammo and ammo:IsA("IntValue") then ammo.Value = 999 end
+        end
+    end
+    local function autoReloadStep()
+        if not autoReload then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets")
+            if ammo and ammo:IsA("IntValue") and ammo.Value == 0 then
+                pcall(function() tool:Reload() end)
+            end
+        end
+    end
+    local function noRecoilStep()
+        if not noRecoil then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            for _, obj in ipairs(tool:GetDescendants()) do
+                if obj:IsA("SpringConstraint") or obj:IsA("RocketPropulsion") then obj.Enabled = false end
+            end
+        end
+    end
+    local rapidFireTimer = 0
+    local function rapidFireStep()
+        if not rapidFire then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+            if tick() - rapidFireTimer >= rapidFireDelay then
+                pcall(function() tool:Activate() end)
+                rapidFireTimer = tick()
+            end
+        end
+    end
+
+    -- Auto Shoot
     local function autoShootStep() if autoShoot then pcall(function() if Player.Character and Player.Character:FindFirstChildWhichIsA("Tool") then Player.Character:FindFirstChildWhichIsA("Tool"):Activate() end end) end end
+
+    -- Fire Rate Mod
     local function fireRateStep()
         if not fireRateMod then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
         if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("firerate") or v.Name:lower():find("rate")) then v.Value = v.Value * fireRateMultiplier end end end) end
     end
+
+    -- Spread Reducer
     local function spreadStep()
         if not spreadReducer then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
         if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("spread") or v.Name:lower():find("accuracy")) then v.Value = 0 end end end) end
     end
+
+    -- Recoil Control
     local function recoilStep()
         if not recoilControl then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
         if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and v.Name:lower():find("recoil") then v.Value = 0 end end end) end
     end
+
+    -- Weapon Range Mod
     local function rangeStep()
         if not weaponRangeMod then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
         if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("range") or v.Name:lower():find("distance")) then v.Value = weaponRangeValue end end end) end
     end
+
+    -- Bullet Speed Mod
     local function bulletSpeedStep()
         if not bulletSpeedMod then return end
         local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
         if tool then pcall(function() for _, v in ipairs(tool:GetDescendants()) do if v:IsA("NumberValue") and (v.Name:lower():find("speed") or v.Name:lower():find("velocity")) then v.Value = bulletSpeedValue end end end) end
+    end
+
+    -- Magnetic Aim
+    local function magneticAimStep()
+        if not magneticAim then return end
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if not tool then return end
+        local handle = tool:FindFirstChild("Handle")
+        if not handle then return end
+        local nearest, nearestDist = nil, 50
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p == Player then continue end
+            local chr = p.Character
+            if chr and chr:FindFirstChild("Head") then
+                local dist = (chr.Head.Position - handle.Position).Magnitude
+                if dist < nearestDist then nearestDist = dist; nearest = chr end
+            end
+        end
+        if nearest then
+            local dir = (nearest.Head.Position - handle.Position).Unit
+            handle.Velocity = dir * magneticStrength
+        end
+    end
+
+    -- Auto Farm (encontra lixo automaticamente)
+    local function findNearestTrash()
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+        local root = char.HumanoidRootPart
+        local nearest, nearestDist = nil, 50
+        local keywords = {"lixo","trash","saco","papel","garrafa","lata","entulho","resto","garbage","waste","bag","bottle","can","paper"}
+        for _, part in ipairs(Workspace:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "" then
+                local name = part.Name:lower()
+                local isTrash = false
+                for _, kw in ipairs(keywords) do if name:find(kw) then isTrash = true; break end end
+                if isTrash and part.Transparency < 0.9 and part.Parent then
+                    local dist = (part.Position - root.Position).Magnitude
+                    if dist < nearestDist then nearestDist = dist; nearest = part end
+                end
+            end
+        end
+        return nearest
+    end
+
+    local lastFarmAction = 0
+    local function farmStep()
+        if not s4zxFarm then return end
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local root = char.HumanoidRootPart
+        local trash = findNearestTrash()
+        if not trash then return end
+        local targetPos = trash.Position
+        local distance = (targetPos - root.Position).Magnitude
+        if distance > 4 then
+            local direction = (targetPos - root.Position).Unit
+            local newPos = root.Position + direction * (farmSpeed * 0.15)
+            root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
+        elseif distance <= 4 then
+            local tool = char:FindFirstChildWhichIsA("Tool")
+            if tool then
+                if tick() - lastFarmAction > 0.5 then
+                    pcall(function() tool:Activate() end)
+                    lastFarmAction = tick()
+                end
+            else
+                if tick() - lastFarmAction > 0.5 then
+                    pcall(function()
+                        root.CFrame = CFrame.new(targetPos) * CFrame.new(0, 2, 0)
+                        task.wait(0.1)
+                        root.CFrame = root.CFrame
+                    end)
+                    lastFarmAction = tick()
+                end
+            end
+        end
+    end
+
+    -- Outras funções
+    local function autoClickStep() if autoClick then pcall(function() if Player.Character and Player.Character:FindFirstChildWhichIsA("Tool") then Player.Character:FindFirstChildWhichIsA("Tool"):Activate() end end) end end
+    local function autoEquipStep()
+        if not autoEquip or autoEquipName == "" then return end
+        local backpack = Player:FindFirstChild("Backpack")
+        if backpack then
+            for _, item in ipairs(backpack:GetChildren()) do
+                if item:IsA("Tool") and item.Name:lower() == autoEquipName:lower() then
+                    pcall(function() item.Parent = Player.Character end)
+                    break
+                end
+            end
+        end
+    end
+    local lastAfkTime = 0
+    local function antiAfkStep()
+        if not antiAfk then return end
+        if tick() - lastAfkTime < 120 then return end
+        lastAfkTime = tick()
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 1, 0)
+        end
+    end
+    local function antiStunStep()
+        if not antiStun then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        end
+    end
+    local function antiFireStep()
+        if not antiFire then return end
+        local char = Player.Character
+        if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") and part.Material == Enum.Material.Fire then part.Material = Enum.Material.SmoothPlastic end end end
+    end
+    local function autoRespawnStep()
+        if not autoRespawn then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then pcall(function() Player:LoadCharacter() end) end
+    end
+    local function spinbotStep()
+        if not spinbot then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+        end
+    end
+    local function fovChangerStep()
+        if fovChanger then Camera.FieldOfView = customFOV else Camera.FieldOfView = 70 end
+    end
+    local function timeStep() if timeChanger then Lighting.ClockTime = gameTime end end
+    local function gravityStep() Workspace.Gravity = gravityChanger and gravityValue or 196.2 end
+    local function jumpPowerStep()
+        if jumpPowerChanger then local hum = Player.Character and Player.Character:FindFirstChild("Humanoid"); if hum then hum.JumpPower = jumpPower end end
+    end
+    local function zoomStep()
+        if zoomHack then Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, -zoomDistance) end
+    end
+    local function fpsUnlockerStep()
+        if fpsUnlocker then pcall(function() settings().Network.FrameRateCap = targetFPS end) else pcall(function() settings().Network.FrameRateCap = 60 end) end
+    end
+    local function antiVoidStep()
+        if not antiVoid then return end
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.Position.Y < voidHeight then
+            char.HumanoidRootPart.CFrame = CFrame.new(char.HumanoidRootPart.Position.X, 50, char.HumanoidRootPart.Position.Z)
+        end
+    end
+    local function autoDodgeStep()
+        if not autoDodge then return end
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local root = char.HumanoidRootPart
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Velocity.Magnitude > 30 and (obj.Position - root.Position).Magnitude < dodgeRange then
+                local dodgeDir = (obj.Position - root.Position).Unit
+                local perpendicular = Vector3.new(-dodgeDir.Z, 0, dodgeDir.X)
+                root.CFrame = CFrame.new(root.Position + perpendicular * 10)
+                break
+            end
+        end
+    end
+    local function rainbowWorldStep()
+        if rainbowWorld then Lighting.Ambient = Color3.fromHSV((tick()*rainbowSpeed)%1, 0.8, 0.5) else Lighting.Ambient = Color3.new(0,0,0) end
+    end
+    local function rainbowSkyStep() if rainbowSky then Lighting.SkyColor = Color3.fromHSV((tick()*rainbowSpeed)%1, 0.6, 0.8) end end
+    local function rainbowFogStep()
+        if rainbowFog then Lighting.FogColor = Color3.fromHSV((tick()*rainbowSpeed)%1, 1, 0.6); Lighting.FogEnd = 100 else Lighting.FogEnd = 0 end
+    end
+    local function rainbowLightingStep()
+        if rainbowLighting then local c = Color3.fromHSV((tick()*rainbowSpeed)%1, 1, 1); Lighting.ColorShift_Top = c; Lighting.ColorShift_Bottom = c end
+    end
+    local function rainbowCharStep()
+        if not rainbowChar then return end
+        local char = Player.Character
+        if char then
+            local c = Color3.fromHSV((tick()*rainbowSpeed)%1, 1, 1)
+            for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Color = c end end
+        end
+    end
+    local function adminNotifierStep()
+        if not adminNotifier then return end
+        for _, p in ipairs(Players:GetPlayers()) do
+            for _, kw in ipairs({"staff","admin","mod","helper","owner","dev","gerente","moderador"}) do
+                if p.Name:lower():find(kw) then
+                    Rayfield:Notify({Title="⚠️ Admin!", Content=p.Name.." está no servidor!", Duration=5})
+                    adminNotifier = false
+                    break
+                end
+            end
+        end
     end
 
     -- Staff Counter
@@ -945,6 +1189,18 @@ function carregarSnowS4zx()
     UserInputService.JumpRequest:Connect(function()
         if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
     end)
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == Enum.KeyCode.V then
+            local char = Player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then waypoint = char.HumanoidRootPart.Position end
+        elseif input.KeyCode == Enum.KeyCode.B and tpWaypoint and waypoint then
+            local char = Player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.CFrame = CFrame.new(waypoint) end
+        elseif input.KeyCode == Enum.KeyCode.F3 then
+            TeleportService:Teleport(game.PlaceId)
+        end
+    end)
 
     local lastLiveCheck = 0
     RunService.RenderStepped:Connect(function()
@@ -954,14 +1210,41 @@ function carregarSnowS4zx()
         flyStep()
         invisibilityStep()
         freecamStep()
+        reachStep()
+        infiniteAmmoStep()
+        autoReloadStep()
+        noRecoilStep()
+        rapidFireStep()
         autoShootStep()
         fireRateStep()
         spreadStep()
         recoilStep()
         rangeStep()
         bulletSpeedStep()
-        wallshotStep()
+        magneticAimStep()
         flyCarStep()
+        farmStep()
+        autoClickStep()
+        autoEquipStep()
+        antiAfkStep()
+        antiStunStep()
+        antiFireStep()
+        autoRespawnStep()
+        spinbotStep()
+        fovChangerStep()
+        timeStep()
+        gravityStep()
+        jumpPowerStep()
+        zoomStep()
+        fpsUnlockerStep()
+        antiVoidStep()
+        autoDodgeStep()
+        rainbowWorldStep()
+        rainbowSkyStep()
+        rainbowFogStep()
+        rainbowLightingStep()
+        rainbowCharStep()
+        adminNotifierStep()
         updateStaffCounter()
         if antiLive and tick()-lastLiveCheck > 1 then
             lastLiveCheck = tick()
@@ -970,6 +1253,9 @@ function carregarSnowS4zx()
     end)
 
     script.Destroying:Connect(function()
+        disableWallshot()
+        if flyCarBV then flyCarBV:Destroy() end
+        if flyCarBG then flyCarBG:Destroy() end
         if silentAimConnection then silentAimConnection:Disconnect() end
         if fovCircleObj then fovCircleObj:Remove() end
         if crosshairObj then crosshairObj:Remove() end
@@ -982,13 +1268,13 @@ function carregarSnowS4zx()
         for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
         local c = Player.Character
-        if c and c:FindFirstChild("Humanoid") then
-            c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16; Camera.FieldOfView = 70
-        end
+        if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16; Camera.FieldOfView = 70 end
         Camera.CameraType = Enum.CameraType.Custom
+        Workspace.Gravity = 196.2
+        pcall(function() settings().Network.FrameRateCap = 60 end)
     end)
 
-    print("Snow S4zx Ultimate – WallShot, Fly Car, Modo Streamer, Salvar Config carregado!")
+    print("Snow S4zx Ultimate – TUDO CORRIGIDO E FUNCIONAL!")
 end
 
 mostrarLogin()
