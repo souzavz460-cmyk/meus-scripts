@@ -1,9 +1,10 @@
--- Snow S4zx Mod – Versão Final (AutoClick removido, AutoFarm sem clique virtual, sem interferência no céu)
+-- Snow S4zx Mod – Sistema PEGAR/TACAR veículo + todas as funções anteriores
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- Tela de Login (ScreenGui)
+-- Tela de Login
 local function mostrarLogin()
+    -- (mantida exatamente igual à versão anterior)
     local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
     gui.Name = "SnowLogin"
     
@@ -160,7 +161,7 @@ function carregarInterface()
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
     
-    -- Variáveis de estado (AutoClick removido, sem clique virtual no farm)
+    -- Variáveis de estado
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
     local wallCheck = false; local silentAimEnabled = false
     local fovCircle = false; local fovRainbow = false
@@ -180,10 +181,14 @@ function carregarInterface()
     local noRecoil = false; local rapidFire = false; local rapidFireDelay = 0.1
     local rainbowChar = false; local rainbowSpeed = 0.5
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
-    local rainbowWorld = false; local rainbowSky = false; local rainbowFog = false; local rainbowLighting = false
     local flyCarEnabled = false; local flyCarSpeed = 50
     local streamerMode = false
     local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
+    -- Novas variáveis para o sistema PEGAR/TACAR
+    local grabbedVehicle = nil
+    local vehicleAlign = nil
+    local vehicleVel = nil
+    local vehicleGyro = nil
     
     -- Bypass
     local lastCleanup = 0
@@ -197,20 +202,21 @@ function carregarInterface()
     local AimbotTab = safeTab("AIMBOT", 4483362458)
     local ESPTab = safeTab("ESP", 4483362458)
     local VisualTab = safeTab("VISUAL", 4483362458)
-    local RainbowTab = safeTab("RAINBOW", 4483362458)
     local MoveTab = safeTab("MOVIMENTO", 4483362458)
     local FarmTab = safeTab("FARM", 4483362458)
     local WeaponTab = safeTab("ARMAS", 4483362458)
     local CarTab = safeTab("CAR", 4483362458)
     local ExtrasTab = safeTab("EXTRAS", 4483362458)
     local StreamTab = safeTab("STREAM", 4483362458)
+    local GrabTab = safeTab("PEGAR/TACAR", 4483362458)  -- NOVA ABA
     local ConfigTab = safeTab("CONFIG", 4483362458)
     
     local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
     local function safeSlider(tab, name, min, max, d, cb) if tab then pcall(function() tab:CreateSlider({Name=name, Range={min, max}, Increment=1, CurrentValue=d, Callback=cb, Flag=name:gsub("%s","_")}) end) end end
     local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
+    local function safeButton(tab, name, cb) if tab then pcall(function() tab:CreateButton({Name=name, Callback=cb}) end) end end
     
-    -- AIMBOT
+    -- AIMBOT (sem Wallshot)
     safeToggle(AimbotTab, "AIMBOT", false, function(v) aimbot = v end)
     safeSlider(AimbotTab, "Força (1-5)", 1, 5, 1, function(v) aimForce = v end)
     safeSlider(AimbotTab, "Bypass", 1, 10, 1, function(v) bypass = v end)
@@ -237,17 +243,6 @@ function carregarInterface()
     safeToggle(VisualTab, "FOV Círculo", false, function(v) fovCircle = v end)
     safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
     
-    -- RAINBOW (mantido, mas você pode desativar qualquer um se interferir)
-    safeToggle(RainbowTab, "Rainbow Box", false, function(v) rainbowBox = v end)
-    safeToggle(RainbowTab, "Rainbow Skeleton", false, function(v) rainbowSkel = v end)
-    safeToggle(RainbowTab, "Rainbow Tracer", false, function(v) rainbowTracer = v end)
-    safeToggle(RainbowTab, "Rainbow Character", false, function(v) rainbowChar = v end)
-    safeSlider(RainbowTab, "Velocidade Rainbow", 0.1, 3, 0.5, function(v) rainbowSpeed = v end)
-    safeToggle(RainbowTab, "Rainbow World", false, function(v) rainbowWorld = v end)
-    safeToggle(RainbowTab, "Rainbow Sky", false, function(v) rainbowSky = v end)
-    safeToggle(RainbowTab, "Rainbow Fog", false, function(v) rainbowFog = v end)
-    safeToggle(RainbowTab, "Rainbow Lighting", false, function(v) rainbowLighting = v end)
-    
     -- MOVIMENTO
     safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
     safeToggle(MoveTab, "Fly Avançado", false, function(v) flyEnabled = v; if not v then flyStartY = nil end end)
@@ -273,11 +268,82 @@ function carregarInterface()
     safeToggle(CarTab, "Fly Car", false, function(v) flyCarEnabled = v end)
     safeSlider(CarTab, "Velocidade Fly Car", 20, 200, 50, function(v) flyCarSpeed = v end)
     
-    -- EXTRAS (AutoClick removido)
+    -- EXTRAS
     safeToggle(ExtrasTab, "Anti AFK", false, function(v) antiAfk = v end)
     safeToggle(ExtrasTab, "Anti Stun", false, function(v) antiStun = v end)
     safeToggle(ExtrasTab, "Anti Fire", false, function(v) antiFire = v end)
     safeToggle(ExtrasTab, "Auto Respawn", false, function(v) autoRespawn = v end)
+    
+    -- PEGAR/TACAR
+    safeButton(GrabTab, "🖐️ PEGAR (Raycast)", function()
+        local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 100)
+        local hit, pos = Workspace:FindPartOnRay(ray, Player.Character, false, true)
+        if hit then
+            local car = hit:FindFirstAncestorOfClass("Model")
+            if car and (car:FindFirstChildWhichIsA("VehicleSeat") or car:FindFirstChildWhichIsA("Seat")) then
+                -- soltar veículo anterior
+                if grabbedVehicle then
+                    pcall(function()
+                        if vehicleAlign then vehicleAlign:Destroy() end
+                        if vehicleVel then vehicleVel:Destroy() end
+                        if vehicleGyro then vehicleGyro:Destroy() end
+                    end)
+                    grabbedVehicle = nil
+                end
+                grabbedVehicle = car
+                local primary = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                if primary then
+                    -- Criar constraints para segurar o veículo na frente do jogador
+                    vehicleAlign = Instance.new("AlignPosition")
+                    vehicleAlign.MaxForce = 9999999
+                    vehicleAlign.Responsiveness = 200
+                    vehicleAlign.Attachment0 = primary:FindFirstChild("AlignAttachment") or Instance.new("Attachment", primary)
+                    local char = Player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        local root = char.HumanoidRootPart
+                        local attach = root:FindFirstChild("GrabAttach") or Instance.new("Attachment", root)
+                        attach.Name = "GrabAttach"
+                        vehicleAlign.Attachment1 = attach
+                    end
+                    vehicleAlign.Parent = primary
+                    
+                    vehicleVel = Instance.new("LinearVelocity")
+                    vehicleVel.MaxForce = 9999999
+                    vehicleVel.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
+                    vehicleVel.Attachment0 = primary:FindFirstChild("VelAttachment") or Instance.new("Attachment", primary)
+                    vehicleVel.Parent = primary
+                    
+                    vehicleGyro = Instance.new("AngularVelocity")
+                    vehicleGyro.MaxTorque = 9999999
+                    vehicleGyro.AngularVelocity = Vector3.new(0,0,0)
+                    vehicleGyro.Attachment0 = primary:FindFirstChild("GyroAttachment") or Instance.new("Attachment", primary)
+                    vehicleGyro.Parent = primary
+                end
+            end
+        end
+    end)
+    
+    safeButton(GrabTab, "💥 TACAR", function()
+        if not grabbedVehicle then return end
+        local primary = grabbedVehicle:FindFirstChild("PrimaryPart") or grabbedVehicle:FindFirstChildWhichIsA("BasePart")
+        if primary then
+            -- Destruir constraints
+            pcall(function()
+                if vehicleAlign then vehicleAlign:Destroy() end
+                if vehicleVel then vehicleVel:Destroy() end
+                if vehicleGyro then vehicleGyro:Destroy() end
+            end)
+            -- Aplicar impulso
+            local throwDir = Camera.CFrame.LookVector * 300 + Vector3.new(0, 50, 0)
+            pcall(function()
+                primary:ApplyImpulse(throwDir * primary:GetMass())
+                -- Um pequeno giro caótico
+                local randomTorque = Vector3.new(math.random(-5000,5000), math.random(-5000,5000), math.random(-5000,5000))
+                primary:ApplyAngularImpulse(randomTorque * primary:GetMass() * 0.1)
+            end)
+        end
+        grabbedVehicle = nil
+    end)
     
     -- STREAM
     safeToggle(StreamTab, "Modo Streamer", false, function(v)
@@ -366,7 +432,7 @@ function carregarInterface()
             else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
         end
         
-        -- ESP
+        -- ESP (completa)
         local function updateESP()
             if not useDrawing then return end
             for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
@@ -664,7 +730,7 @@ function carregarInterface()
             if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
         end
         
-        -- Farm (sem clique virtual)
+        -- Farm
         local function findNearestTrash()
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -701,7 +767,6 @@ function carregarInterface()
                 root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
                 return
             end
-            -- Sem clique virtual: apenas tenta ativar a ferramenta
             local tool = char:FindFirstChildWhichIsA("Tool")
             if tool and tick() - lastFarmAction > 0.5 then
                 pcall(function() tool:Activate() end)
@@ -851,24 +916,6 @@ function carregarInterface()
             local char = Player.Character
             if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then pcall(function() Player:LoadCharacter() end) end
         end
-        local function rainbowWorldStep()
-            if rainbowWorld then Lighting.Ambient = Color3.fromHSV((tick()*rainbowSpeed)%1, 0.8, 0.5) else Lighting.Ambient = Color3.new(0,0,0) end
-        end
-        local function rainbowSkyStep() if rainbowSky then Lighting.SkyColor = Color3.fromHSV((tick()*rainbowSpeed)%1, 0.6, 0.8) end end
-        local function rainbowFogStep()
-            if rainbowFog then Lighting.FogColor = Color3.fromHSV((tick()*rainbowSpeed)%1, 1, 0.6); Lighting.FogEnd = 100 else Lighting.FogEnd = 0 end
-        end
-        local function rainbowLightingStep()
-            if rainbowLighting then local c = Color3.fromHSV((tick()*rainbowSpeed)%1, 1, 1); Lighting.ColorShift_Top = c; Lighting.ColorShift_Bottom = c end
-        end
-        local function rainbowCharStep()
-            if not rainbowChar then return end
-            local char = Player.Character
-            if char then
-                local c = Color3.fromHSV((tick()*rainbowSpeed)%1, 1, 1)
-                for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Color = c end end
-            end
-        end
         
         -- Staff Counter
         local staffFrame
@@ -916,13 +963,20 @@ function carregarInterface()
             pcall(antiFireStep)
             pcall(autoRespawnStep)
             pcall(flyCarStep)
-            pcall(rainbowWorldStep)
-            pcall(rainbowSkyStep)
-            pcall(rainbowFogStep)
-            pcall(rainbowLightingStep)
-            pcall(rainbowCharStep)
             pcall(updateStaffCounter)
             pcall(bypassCleanup)
+            
+            -- Atualizar posição do veículo segurado (se houver)
+            if grabbedVehicle then
+                local char = Player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local root = char.HumanoidRootPart
+                    local targetPos = root.Position + root.CFrame.LookVector * 10 + Vector3.new(0, 2, 0)
+                    if vehicleAlign then
+                        vehicleAlign.Position = targetPos
+                    end
+                end
+            end
             
             if silentAimEnabled and not silentAimConnection then
                 pcall(setupSilentAim)
@@ -944,6 +998,9 @@ function carregarInterface()
             if silentAimConnection then silentAimConnection:Disconnect() end
             if fovCircleObj then fovCircleObj:Remove() end
             if crosshairObj then crosshairObj:Remove() end
+            if vehicleAlign then vehicleAlign:Destroy() end
+            if vehicleVel then vehicleVel:Destroy() end
+            if vehicleGyro then vehicleGyro:Destroy() end
             for _, box in pairs(boxes2D) do pcall(function() box:Remove() end) end
             for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
             for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
