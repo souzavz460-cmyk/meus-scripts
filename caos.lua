@@ -1,4 +1,4 @@
--- Snow S4zx Ultimate – TUDO REVISADO (Tema DarkBlue, ESPs, Silent Aim, Ghost, Speed, Fly, Combat+)
+-- Snow S4zx Ultimate – WallShot, Fly Car, Modo Streamer, Salvar Config
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
@@ -107,7 +107,11 @@ function carregarSnowS4zx()
         LoadingSubtitle = "by Souzavz",
         ShowText = "S4zx MODS",
         Theme = "DarkBlue",
-        ConfigurationSaving = { Enabled = false },
+        ConfigurationSaving = {
+            Enabled = true,
+            FolderName = "SnowS4zx",
+            FileName = "Config"
+        },
         KeySystem = false,
         MobileButton = { Enabled = true, Name = "S4zx MODS" }
     })
@@ -185,6 +189,11 @@ function carregarSnowS4zx()
     local bulletSpeedMod = false; local bulletSpeedValue = 200
     local magneticAim = false; local magneticStrength = 30
     local hitSound = false; local hitSoundID = "rbxassetid://9120386436"
+    -- Novas
+    local wallshotEnabled = false
+    local flyCarEnabled = false
+    local flyCarSpeed = 50
+    local streamerMode = false
 
     -- ==================== ABAS ====================
     local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
@@ -201,6 +210,8 @@ function carregarSnowS4zx()
     local FunTab = safeTab("DIVERSÃO", 4483362458)
     local UtilitiesTab = safeTab("UTILITIES", 4483362458)
     local TeleportTab = safeTab("TELEPORT", 4483362458)
+    local CarTab = safeTab("CAR", 4483362458)         -- Fly Car
+    local StreamTab = safeTab("STREAM", 4483362458)   -- Modo Streamer
     local ConfigTab = safeTab("CONFIG", 4483362458)
 
     local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
@@ -216,6 +227,7 @@ function carregarSnowS4zx()
     safeToggle(AimbotTab, "WALLCK", false, function(v) wallCheck = v end)
     safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
     safeToggle(AimbotTab, "Triggerbot", false, function(v) triggerbot = v end)
+    safeToggle(AimbotTab, "WallShot (Tiro Atravessa)", false, function(v) wallshotEnabled = v end)
 
     -- ESP
     safeToggle(ESPTab, "2D Box", false, function(v) espBox = v end)
@@ -309,6 +321,10 @@ function carregarSnowS4zx()
         local char = Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then waypoint = char.HumanoidRootPart.Position end
     end)
+
+    -- CAR (Fly Car)
+    safeToggle(CarTab, "Fly Car", false, function(v) flyCarEnabled = v end)
+    safeSlider(CarTab, "Velocidade Fly Car", 20, 200, 50, function(v) flyCarSpeed = v end)
 
     -- TELEPORT
     safeInput(TeleportTab, "Nome do Jogador", "", function(v) teleportPlayerName = v end)
@@ -405,8 +421,19 @@ function carregarSnowS4zx()
     safeButton(UtilitiesTab, "Server Hop (F3)", function() TeleportService:Teleport(game.PlaceId) end)
     safeInput(UtilitiesTab, "Chat Tag", "[S4zx]", function(v) chatTagText = v end)
 
+    -- STREAM (Modo Streamer)
+    safeToggle(StreamTab, "Modo Streamer", false, function(v)
+        streamerMode = v
+        Window.Enabled = not v  -- esconde/mostra a janela principal
+        if staffFrame then staffFrame.Visible = not v end
+    end)
+
     -- CONFIG
     safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
+    safeButton(ConfigTab, "Salvar Configuração", function()
+        Rayfield.SaveConfiguration()
+        Rayfield:Notify({Title="S4zx", Content="Configuração salva!", Duration=2})
+    end)
 
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
@@ -486,7 +513,85 @@ function carregarSnowS4zx()
         else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
     end
 
-    -- ESP (completa, com limpeza)
+    -- WallShot (projéteis atravessam paredes)
+    local function wallshotStep()
+        if not wallshotEnabled then return end
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                -- Projétil: velocidade alta ou atributo Owner
+                if obj.Velocity.Magnitude > 50 or obj:GetAttribute("Owner") == Player.Name then
+                    -- Ignora partes de personagens
+                    local parent = obj.Parent
+                    local isCharacter = false
+                    while parent do
+                        if parent:IsA("Model") and Players:GetPlayerFromCharacter(parent) then
+                            isCharacter = true
+                            break
+                        end
+                        parent = parent.Parent
+                    end
+                    if not isCharacter then
+                        pcall(function()
+                            obj.CanCollide = false
+                            obj.CanQuery = false
+                        end)
+                    end
+                end
+            end
+        end
+    end
+
+    -- Fly Car
+    local function flyCarStep()
+        if not flyCarEnabled then return end
+        local char = Player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local nearest, nearestDist = nil, math.huge
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
+                local car = obj:FindFirstAncestorOfClass("Model")
+                if car then
+                    local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                    if p then
+                        local d = (p.Position - char.HumanoidRootPart.Position).Magnitude
+                        if d < nearestDist then nearestDist = d; nearest = car end
+                    end
+                end
+            end
+        end
+        if nearest then
+            local primary = nearest:FindFirstChild("PrimaryPart") or nearest:FindFirstChildWhichIsA("BasePart")
+            if primary then
+                -- Cria forças se não existirem
+                local bv = primary:FindFirstChild("FlyCarVelocity")
+                local bg = primary:FindFirstChild("FlyCarGyro")
+                if not bv then
+                    bv = Instance.new("BodyVelocity")
+                    bv.Name = "FlyCarVelocity"
+                    bv.MaxForce = Vector3.new(1e9,1e9,1e9)
+                    bv.Parent = primary
+                end
+                if not bg then
+                    bg = Instance.new("BodyGyro")
+                    bg.Name = "FlyCarGyro"
+                    bg.MaxTorque = Vector3.new(1e9,1e9,1e9)
+                    bg.Parent = primary
+                end
+                -- Controle
+                local moveDir = Vector3.zero
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0,1,0) end
+                bv.Velocity = moveDir.Unit * (flyCarSpeed * 0.5)
+                bg.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
+            end
+        end
+    end
+
+    -- ESP (completa)
     local function updateESP()
         if not useDrawing then return end
         for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
@@ -855,6 +960,8 @@ function carregarSnowS4zx()
         recoilStep()
         rangeStep()
         bulletSpeedStep()
+        wallshotStep()
+        flyCarStep()
         updateStaffCounter()
         if antiLive and tick()-lastLiveCheck > 1 then
             lastLiveCheck = tick()
@@ -881,7 +988,7 @@ function carregarSnowS4zx()
         Camera.CameraType = Enum.CameraType.Custom
     end)
 
-    print("Snow S4zx Ultimate Tema DarkBlue 100% funcional!")
+    print("Snow S4zx Ultimate – WallShot, Fly Car, Modo Streamer, Salvar Config carregado!")
 end
 
 mostrarLogin()
