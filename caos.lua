@@ -106,7 +106,7 @@ function carregarSnowS4zx()
         LoadingTitle = "S4zx MODS",
         LoadingSubtitle = "by Souzavz",
         ShowText = "S4zx MODS",
-        Theme = "AmberGlow",
+        Theme = "Amethyst",
         ConfigurationSaving = { Enabled = false },
         KeySystem = false,
         MobileButton = { Enabled = true, Name = "S4zx MODS" }
