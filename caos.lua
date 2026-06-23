@@ -2,7 +2,7 @@
 -- Sistema de Key padrão (sem bypass offline)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2710"
+local DONO_KEY = "S4zx-XXX2710"
 
 -- =================== FUNÇÕES DE BYPASS ===================
 local function deepCleanAttributes()
