@@ -1,10 +1,9 @@
--- Snow S4zx Mod – Sistema PEGAR/TACAR veículo + todas as funções anteriores
+-- Snow S4zx Mod – Versão Suprema Ultimate (Sintonia RP Edition)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2027"
+local DONO_KEY = "S4zx-DonoSupreme2026"
 
 -- Tela de Login
 local function mostrarLogin()
-    -- (mantida exatamente igual à versão anterior)
     local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
     gui.Name = "SnowLogin"
     
@@ -184,7 +183,14 @@ function carregarInterface()
     local flyCarEnabled = false; local flyCarSpeed = 50
     local streamerMode = false
     local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
-    -- Novas variáveis para o sistema PEGAR/TACAR
+    
+    -- Novas Variáveis Integradas
+    local autoEssencia = false
+    local autoLockPic = false
+    local autoMicha = false
+    local lockedTarget = nil
+    
+    -- Sistema PEGAR/TACAR
     local grabbedVehicle = nil
     local vehicleAlign = nil
     local vehicleVel = nil
@@ -193,8 +199,6 @@ function carregarInterface()
     -- Bypass
     local lastCleanup = 0
     local CLEANUP_INTERVAL = 2.0
-    
-    -- Fly auxiliar
     local flyStartY = nil
     
     -- Abas
@@ -208,7 +212,7 @@ function carregarInterface()
     local CarTab = safeTab("CAR", 4483362458)
     local ExtrasTab = safeTab("EXTRAS", 4483362458)
     local StreamTab = safeTab("STREAM", 4483362458)
-    local GrabTab = safeTab("PEGAR/TACAR", 4483362458)  -- NOVA ABA
+    local GrabTab = safeTab("PEGAR/TACAR", 4483362458)
     local ConfigTab = safeTab("CONFIG", 4483362458)
     
     local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
@@ -216,8 +220,9 @@ function carregarInterface()
     local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
     local function safeButton(tab, name, cb) if tab then pcall(function() tab:CreateButton({Name=name, Callback=cb}) end) end end
     
-    -- AIMBOT (sem Wallshot)
+    -- AIMBOT
     safeToggle(AimbotTab, "AIMBOT", false, function(v) aimbot = v end)
+    safeToggle(AimbotTab, "Auto Lock Pic (CamLock)", false, function(v) autoLockPic = v if not v then lockedTarget = nil end end)
     safeSlider(AimbotTab, "Força (1-5)", 1, 5, 1, function(v) aimForce = v end)
     safeSlider(AimbotTab, "Bypass", 1, 10, 1, function(v) bypass = v end)
     safeSlider(AimbotTab, "FOV (Raio)", 50, 500, 150, function(v) fovRadius = v end)
@@ -245,13 +250,15 @@ function carregarInterface()
     
     -- MOVIMENTO
     safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
-    safeToggle(MoveTab, "Fly Avançado", false, function(v) flyEnabled = v; if not v then flyStartY = nil end end)
+    safeToggle(MoveTab, "Fly Avançado (Anti-Kick)", false, function(v) flyEnabled = v; if not v then flyStartY = nil end end)
     safeSlider(MoveTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
     safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v end)
     safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
     safeToggle(MoveTab, "Ghost Mode (Invisível)", false, function(v) ghostMode = v; invisibility = v end)
     
     -- FARM
+    safeToggle(FarmTab, "Auto Essência", false, function(v) autoEssencia = v end)
+    safeToggle(FarmTab, "Auto Micha (Sintonia RP)", false, function(v) autoMicha = v end)
     safeToggle(FarmTab, "S4zx Farm", false, function(v) s4zxFarm = v end)
     safeSlider(FarmTab, "Velocidade Farm", 30, 100, 50, function(v) farmSpeed = v end)
     
@@ -281,7 +288,6 @@ function carregarInterface()
         if hit then
             local car = hit:FindFirstAncestorOfClass("Model")
             if car and (car:FindFirstChildWhichIsA("VehicleSeat") or car:FindFirstChildWhichIsA("Seat")) then
-                -- soltar veículo anterior
                 if grabbedVehicle then
                     pcall(function()
                         if vehicleAlign then vehicleAlign:Destroy() end
@@ -293,7 +299,6 @@ function carregarInterface()
                 grabbedVehicle = car
                 local primary = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
                 if primary then
-                    -- Criar constraints para segurar o veículo na frente do jogador
                     vehicleAlign = Instance.new("AlignPosition")
                     vehicleAlign.MaxForce = 9999999
                     vehicleAlign.Responsiveness = 200
@@ -327,17 +332,14 @@ function carregarInterface()
         if not grabbedVehicle then return end
         local primary = grabbedVehicle:FindFirstChild("PrimaryPart") or grabbedVehicle:FindFirstChildWhichIsA("BasePart")
         if primary then
-            -- Destruir constraints
             pcall(function()
                 if vehicleAlign then vehicleAlign:Destroy() end
                 if vehicleVel then vehicleVel:Destroy() end
                 if vehicleGyro then vehicleGyro:Destroy() end
             end)
-            -- Aplicar impulso
             local throwDir = Camera.CFrame.LookVector * 300 + Vector3.new(0, 50, 0)
             pcall(function()
                 primary:ApplyImpulse(throwDir * primary:GetMass())
-                -- Um pequeno giro caótico
                 local randomTorque = Vector3.new(math.random(-5000,5000), math.random(-5000,5000), math.random(-5000,5000))
                 primary:ApplyAngularImpulse(randomTorque * primary:GetMass() * 0.1)
             end)
@@ -362,7 +364,7 @@ function carregarInterface()
         return nil
     end
     
-    -- ==================== FUNÇÕES ====================
+    -- ==================== FUNÇÕES INTERNAS ====================
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -404,7 +406,7 @@ function carregarInterface()
             end)
         end
         
-        -- Aimbot
+        -- Aimbot Padrão
         local function aimbotStep()
             if not aimbot then return end
             local center = Camera.ViewportSize/2
@@ -432,7 +434,69 @@ function carregarInterface()
             else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
         end
         
-        -- ESP (completa)
+        -- NOVA FUNÇÃO: Auto Lock Pic (CamLock Travado para PVP)
+        local function autoLockPicStep()
+            if not autoLockPic then return end
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local myRoot = char.HumanoidRootPart
+            
+            if not lockedTarget or not lockedTarget.Parent or not lockedTarget:FindFirstChild("Humanoid") or lockedTarget.Humanoid.Health <= 0 then
+                local nearest = nil; local nearestDist = math.huge
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= Player and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+                        local d = (p.Character.Head.Position - Camera.CFrame.Position).Magnitude
+                        if d < nearestDist then nearestDist = d; nearest = p.Character end
+                    end
+                end
+                lockedTarget = nearest
+            end
+            if lockedTarget and lockedTarget:FindFirstChild("Head") then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, lockedTarget.Head.Position)
+            end
+        end
+        
+        -- NOVA FUNÇÃO: Auto Essência
+        local function autoEssenciaStep()
+            if not autoEssencia then return end
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and (obj.Name:lower():find("essencia") or obj.Name:lower():find("essence")) then
+                    char.HumanoidRootPart.CFrame = obj.CFrame
+                    break
+                end
+            end
+        end
+        
+        -- NOVA FUNÇÃO: Auto Micha (Sintonia RP)
+        local function autoMichaStep()
+            if not autoMicha then return end
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            
+            -- Equipa a ferramenta "Micha" automaticamente se tiver na backpack
+            local tool = char:FindFirstChild("Micha") or Player.Backpack:FindFirstChild("Micha")
+            if tool and tool:IsA("Tool") then
+                if tool.Parent ~= char then tool.Parent = char end
+                pcall(function() tool:Activate() end)
+            end
+            
+            -- Dispara interações de proximidade (ProximityPrompts) automáticas de roubo de veículos
+            for _, prompt in ipairs(Workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    local objText = prompt.ObjectText:lower()
+                    local actText = prompt.ActionText:lower()
+                    if objText:find("micha") or actText:find("roubar") or actText:find("micha") or objText:find("veiculo") then
+                        if Player:DistanceFromCharacter(prompt.Parent.Position) <= prompt.MaxActivationDistance then
+                            pcall(function() fireproximityprompt(prompt) end)
+                        end
+                    end
+                end
+            end
+        end
+        
+        -- ESP Completa
         local function updateESP()
             if not useDrawing then return end
             for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
@@ -680,7 +744,7 @@ function carregarInterface()
             end
         end
         
-        -- Speed
+        -- Speed Hack
         local function speedStep()
             if not speedEnabled then return end
             local char = Player.Character
@@ -697,7 +761,7 @@ function carregarInterface()
             end
         end
         
-        -- Fly
+        -- Fly Avançado Otimizado (Igual ao do Vídeo)
         local function flyStep()
             if not flyEnabled then flyStartY = nil; return end
             local char = Player.Character
@@ -705,32 +769,40 @@ function carregarInterface()
             local root = char.HumanoidRootPart
             local hum = char:FindFirstChild("Humanoid")
             if hum then hum.PlatformStand = true end
+            
             if not flyStartY then flyStartY = root.Position.Y end
             local camDir = Camera.CFrame.LookVector
             local moveDir = Vector3.zero
             local moving = false
+            
             if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
             if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
             if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
             if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
+            
             local verticalChange = 0
             if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalChange = 1; moving = true end
             if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalChange = -1; moving = true end
+            
             if verticalChange ~= 0 then flyStartY = flyStartY + verticalChange * (flySpeed * 0.15) end
+            
             local newPos = root.Position
-            if moving and moveDir.Magnitude > 0 then newPos = root.Position + moveDir.Unit * (flySpeed * 0.2) end
+            if moving and moveDir.Magnitude > 0 then 
+                newPos = root.Position + moveDir.Unit * (flySpeed * 0.2) 
+            end
+            
             newPos = Vector3.new(newPos.X, flyStartY, newPos.Z)
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
         end
         
-        -- Ghost
+        -- Ghost Mode
         local function invisibilityStep()
             if not invisibility then return end
             local char = Player.Character
             if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
         end
         
-        -- Farm
+        -- Farm de Lixo Padrão
         local function findNearestTrash()
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -822,7 +894,7 @@ function carregarInterface()
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
         end
         
-        -- Bypass
+        -- Anticheat Bypass Integrado
         local function bypassCleanup()
             local now = tick()
             if now - lastCleanup < CLEANUP_INTERVAL then return end
@@ -848,7 +920,7 @@ function carregarInterface()
             end)
         end
         
-        -- Armas
+        -- Modificações de Armas
         local function reachStep()
             if not reach then return end
             local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
@@ -887,7 +959,7 @@ function carregarInterface()
             end
         end
         
-        -- Extras
+        -- Proteções Extras
         local lastAfkTime = 0
         local function antiAfkStep()
             if not antiAfk then return end
@@ -917,7 +989,7 @@ function carregarInterface()
             if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then pcall(function() Player:LoadCharacter() end) end
         end
         
-        -- Staff Counter
+        -- Contador Oculto de Staff
         local staffFrame
         local function updateStaffCounter()
             if not staffFrame then return end
@@ -939,15 +1011,18 @@ function carregarInterface()
             updateStaffCounter()
         end)
         
-        -- Pulo Infinito
+        -- Evento de Pulo Infinito
         UserInputService.JumpRequest:Connect(function()
             if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
         end)
         
-        -- Loop
+        -- LOOP PRINCIPAL DE RENDERIZAÇÃO (RenderStepped)
         local lastLiveCheck = 0
         RunService.RenderStepped:Connect(function()
             pcall(aimbotStep)
+            pcall(autoLockPicStep)
+            pcall(autoEssenciaStep)
+            pcall(autoMichaStep)
             pcall(updateESP)
             pcall(speedStep)
             pcall(flyStep)
@@ -966,7 +1041,7 @@ function carregarInterface()
             pcall(updateStaffCounter)
             pcall(bypassCleanup)
             
-            -- Atualizar posição do veículo segurado (se houver)
+            -- Física do Veículo Segurado (Sistema PEGAR/TACAR)
             if grabbedVehicle then
                 local char = Player.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -991,7 +1066,7 @@ function carregarInterface()
             end
         end)
         
-        -- Limpeza
+        -- Limpeza Completa ao Desativar
         script.Destroying:Connect(function()
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
