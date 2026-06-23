@@ -1,7 +1,7 @@
 -- Snow S4zx Mod – Ultimate Bypass Edition (Linoria Corrigida)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2026"
+local DONO_KEY = "S4zx-DonoSupreme2028"
 
 -- =================== TELA DE LOGIN (GARANTIDA) ===================
 local function mostrarLogin()
