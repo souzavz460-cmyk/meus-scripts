@@ -1,6 +1,6 @@
 -- Snow S4zx Mod – Versão Ultimate Completa (TODAS as funções integradas)
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2026"
+local DONO_KEY = "S4zx-DonoSupreme2710"
 
 -- ==========================================
 -- TELA DE LOGIN
