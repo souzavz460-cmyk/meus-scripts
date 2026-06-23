@@ -1,13 +1,14 @@
--- Snow S4zx Mod – Ultimate Bypass Edition (Orion UI + Login Corrigido)
+-- Snow S4zx Mod – Ultimate Bypass Edition (Linoria Oficial + Login Corrigido)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- =================== TELA DE LOGIN (CORRIGIDA) ===================
+-- =================== TELA DE LOGIN (100% GARANTIDA) ===================
 local function mostrarLogin()
-    task.wait(0.5)  -- pequena pausa para garantir que os serviços estejam prontos
+    task.wait(0.5)
 
-    local coreGui = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui")
+    -- Tenta usar CoreGui, se falhar vai para PlayerGui
+    local parent = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui")
     local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
     local gui = Instance.new("ScreenGui")
@@ -15,17 +16,13 @@ local function mostrarLogin()
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    -- Tenta alocar no CoreGui (anti-detecção), se falhar, joga pro PlayerGui
-    if coreGui then
-        local ok = pcall(function() gui.Parent = coreGui end)
-        if not ok then
-            gui.Parent = playerGui
-        end
+    if parent then
+        local ok = pcall(function() gui.Parent = parent end)
+        if not ok then gui.Parent = playerGui end
     else
         gui.Parent = playerGui
     end
 
-    -- (o restante da criação da tela de login permanece igual ao seu código original)
     local bg = Instance.new("Frame", gui)
     bg.Size = UDim2.new(0, 300, 0, 220)
     bg.Position = UDim2.new(0.5, -150, 0.5, -110)
@@ -156,103 +153,54 @@ local function mostrarLogin()
     end)
 end
 
--- =================== INTERFACE PRINCIPAL (ORION + ADAPTADOR) ===================
+-- =================== INTERFACE LINORIA OFICIAL (ADAPTADA) ===================
 function carregarInterface()
-    -- Carrega a Orion Library (online, estável)
-    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-    if not OrionLib then
-        game:GetService("Players").LocalPlayer:Kick("Falha ao carregar interface Orion")
+    local Linoria = loadstring(game:HttpGet("https://raw.githubusercontent.com/richie0866/LinoriaLib/main/Library.lua"))()
+    if not Linoria then
+        game:GetService("Players").LocalPlayer:Kick("Falha ao carregar Linoria")
         return
     end
 
-    -- Adaptador para manter sua sintaxe original (AddToggle, AddSlider, etc.)
-    local LinoriaLib = {}
-    function LinoriaLib:Create(config)
-        local Window = OrionLib:MakeWindow({
-            Name = config.Title or "Snow S4zx",
-            HidePremium = true,
-            SaveConfig = config.Library and config.Library.Save or true,
-            ConfigFolder = config.Folder or "S4zxConfig"
-        })
-
-        local LibraryWrapper = {}
-
-        function LibraryWrapper:CreateTab(name)
-            local tab = Window:MakeTab({Name = name, PremiumOnly = false})
-            local TabWrapper = {}
-
-            function TabWrapper:AddToggle(tname, default, callback)
-                tab:AddToggle({Name = tname, Default = default, Callback = callback})
-            end
-
-            function TabWrapper:AddSlider(tname, min, max, default, callback)
-                local inc = 1
-                if type(default) == "number" and math.floor(default) ~= default then inc = 0.05 end
-                tab:AddSlider({
-                    Name = tname,
-                    Min = min,
-                    Max = max,
-                    Default = default,
-                    Color = Color3.fromRGB(0, 200, 255),
-                    Increment = inc,
-                    ValueName = "",
-                    Callback = callback
-                })
-            end
-
-            function TabWrapper:AddTextbox(tname, default, callback)
-                tab:AddTextbox({
-                    Name = tname,
-                    Default = default,
-                    TextDisappear = false,
-                    Callback = callback
-                })
-            end
-
-            function TabWrapper:AddButton(tname, callback)
-                tab:AddButton({Name = tname, Callback = callback})
-            end
-
-            return TabWrapper
-        end
-
-        function LibraryWrapper:SetHidden(state)
-            -- a Orion não tem método setHidden, então deixamos vazio
-        end
-
-        function LibraryWrapper:Unload()
-            OrionLib:Destroy()
-        end
-
-        -- Inicializa a UI após meio segundo (necessário para alguns executores)
-        task.delay(0.5, function()
-            OrionLib:Init()
-        end)
-
-        return LibraryWrapper
-    end
-
-    local Library = LinoriaLib:Create({
+    -- Cria a janela principal
+    local Window = Linoria:CreateWindow({
         Title = "Snow S4zx",
         Folder = "S4zxConfig",
-        Library = { Enabled = true, Save = true }
+        Save = true
     })
 
-    -- ========== DAQUI EM DIANTE, SEU CÓDIGO ORIGINAL CONTINUA IGUAL ==========
-    -- Abas da interface
-    local AimbotTab = Library:CreateTab("AIMBOT")
-    local ESPTab = Library:CreateTab("ESP")
-    local VisualTab = Library:CreateTab("VISUAL")
-    local MoveTab = Library:CreateTab("MOVIMENTO")
-    local FarmTab = Library:CreateTab("FARM")
-    local WeaponTab = Library:CreateTab("ARMAS")
-    local CarTab = Library:CreateTab("CARRO")
-    local ExtrasTab = Library:CreateTab("EXTRAS")
-    local GrabTab = Library:CreateTab("PEGAR/TACAR")
-    local StreamTab = Library:CreateTab("STREAM")
-    local ConfigTab = Library:CreateTab("CONFIG")
+    -- Funções auxiliares para criar abas e elementos compatíveis com o código original
+    local function criarAba(nome)
+        local tab = Window:Tab(nome)
+        local aba = {}
+        function aba:AddToggle(texto, padrao, callback)
+            tab:Toggle(texto, {Text = texto, Default = padrao, Callback = callback})
+        end
+        function aba:AddSlider(texto, min, max, padrao, callback)
+            tab:Slider(texto, {Text = texto, Min = min, Max = max, Default = padrao, Callback = callback})
+        end
+        function aba:AddTextbox(texto, padrao, callback)
+            tab:Textbox(texto, {Text = texto, Default = padrao, Callback = callback})
+        end
+        function aba:AddButton(texto, callback)
+            tab:Button(texto, {Text = texto, Callback = callback})
+        end
+        return aba
+    end
 
-    -- Serviços e variáveis de estado
+    -- Cria as abas
+    local AimbotTab = criarAba("AIMBOT")
+    local ESPTab = criarAba("ESP")
+    local VisualTab = criarAba("VISUAL")
+    local MoveTab = criarAba("MOVIMENTO")
+    local FarmTab = criarAba("FARM")
+    local WeaponTab = criarAba("ARMAS")
+    local CarTab = criarAba("CARRO")
+    local ExtrasTab = criarAba("EXTRAS")
+    local GrabTab = criarAba("PEGAR/TACAR")
+    local StreamTab = criarAba("STREAM")
+    local ConfigTab = criarAba("CONFIG")
+
+    -- Serviços e variáveis de estado (IDÊNTICO ao original)
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
@@ -296,8 +244,7 @@ function carregarInterface()
     local vehicleVel = nil
     local vehicleGyro = nil
 
-    -- ========== CONFIGURAÇÃO DOS ELEMENTOS DA UI ==========
-    -- (todas as linhas AddToggle, AddSlider, AddTextbox e AddButton que você já havia escrito)
+    -- ========== CONFIGURAÇÃO DOS ELEMENTOS DA UI (ADAPTADO À LINORIA OFICIAL) ==========
     -- AIMBOT
     AimbotTab:AddToggle("AIMBOT", false, function(v) aimbot = v end)
     AimbotTab:AddToggle("Auto Lock Pic (CamLock)", false, function(v) autoLockPic = v if not v then lockedTarget = nil end end)
@@ -431,13 +378,14 @@ function carregarInterface()
     -- STREAM
     StreamTab:AddToggle("Modo Streamer", false, function(v)
         streamerMode = v
-        Library:SetHidden(v)   -- será ignorado, mas não causa erro
+        -- Linoria não tem SetHidden, mas podemos minimizar a janela
+        if v then Window:Minimize() else Window:Maximize() end
     end)
 
     -- CONFIG
     ConfigTab:AddToggle("Anti Live", false, function(v) antiLive = v end)
 
-    -- Função auxiliar de cor
+    -- Função auxiliar de cor (mantida)
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
         local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
@@ -464,7 +412,7 @@ function carregarInterface()
         task.wait(math.random(10, 30) / 1000)
     end
 
-    -- ==================== FUNÇÕES INTERNAS (MANTIDAS IGUAIS) ====================
+    -- ==================== FUNÇÕES INTERNAS (100% ORIGINAIS) ====================
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -1162,18 +1110,18 @@ function carregarInterface()
 
             if antiLive and tick()-lastLiveCheck > 1 then
                 lastLiveCheck = tick()
-                -- Anti Live: se detectar LiveIndicator, esconde a UI
+                -- Esconde a UI se detectar LiveIndicator
                 if CoreGui:FindFirstChild("LiveIndicator") then
-                    Library:SetHidden(true)
+                    Window:Minimize()
                 else
-                    Library:SetHidden(false)
+                    Window:Maximize()
                 end
             end
         end)
 
         -- Limpeza ao Desativar
         script.Destroying:Connect(function()
-            pcall(function() Library:Unload() end)
+            pcall(function() Window:Destroy() end)
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
             if silentAimConnection then silentAimConnection:Disconnect() end
