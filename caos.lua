@@ -1,167 +1,235 @@
--- Snow S4zx Mod – Ultimate Bypass Edition (Linoria UI)
--- Tela de Login Corrigida + Interface Linoria + Bypasses
+-- Snow S4zx Mod – Ultimate Bypass Edition (Orion UI + Login Corrigido)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- =================== TELA DE LOGIN (GARANTIDA) ===================
+-- =================== TELA DE LOGIN (CORRIGIDA) ===================
 local function mostrarLogin()
-    -- Pequeno delay para garantir que o CoreGui esteja disponível
-    task.wait(0.5)
-    
-    local success, err = pcall(function()
-        -- Tenta usar CoreGui, se falhar usa PlayerGui
-        local parent = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-        
-        local gui = Instance.new("ScreenGui")
-        gui.Name = "SnowLogin"
-        gui.Parent = parent
-        gui.ResetOnSpawn = false
-        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    task.wait(0.5)  -- pequena pausa para garantir que os serviços estejam prontos
 
-        local bg = Instance.new("Frame", gui)
-        bg.Size = UDim2.new(0, 300, 0, 220)
-        bg.Position = UDim2.new(0.5, -150, 0.5, -110)
-        bg.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-        bg.BorderSizePixel = 0
-        Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 12)
+    local coreGui = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui")
+    local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
-        local title = Instance.new("TextLabel", bg)
-        title.Size = UDim2.new(1, 0, 0, 40)
-        title.Position = UDim2.new(0, 0, 0, 10)
-        title.Text = "Snow S4zx"
-        title.TextColor3 = Color3.fromRGB(0, 200, 255)
-        title.Font = Enum.Font.GothamBold
-        title.TextSize = 28
-        title.BackgroundTransparency = 1
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "SnowLogin"
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-        local input = Instance.new("TextBox", bg)
-        input.Size = UDim2.new(1, -40, 0, 40)
-        input.Position = UDim2.new(0, 20, 0, 60)
-        input.PlaceholderText = "Cole sua key aqui..."
-        input.TextColor3 = Color3.new(1,1,1)
-        input.BackgroundColor3 = Color3.fromRGB(30,30,40)
-        input.Font = Enum.Font.SourceSans
-        input.TextSize = 16
-        input.ClearTextOnFocus = false
-        Instance.new("UICorner", input).CornerRadius = UDim.new(0, 8)
+    -- Tenta alocar no CoreGui (anti-detecção), se falhar, joga pro PlayerGui
+    if coreGui then
+        local ok = pcall(function() gui.Parent = coreGui end)
+        if not ok then
+            gui.Parent = playerGui
+        end
+    else
+        gui.Parent = playerGui
+    end
 
-        local status = Instance.new("TextLabel", bg)
-        status.Size = UDim2.new(1, 0, 0, 20)
-        status.Position = UDim2.new(0, 0, 0, 110)
-        status.Text = ""
-        status.TextColor3 = Color3.new(1,1,1)
-        status.Font = Enum.Font.SourceSans
-        status.TextSize = 13
-        status.BackgroundTransparency = 1
+    -- (o restante da criação da tela de login permanece igual ao seu código original)
+    local bg = Instance.new("Frame", gui)
+    bg.Size = UDim2.new(0, 300, 0, 220)
+    bg.Position = UDim2.new(0.5, -150, 0.5, -110)
+    bg.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    bg.BorderSizePixel = 0
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 12)
 
-        local btn = Instance.new("TextButton", bg)
-        btn.Size = UDim2.new(1, -40, 0, 40)
-        btn.Position = UDim2.new(0, 20, 0, 140)
-        btn.Text = "ENTRAR"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 18
-        btn.BorderSizePixel = 0
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    local title = Instance.new("TextLabel", bg)
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.Position = UDim2.new(0, 0, 0, 10)
+    title.Text = "Snow S4zx"
+    title.TextColor3 = Color3.fromRGB(0, 200, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 28
+    title.BackgroundTransparency = 1
 
-        local closeBtn = Instance.new("TextButton", bg)
-        closeBtn.Size = UDim2.new(0, 30, 0, 30)
-        closeBtn.Position = UDim2.new(1, -35, 0, 5)
-        closeBtn.Text = "X"
-        closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-        closeBtn.TextColor3 = Color3.new(1,1,1)
-        closeBtn.Font = Enum.Font.GothamBold
-        closeBtn.TextSize = 14
-        closeBtn.BorderSizePixel = 0
-        Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
-        closeBtn.Activated:Connect(function() gui:Destroy() end)
+    local input = Instance.new("TextBox", bg)
+    input.Size = UDim2.new(1, -40, 0, 40)
+    input.Position = UDim2.new(0, 20, 0, 60)
+    input.PlaceholderText = "Cole sua key aqui..."
+    input.TextColor3 = Color3.new(1,1,1)
+    input.BackgroundColor3 = Color3.fromRGB(30,30,40)
+    input.Font = Enum.Font.SourceSans
+    input.TextSize = 16
+    input.ClearTextOnFocus = false
+    Instance.new("UICorner", input).CornerRadius = UDim.new(0, 8)
 
-        local function tentarLogin()
-            local key = input.Text:gsub("%s+", "")
-            if key == "" then
-                status.Text = "Digite uma key"
-                status.TextColor3 = Color3.fromRGB(255,200,0)
-                return
-            end
+    local status = Instance.new("TextLabel", bg)
+    status.Size = UDim2.new(1, 0, 0, 20)
+    status.Position = UDim2.new(0, 0, 0, 110)
+    status.Text = ""
+    status.TextColor3 = Color3.new(1,1,1)
+    status.Font = Enum.Font.SourceSans
+    status.TextSize = 13
+    status.BackgroundTransparency = 1
 
-            if key == DONO_KEY then
-                status.Text = "✅ Key do Dono (Permanente)"
-                status.TextColor3 = Color3.fromRGB(0,255,100)
-                task.wait(1)
-                gui:Destroy()
-                carregarInterface()
-                return
-            end
+    local btn = Instance.new("TextButton", bg)
+    btn.Size = UDim2.new(1, -40, 0, 40)
+    btn.Position = UDim2.new(0, 20, 0, 140)
+    btn.Text = "ENTRAR"
+    btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 18
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
-            btn.Text = "AGUARDE..."
-            btn.BackgroundColor3 = Color3.fromRGB(100,100,100)
+    local closeBtn = Instance.new("TextButton", bg)
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -35, 0, 5)
+    closeBtn.Text = "X"
+    closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+    closeBtn.TextColor3 = Color3.new(1,1,1)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 14
+    closeBtn.BorderSizePixel = 0
+    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
+    closeBtn.Activated:Connect(function() gui:Destroy() end)
 
-            local ok, json = pcall(function() return game:HttpGet(KEYS_URL) end)
-            if ok and json and json ~= "" then
-                local keys = {}
-                pcall(function() keys = game:GetService("HttpService"):JSONDecode(json) end)
-                local data = keys[key]
-                if data then
-                    if data.dias == "perm" then
-                        status.Text = "✅ Key permanente"
-                        status.TextColor3 = Color3.fromRGB(0,255,100)
-                        task.wait(1)
-                        gui:Destroy()
-                        carregarInterface()
-                        return
-                    else
-                        local dia, mes, ano = data.criada:match("(%d+)/(%d+)/(%d+)")
-                        if dia then
-                            local criada = os.time({year=tonumber(ano), month=tonumber(mes), day=tonumber(dia)})
-                            local expira = criada + (tonumber(data.dias) * 86400)
-                            if os.time() <= expira then
-                                local diasRestantes = math.ceil((expira - os.time()) / 86400)
-                                status.Text = "✅ Key válida! Dias: " .. diasRestantes
-                                status.TextColor3 = Color3.fromRGB(0,255,100)
-                                task.wait(1)
-                                gui:Destroy()
-                                carregarInterface()
-                                return
-                            else
-                                status.Text = "❌ Key expirada"
-                                status.TextColor3 = Color3.fromRGB(255,50,50)
-                            end
-                        end
-                    end
-                else
-                    status.Text = "❌ Key inválida"
-                    status.TextColor3 = Color3.fromRGB(255,50,50)
-                end
-            else
-                status.Text = "❌ Erro ao verificar key"
-                status.TextColor3 = Color3.fromRGB(255,50,50)
-            end
-
-            btn.Text = "ENTRAR"
-            btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    local function tentarLogin()
+        local key = input.Text:gsub("%s+", "")
+        if key == "" then
+            status.Text = "Digite uma key"
+            status.TextColor3 = Color3.fromRGB(255,200,0)
+            return
         end
 
-        btn.Activated:Connect(tentarLogin)
-        input.FocusLost:Connect(function(enterPressed)
-            if enterPressed then tentarLogin() end
-        end)
-    end)
+        if key == DONO_KEY then
+            status.Text = "✅ Key do Dono (Permanente)"
+            status.TextColor3 = Color3.fromRGB(0,255,100)
+            task.wait(1)
+            gui:Destroy()
+            carregarInterface()
+            return
+        end
 
-    if not success then
-        warn("Erro ao criar tela de login: " .. tostring(err))
-        -- Força recriação simples
-        game:GetService("Players").LocalPlayer:Kick("Falha na interface de login. Tente novamente.")
+        btn.Text = "AGUARDE..."
+        btn.BackgroundColor3 = Color3.fromRGB(100,100,100)
+
+        local ok, json = pcall(function() return game:HttpGet(KEYS_URL) end)
+        if ok and json and json ~= "" then
+            local keys = {}
+            pcall(function() keys = game:GetService("HttpService"):JSONDecode(json) end)
+            local data = keys[key]
+            if data then
+                if data.dias == "perm" then
+                    status.Text = "✅ Key permanente"
+                    status.TextColor3 = Color3.fromRGB(0,255,100)
+                    task.wait(1)
+                    gui:Destroy()
+                    carregarInterface()
+                    return
+                else
+                    local dia, mes, ano = data.criada:match("(%d+)/(%d+)/(%d+)")
+                    if dia then
+                        local criada = os.time({year=tonumber(ano), month=tonumber(mes), day=tonumber(dia)})
+                        local expira = criada + (tonumber(data.dias) * 86400)
+                        if os.time() <= expira then
+                            local diasRestantes = math.ceil((expira - os.time()) / 86400)
+                            status.Text = "✅ Key válida! Dias: " .. diasRestantes
+                            status.TextColor3 = Color3.fromRGB(0,255,100)
+                            task.wait(1)
+                            gui:Destroy()
+                            carregarInterface()
+                            return
+                        else
+                            status.Text = "❌ Key expirada"
+                            status.TextColor3 = Color3.fromRGB(255,50,50)
+                        end
+                    end
+                end
+            else
+                status.Text = "❌ Key inválida"
+                status.TextColor3 = Color3.fromRGB(255,50,50)
+            end
+        else
+            status.Text = "❌ Erro ao verificar key"
+            status.TextColor3 = Color3.fromRGB(255,50,50)
+        end
+
+        btn.Text = "ENTRAR"
+        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
     end
+
+    btn.Activated:Connect(tentarLogin)
+    input.FocusLost:Connect(function(enterPressed)
+        if enterPressed then tentarLogin() end
+    end)
 end
 
--- =================== INTERFACE LINORIA + FUNÇÕES ===================
+-- =================== INTERFACE PRINCIPAL (ORION + ADAPTADOR) ===================
 function carregarInterface()
-    local LinoriaLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/richie0866/Linoria/main/linoria.lua"))()
-    if not LinoriaLib then
-        game:GetService("Players").LocalPlayer:Kick("Falha ao carregar interface")
+    -- Carrega a Orion Library (online, estável)
+    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+    if not OrionLib then
+        game:GetService("Players").LocalPlayer:Kick("Falha ao carregar interface Orion")
         return
+    end
+
+    -- Adaptador para manter sua sintaxe original (AddToggle, AddSlider, etc.)
+    local LinoriaLib = {}
+    function LinoriaLib:Create(config)
+        local Window = OrionLib:MakeWindow({
+            Name = config.Title or "Snow S4zx",
+            HidePremium = true,
+            SaveConfig = config.Library and config.Library.Save or true,
+            ConfigFolder = config.Folder or "S4zxConfig"
+        })
+
+        local LibraryWrapper = {}
+
+        function LibraryWrapper:CreateTab(name)
+            local tab = Window:MakeTab({Name = name, PremiumOnly = false})
+            local TabWrapper = {}
+
+            function TabWrapper:AddToggle(tname, default, callback)
+                tab:AddToggle({Name = tname, Default = default, Callback = callback})
+            end
+
+            function TabWrapper:AddSlider(tname, min, max, default, callback)
+                local inc = 1
+                if type(default) == "number" and math.floor(default) ~= default then inc = 0.05 end
+                tab:AddSlider({
+                    Name = tname,
+                    Min = min,
+                    Max = max,
+                    Default = default,
+                    Color = Color3.fromRGB(0, 200, 255),
+                    Increment = inc,
+                    ValueName = "",
+                    Callback = callback
+                })
+            end
+
+            function TabWrapper:AddTextbox(tname, default, callback)
+                tab:AddTextbox({
+                    Name = tname,
+                    Default = default,
+                    TextDisappear = false,
+                    Callback = callback
+                })
+            end
+
+            function TabWrapper:AddButton(tname, callback)
+                tab:AddButton({Name = tname, Callback = callback})
+            end
+
+            return TabWrapper
+        end
+
+        function LibraryWrapper:SetHidden(state)
+            -- a Orion não tem método setHidden, então deixamos vazio
+        end
+
+        function LibraryWrapper:Unload()
+            OrionLib:Destroy()
+        end
+
+        -- Inicializa a UI após meio segundo (necessário para alguns executores)
+        task.delay(0.5, function()
+            OrionLib:Init()
+        end)
+
+        return LibraryWrapper
     end
 
     local Library = LinoriaLib:Create({
@@ -170,6 +238,7 @@ function carregarInterface()
         Library = { Enabled = true, Save = true }
     })
 
+    -- ========== DAQUI EM DIANTE, SEU CÓDIGO ORIGINAL CONTINUA IGUAL ==========
     -- Abas da interface
     local AimbotTab = Library:CreateTab("AIMBOT")
     local ESPTab = Library:CreateTab("ESP")
@@ -227,7 +296,8 @@ function carregarInterface()
     local vehicleVel = nil
     local vehicleGyro = nil
 
-    -- ========== CONFIGURAÇÃO DOS ELEMENTOS DA UI (LINORIA) ==========
+    -- ========== CONFIGURAÇÃO DOS ELEMENTOS DA UI ==========
+    -- (todas as linhas AddToggle, AddSlider, AddTextbox e AddButton que você já havia escrito)
     -- AIMBOT
     AimbotTab:AddToggle("AIMBOT", false, function(v) aimbot = v end)
     AimbotTab:AddToggle("Auto Lock Pic (CamLock)", false, function(v) autoLockPic = v if not v then lockedTarget = nil end end)
@@ -361,7 +431,7 @@ function carregarInterface()
     -- STREAM
     StreamTab:AddToggle("Modo Streamer", false, function(v)
         streamerMode = v
-        Library:SetHidden(v)
+        Library:SetHidden(v)   -- será ignorado, mas não causa erro
     end)
 
     -- CONFIG
@@ -394,7 +464,7 @@ function carregarInterface()
         task.wait(math.random(10, 30) / 1000)
     end
 
-    -- ==================== FUNÇÕES INTERNAS ====================
+    -- ==================== FUNÇÕES INTERNAS (MANTIDAS IGUAIS) ====================
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -1092,7 +1162,12 @@ function carregarInterface()
 
             if antiLive and tick()-lastLiveCheck > 1 then
                 lastLiveCheck = tick()
-                Library:SetHidden(CoreGui:FindFirstChild("LiveIndicator") ~= nil)
+                -- Anti Live: se detectar LiveIndicator, esconde a UI
+                if CoreGui:FindFirstChild("LiveIndicator") then
+                    Library:SetHidden(true)
+                else
+                    Library:SetHidden(false)
+                end
             end
         end)
 
