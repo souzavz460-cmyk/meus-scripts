@@ -697,31 +697,90 @@ function carregarInterface()
             end
         end
         
-        -- Fly
-        local function flyStep()
-            if not flyEnabled then flyStartY = nil; return end
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local root = char.HumanoidRootPart
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = true end
-            if not flyStartY then flyStartY = root.Position.Y end
-            local camDir = Camera.CFrame.LookVector
-            local moveDir = Vector3.zero
-            local moving = false
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
-            local verticalChange = 0
-            if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalChange = 1; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalChange = -1; moving = true end
-            if verticalChange ~= 0 then flyStartY = flyStartY + verticalChange * (flySpeed * 0.15) end
-            local newPos = root.Position
-            if moving and moveDir.Magnitude > 0 then newPos = root.Position + moveDir.Unit * (flySpeed * 0.2) end
-            newPos = Vector3.new(newPos.X, flyStartY, newPos.Z)
-            root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
+        -- Fly Avançado - Modo "Andando no Ar" (muito mais natural e difícil de detectar)
+local function flyStep()
+    if not flyEnabled then
+        if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+        if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+        local hum = Player.Character and Player.Character:FindFirstChild("Humanoid")
+        if hum then 
+            hum.PlatformStand = false
         end
+        flyStartY = nil
+        return
+    end
+
+    local char = Player.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    if not root or not hum then return end
+
+    -- Ativa modo voo suave
+    hum.PlatformStand = true
+
+    -- Cria BodyVelocity e BodyGyro (uma única vez)
+    if not flyBodyVelocity or not flyBodyVelocity.Parent then
+        if flyBodyVelocity then flyBodyVelocity:Destroy() end
+        flyBodyVelocity = Instance.new("BodyVelocity")
+        flyBodyVelocity.Name = "S4zxFlyVelocity"
+        flyBodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        flyBodyVelocity.Velocity = Vector3.zero
+        flyBodyVelocity.Parent = root
+    end
+
+    if not flyBodyGyro or not flyBodyGyro.Parent then
+        if flyBodyGyro then flyBodyGyro:Destroy() end
+        flyBodyGyro = Instance.new("BodyGyro")
+        flyBodyGyro.Name = "S4zxFlyGyro"
+        flyBodyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+        flyBodyGyro.P = 3000
+        flyBodyGyro.D = 500
+        flyBodyGyro.Parent = root
+    end
+
+    -- Direção do movimento (baseado na câmera + input)
+    local moveDir = Vector3.zero
+    local camLook = Camera.CFrame.LookVector
+    local camRight = Camera.CFrame.RightVector
+
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+        moveDir += Vector3.new(camLook.X, 0, camLook.Z).Unit
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+        moveDir -= Vector3.new(camLook.X, 0, camLook.Z).Unit
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+        moveDir -= camRight
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+        moveDir += camRight
+    end
+
+    -- Subir / Descer (E / Q)
+    local vertical = 0
+    if UserInputService:IsKeyDown(Enum.KeyCode.E) then vertical = 1 end
+    if UserInputService:IsKeyDown(Enum.KeyCode.Q) then vertical = -1 end
+
+    -- Normaliza e aplica velocidade
+    if moveDir.Magnitude > 0 then
+        moveDir = moveDir.Unit
+    end
+
+    local finalVelocity = (moveDir * flySpeed) + Vector3.new(0, vertical * flySpeed * 0.8, 0)
+
+    flyBodyVelocity.Velocity = finalVelocity
+
+    -- Mantém o personagem olhando para onde a câmera aponta (suave)
+    local lookAt = root.Position + camLook * 50
+    flyBodyGyro.CFrame = CFrame.lookAt(root.Position, lookAt)
+
+    -- Mantém animações de pernas andando (fica bem mais natural)
+    if not isFlyingNaturally then
+        hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+        isFlyingNaturally = true
+    end
+end
         
         -- Ghost
         local function invisibilityStep()
