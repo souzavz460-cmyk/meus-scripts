@@ -1,12 +1,17 @@
 -- Snow S4zx Mod – Ultimate Bypass Edition (Linoria UI)
+-- Tela de Login Corrigida + Interface Linoria + Bypasses
+
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- =================== TELA DE LOGIN ===================
+-- =================== TELA DE LOGIN (GARANTIDA) ===================
 local function mostrarLogin()
+    -- Tenta usar CoreGui, se falhar usa PlayerGui
+    local parent = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    
     local gui = Instance.new("ScreenGui")
     gui.Name = "SnowLogin"
-    gui.Parent = game:GetService("CoreGui")
+    gui.Parent = parent
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -142,7 +147,7 @@ end
 
 -- =================== INTERFACE LINORIA + FUNÇÕES ===================
 function carregarInterface()
-    -- Carrega biblioteca Linoria (interface primeiro)
+    -- Carrega biblioteca Linoria
     local LinoriaLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/richie0866/Linoria/main/linoria.lua"))()
     if not LinoriaLib then
         game:GetService("Players").LocalPlayer:Kick("Falha ao carregar interface")
@@ -361,7 +366,7 @@ function carregarInterface()
         return nil
     end
 
-    -- ==================== FUNÇÕES DE BYPASS (AO FINAL) ====================
+    -- ==================== FUNÇÕES DE BYPASS ====================
     local function deepCleanAttributes()
         pcall(function()
             local player = game:GetService("Players").LocalPlayer
@@ -376,10 +381,10 @@ function carregarInterface()
     end
 
     local function humanDelay()
-        task.wait(math.random(10, 30) / 1000)  -- 10-30ms delay humano
+        task.wait(math.random(10, 30) / 1000)
     end
 
-    -- ==================== FUNÇÕES INTERNAS (ORIGINAIS MANTIDAS) ====================
+    -- ==================== FUNÇÕES INTERNAS ====================
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -1081,7 +1086,7 @@ function carregarInterface()
             end
         end)
 
-        -- Limpeza Completa ao Desativar
+        -- Limpeza ao Desativar
         script.Destroying:Connect(function()
             pcall(function() Library:Unload() end)
             if flyCarBV then flyCarBV:Destroy() end
@@ -1106,4 +1111,5 @@ function carregarInterface()
     end)
 end
 
+-- Inicia a tela de login imediatamente
 mostrarLogin()
