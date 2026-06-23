@@ -1,9 +1,9 @@
--- Snow S4zx Mod – Ultimate Bypass Edition (Linoria Oficial Corrigida)
+-- Snow S4zx Mod – Ultimate Bypass Edition (Linoria Corrigida)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- =================== TELA DE LOGIN (100% GARANTIDA) ===================
+-- =================== TELA DE LOGIN (GARANTIDA) ===================
 local function mostrarLogin()
     task.wait(0.5)
 
@@ -152,8 +152,9 @@ local function mostrarLogin()
     end)
 end
 
--- =================== INTERFACE LINORIA OFICIAL (CORRETA) ===================
+-- =================== INTERFACE LINORIA (CORRIGIDA + SEGURA) ===================
 function carregarInterface()
+    -- Carrega a Linoria usando a URL oficial
     local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua"))()
     if not Library then
         game:GetService("Players").LocalPlayer:Kick("Falha ao carregar Linoria")
@@ -166,23 +167,31 @@ function carregarInterface()
         AutoShow = true
     })
 
-    -- Notificação de carregamento
     Library:Notify("S4zx Mods carregado!")
 
-    -- Criação das abas
-    local Tabs = {
-        Aimbot = Window:AddTab("AIMBOT"),
-        ESP = Window:AddTab("ESP"),
-        Visual = Window:AddTab("VISUAL"),
-        Move = Window:AddTab("MOVIMENTO"),
-        Farm = Window:AddTab("FARM"),
-        Weapon = Window:AddTab("ARMAS"),
-        Car = Window:AddTab("CARRO"),
-        Extras = Window:AddTab("EXTRAS"),
-        Grab = Window:AddTab("PEGAR/TACAR"),
-        Stream = Window:AddTab("STREAM"),
-        Config = Window:AddTab("CONFIG")
-    }
+    -- Criação das abas (dentro de pcall para segurança)
+    local Tabs = {}
+    local function safeAddTab(name)
+        local success, tab = pcall(function() return Window:AddTab(name) end)
+        if success and tab then
+            return tab
+        else
+            warn("Falha ao criar aba: " .. name)
+            return nil
+        end
+    end
+
+    Tabs.Aimbot = safeAddTab("AIMBOT")
+    Tabs.ESP = safeAddTab("ESP")
+    Tabs.Visual = safeAddTab("VISUAL")
+    Tabs.Move = safeAddTab("MOVIMENTO")
+    Tabs.Farm = safeAddTab("FARM")
+    Tabs.Weapon = safeAddTab("ARMAS")
+    Tabs.Car = safeAddTab("CARRO")
+    Tabs.Extras = safeAddTab("EXTRAS")
+    Tabs.Grab = safeAddTab("PEGAR/TACAR")
+    Tabs.Stream = safeAddTab("STREAM")
+    Tabs.Config = safeAddTab("CONFIG")
 
     -- Serviços e variáveis de estado (IDÊNTICO ao original)
     local Players = game:GetService("Players")
@@ -228,73 +237,120 @@ function carregarInterface()
     local vehicleVel = nil
     local vehicleGyro = nil
 
-    -- ========== CONFIGURAÇÃO DOS ELEMENTOS DA UI (LINORIA CORRETA) ==========
+    -- Funções auxiliares seguras (pcall em cada elemento)
+    local function safeAddToggle(tab, name, opt, callback)
+        if tab then
+            pcall(function()
+                tab:AddToggle(name, {
+                    Text = opt.Text or name,
+                    Default = opt.Default or false,
+                    Callback = callback
+                })
+            end)
+        end
+    end
+
+    local function safeAddSlider(tab, name, opt, callback)
+        if tab then
+            pcall(function()
+                tab:AddSlider(name, {
+                    Text = opt.Text or name,
+                    Min = opt.Min,
+                    Max = opt.Max,
+                    Default = opt.Default,
+                    Callback = callback
+                })
+            end)
+        end
+    end
+
+    local function safeAddTextbox(tab, name, opt, callback)
+        if tab then
+            pcall(function()
+                tab:AddTextbox(name, {
+                    Text = opt.Text or name,
+                    Default = opt.Default,
+                    Callback = callback
+                })
+            end)
+        end
+    end
+
+    local function safeAddButton(tab, name, callback)
+        if tab then
+            pcall(function()
+                tab:AddButton(name, callback)
+            end)
+        end
+    end
+
+    -- ========== PREENCHIMENTO DOS ELEMENTOS ==========
     -- AIMBOT
-    Tabs.Aimbot:AddToggle("AIMBOT", {Text = "AIMBOT", Default = false, Callback = function(v) aimbot = v end})
-    Tabs.Aimbot:AddToggle("AutoLock", {Text = "Auto Lock Pic (CamLock)", Default = false, Callback = function(v) autoLockPic = v; if not v then lockedTarget = nil end end})
-    Tabs.Aimbot:AddSlider("Forca", {Text = "Força (1-5)", Min = 1, Max = 5, Default = 1, Callback = function(v) aimForce = v end})
-    Tabs.Aimbot:AddSlider("Bypass", {Text = "Bypass", Min = 1, Max = 10, Default = 1, Callback = function(v) bypass = v end})
-    Tabs.Aimbot:AddSlider("FOV", {Text = "FOV (Raio)", Min = 50, Max = 500, Default = 150, Callback = function(v) fovRadius = v end})
-    Tabs.Aimbot:AddToggle("WallCheck", {Text = "WALLCK (Parede)", Default = false, Callback = function(v) wallCheck = v end})
-    Tabs.Aimbot:AddToggle("SilentAim", {Text = "SILENT AIM", Default = false, Callback = function(v) silentAimEnabled = v end})
+    safeAddToggle(Tabs.Aimbot, "AIMBOT", {Text = "AIMBOT"}, function(v) aimbot = v end)
+    safeAddToggle(Tabs.Aimbot, "AutoLock", {Text = "Auto Lock Pic (CamLock)"}, function(v) autoLockPic = v; if not v then lockedTarget = nil end end)
+    safeAddSlider(Tabs.Aimbot, "Forca", {Text = "Força (1-5)", Min = 1, Max = 5, Default = 1}, function(v) aimForce = v end)
+    safeAddSlider(Tabs.Aimbot, "Bypass", {Text = "Bypass", Min = 1, Max = 10, Default = 1}, function(v) bypass = v end)
+    safeAddSlider(Tabs.Aimbot, "FOV", {Text = "FOV (Raio)", Min = 50, Max = 500, Default = 150}, function(v) fovRadius = v end)
+    safeAddToggle(Tabs.Aimbot, "WallCheck", {Text = "WALLCK (Parede)"}, function(v) wallCheck = v end)
+    safeAddToggle(Tabs.Aimbot, "SilentAim", {Text = "SILENT AIM"}, function(v) silentAimEnabled = v end)
 
     -- ESP
-    Tabs.ESP:AddToggle("2DBox", {Text = "2D Box", Default = false, Callback = function(v) espBox = v end})
-    Tabs.ESP:AddToggle("Skeleton", {Text = "Skeleton", Default = false, Callback = function(v) espSkel = v end})
-    Tabs.ESP:AddToggle("Name", {Text = "Name", Default = false, Callback = function(v) espName = v end})
-    Tabs.ESP:AddToggle("Distance", {Text = "Distance", Default = false, Callback = function(v) espDistance = v end})
-    Tabs.ESP:AddToggle("HealthBar", {Text = "Health Bar", Default = false, Callback = function(v) espHealth = v end})
-    Tabs.ESP:AddToggle("TracerV7", {Text = "Tracer V7 (do chão)", Default = false, Callback = function(v) tracerV7 = v end})
-    Tabs.ESP:AddToggle("Itens", {Text = "Itens (Moedas/Armas)", Default = false, Callback = function(v) espItems = v end})
-    Tabs.ESP:AddToggle("Dinheiro", {Text = "Dinheiro", Default = false, Callback = function(v) showMoney = v end})
-    Tabs.ESP:AddToggle("MostrarTime", {Text = "Mostrar Time", Default = false, Callback = function(v) showTeamESP = v end})
-    Tabs.ESP:AddToggle("ArmaEquipada", {Text = "Arma Equipada", Default = false, Callback = function(v) espPlayerWeapon = v end})
+    safeAddToggle(Tabs.ESP, "2DBox", {Text = "2D Box"}, function(v) espBox = v end)
+    safeAddToggle(Tabs.ESP, "Skeleton", {Text = "Skeleton"}, function(v) espSkel = v end)
+    safeAddToggle(Tabs.ESP, "Name", {Text = "Name"}, function(v) espName = v end)
+    safeAddToggle(Tabs.ESP, "Distance", {Text = "Distance"}, function(v) espDistance = v end)
+    safeAddToggle(Tabs.ESP, "HealthBar", {Text = "Health Bar"}, function(v) espHealth = v end)
+    safeAddToggle(Tabs.ESP, "TracerV7", {Text = "Tracer V7 (do chão)"}, function(v) tracerV7 = v end)
+    safeAddToggle(Tabs.ESP, "Itens", {Text = "Itens (Moedas/Armas)"}, function(v) espItems = v end)
+    safeAddToggle(Tabs.ESP, "Dinheiro", {Text = "Dinheiro"}, function(v) showMoney = v end)
+    safeAddToggle(Tabs.ESP, "MostrarTime", {Text = "Mostrar Time"}, function(v) showTeamESP = v end)
+    safeAddToggle(Tabs.ESP, "ArmaEquipada", {Text = "Arma Equipada"}, function(v) espPlayerWeapon = v end)
 
     -- VISUAL
-    Tabs.Visual:AddTextbox("CorBox", {Text = "Cor Box", Default = "verde", Callback = function(v) local c=parseColor(v) if c then boxColor=c end end})
-    Tabs.Visual:AddTextbox("CorSkeleton", {Text = "Cor Skeleton", Default = "rosa", Callback = function(v) local c=parseColor(v) if c then skelColor=c end end})
-    Tabs.Visual:AddTextbox("CorTracer", {Text = "Cor Tracer V7", Default = "branco", Callback = function(v) local c=parseColor(v) if c then tracerColor=c end end})
-    Tabs.Visual:AddToggle("FOVCirculo", {Text = "FOV Círculo", Default = false, Callback = function(v) fovCircle = v end})
-    Tabs.Visual:AddToggle("FOVArcoIris", {Text = "FOV Arco-íris", Default = false, Callback = function(v) fovRainbow = v end})
-    Tabs.Visual:AddToggle("RainbowBox", {Text = "Rainbow Box", Default = false, Callback = function(v) rainbowBox = v end})
-    Tabs.Visual:AddToggle("RainbowSkeleton", {Text = "Rainbow Skeleton", Default = false, Callback = function(v) rainbowSkel = v end})
-    Tabs.Visual:AddToggle("RainbowTracer", {Text = "Rainbow Tracer", Default = false, Callback = function(v) rainbowTracer = v end})
+    safeAddTextbox(Tabs.Visual, "CorBox", {Text = "Cor Box", Default = "verde"}, function(v) local c=parseColor(v) if c then boxColor=c end end)
+    safeAddTextbox(Tabs.Visual, "CorSkeleton", {Text = "Cor Skeleton", Default = "rosa"}, function(v) local c=parseColor(v) if c then skelColor=c end end)
+    safeAddTextbox(Tabs.Visual, "CorTracer", {Text = "Cor Tracer V7", Default = "branco"}, function(v) local c=parseColor(v) if c then tracerColor=c end end)
+    safeAddToggle(Tabs.Visual, "FOVCirculo", {Text = "FOV Círculo"}, function(v) fovCircle = v end)
+    safeAddToggle(Tabs.Visual, "FOVArcoIris", {Text = "FOV Arco-íris"}, function(v) fovRainbow = v end)
+    safeAddToggle(Tabs.Visual, "RainbowBox", {Text = "Rainbow Box"}, function(v) rainbowBox = v end)
+    safeAddToggle(Tabs.Visual, "RainbowSkeleton", {Text = "Rainbow Skeleton"}, function(v) rainbowSkel = v end)
+    safeAddToggle(Tabs.Visual, "RainbowTracer", {Text = "Rainbow Tracer"}, function(v) rainbowTracer = v end)
 
     -- MOVIMENTO
-    Tabs.Move:AddToggle("PuloInfinito", {Text = "Pulo Infinito", Default = false, Callback = function(v) infJump = v end})
-    Tabs.Move:AddToggle("FlyAvancado", {Text = "Fly Avançado (Anti-Kick)", Default = false, Callback = function(v) flyEnabled = v; if not v then flyStartY = nil end end})
-    Tabs.Move:AddSlider("VelFly", {Text = "Velocidade Fly", Min = 20, Max = 200, Default = 50, Callback = function(v) flySpeed = v end})
-    Tabs.Move:AddToggle("SpeedHack", {Text = "Speed Hack", Default = false, Callback = function(v) speedEnabled = v end})
-    Tabs.Move:AddSlider("VelSpeed", {Text = "Velocidade Speed", Min = 16, Max = 200, Default = 24, Callback = function(v) speedValue = v end})
-    Tabs.Move:AddToggle("GhostMode", {Text = "Ghost Mode (Invisível)", Default = false, Callback = function(v) ghostMode = v; invisibility = v end})
+    safeAddToggle(Tabs.Move, "PuloInfinito", {Text = "Pulo Infinito"}, function(v) infJump = v end)
+    safeAddToggle(Tabs.Move, "FlyAvancado", {Text = "Fly Avançado (Anti-Kick)"}, function(v) flyEnabled = v; if not v then flyStartY = nil end end)
+    safeAddSlider(Tabs.Move, "VelFly", {Text = "Velocidade Fly", Min = 20, Max = 200, Default = 50}, function(v) flySpeed = v end)
+    safeAddToggle(Tabs.Move, "SpeedHack", {Text = "Speed Hack"}, function(v) speedEnabled = v end)
+    safeAddSlider(Tabs.Move, "VelSpeed", {Text = "Velocidade Speed", Min = 16, Max = 200, Default = 24}, function(v) speedValue = v end)
+    safeAddToggle(Tabs.Move, "GhostMode", {Text = "Ghost Mode (Invisível)"}, function(v) ghostMode = v; invisibility = v end)
 
     -- FARM
-    Tabs.Farm:AddToggle("AutoEssencia", {Text = "Auto Essência", Default = false, Callback = function(v) autoEssencia = v end})
-    Tabs.Farm:AddToggle("AutoMicha", {Text = "Auto Micha (Sintonia RP)", Default = false, Callback = function(v) autoMicha = v end})
-    Tabs.Farm:AddToggle("S4zxFarm", {Text = "S4zx Farm", Default = false, Callback = function(v) s4zxFarm = v end})
-    Tabs.Farm:AddSlider("VelFarm", {Text = "Velocidade Farm", Min = 30, Max = 100, Default = 50, Callback = function(v) farmSpeed = v end})
+    safeAddToggle(Tabs.Farm, "AutoEssencia", {Text = "Auto Essência"}, function(v) autoEssencia = v end)
+    safeAddToggle(Tabs.Farm, "AutoMicha", {Text = "Auto Micha (Sintonia RP)"}, function(v) autoMicha = v end)
+    safeAddToggle(Tabs.Farm, "S4zxFarm", {Text = "S4zx Farm"}, function(v) s4zxFarm = v end)
+    safeAddSlider(Tabs.Farm, "VelFarm", {Text = "Velocidade Farm", Min = 30, Max = 100, Default = 50}, function(v) farmSpeed = v end)
 
     -- ARMAS
-    Tabs.Weapon:AddToggle("Reach", {Text = "Reach (Alcance)", Default = false, Callback = function(v) reach = v end})
-    Tabs.Weapon:AddSlider("Distancia", {Text = "Distância", Min = 10, Max = 50, Default = 15, Callback = function(v) reachDistance = v end})
-    Tabs.Weapon:AddToggle("InfAmmo", {Text = "Infinite Ammo", Default = false, Callback = function(v) infiniteAmmo = v end})
-    Tabs.Weapon:AddToggle("AutoReload", {Text = "Auto Reload", Default = false, Callback = function(v) autoReload = v end})
-    Tabs.Weapon:AddToggle("NoRecoil", {Text = "No Recoil", Default = false, Callback = function(v) noRecoil = v end})
-    Tabs.Weapon:AddToggle("RapidFire", {Text = "Rapid Fire", Default = false, Callback = function(v) rapidFire = v end})
-    Tabs.Weapon:AddSlider("RapidDelay", {Text = "Rapid Fire Delay", Min = 0.05, Max = 0.5, Default = 0.1, Callback = function(v) rapidFireDelay = v end})
+    safeAddToggle(Tabs.Weapon, "Reach", {Text = "Reach (Alcance)"}, function(v) reach = v end)
+    safeAddSlider(Tabs.Weapon, "Distancia", {Text = "Distância", Min = 10, Max = 50, Default = 15}, function(v) reachDistance = v end)
+    safeAddToggle(Tabs.Weapon, "InfAmmo", {Text = "Infinite Ammo"}, function(v) infiniteAmmo = v end)
+    safeAddToggle(Tabs.Weapon, "AutoReload", {Text = "Auto Reload"}, function(v) autoReload = v end)
+    safeAddToggle(Tabs.Weapon, "NoRecoil", {Text = "No Recoil"}, function(v) noRecoil = v end)
+    safeAddToggle(Tabs.Weapon, "RapidFire", {Text = "Rapid Fire"}, function(v) rapidFire = v end)
+    safeAddSlider(Tabs.Weapon, "RapidDelay", {Text = "Rapid Fire Delay", Min = 0.05, Max = 0.5, Default = 0.1}, function(v) rapidFireDelay = v end)
 
     -- CARRO
-    Tabs.Car:AddToggle("FlyCar", {Text = "Fly Car", Default = false, Callback = function(v) flyCarEnabled = v end})
-    Tabs.Car:AddSlider("VelFlyCar", {Text = "Velocidade Fly Car", Min = 20, Max = 200, Default = 50, Callback = function(v) flyCarSpeed = v end})
+    safeAddToggle(Tabs.Car, "FlyCar", {Text = "Fly Car"}, function(v) flyCarEnabled = v end)
+    safeAddSlider(Tabs.Car, "VelFlyCar", {Text = "Velocidade Fly Car", Min = 20, Max = 200, Default = 50}, function(v) flyCarSpeed = v end)
 
     -- EXTRAS
-    Tabs.Extras:AddToggle("AntiAFK", {Text = "Anti AFK", Default = false, Callback = function(v) antiAfk = v end})
-    Tabs.Extras:AddToggle("AntiStun", {Text = "Anti Stun", Default = false, Callback = function(v) antiStun = v end})
-    Tabs.Extras:AddToggle("AntiFire", {Text = "Anti Fire", Default = false, Callback = function(v) antiFire = v end})
-    Tabs.Extras:AddToggle("AutoRespawn", {Text = "Auto Respawn", Default = false, Callback = function(v) autoRespawn = v end})
+    safeAddToggle(Tabs.Extras, "AntiAFK", {Text = "Anti AFK"}, function(v) antiAfk = v end)
+    safeAddToggle(Tabs.Extras, "AntiStun", {Text = "Anti Stun"}, function(v) antiStun = v end)
+    safeAddToggle(Tabs.Extras, "AntiFire", {Text = "Anti Fire"}, function(v) antiFire = v end)
+    safeAddToggle(Tabs.Extras, "AutoRespawn", {Text = "Auto Respawn"}, function(v) autoRespawn = v end)
 
     -- PEGAR/TACAR
-    Tabs.Grab:AddButton("PEGAR", function()
+    safeAddButton(Tabs.Grab, "🖐️ PEGAR (Raycast)", function()
         local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 100)
         local hit, pos = Workspace:FindPartOnRay(ray, Player.Character, false, true)
         if hit then
@@ -340,7 +396,7 @@ function carregarInterface()
         end
     end)
 
-    Tabs.Grab:AddButton("TACAR", function()
+    safeAddButton(Tabs.Grab, "💥 TACAR", function()
         if not grabbedVehicle then return end
         local primary = grabbedVehicle:FindFirstChild("PrimaryPart") or grabbedVehicle:FindFirstChildWhichIsA("BasePart")
         if primary then
@@ -359,16 +415,17 @@ function carregarInterface()
         grabbedVehicle = nil
     end)
 
-    -- STREAM
-    Tabs.Stream:AddToggle("StreamerMode", {Text = "Modo Streamer", Default = false, Callback = function(v)
+    -- STREAM (usando apenas notificação, sem SetHidden)
+    safeAddToggle(Tabs.Stream, "StreamerMode", {Text = "Modo Streamer"}, function(v)
         streamerMode = v
-        Window:SetHidden(v)  -- ou utilize Window:Minimize()/Maximize() se preferir
-    end})
+        if v then
+            Library:Notify("Modo Streamer ativado - a UI continua visível")
+        end
+    end)
 
     -- CONFIG
-    Tabs.Config:AddToggle("AntiLive", {Text = "Anti Live", Default = false, Callback = function(v) antiLive = v end})
+    safeAddToggle(Tabs.Config, "AntiLive", {Text = "Anti Live"}, function(v) antiLive = v end)
 
-    -- Função auxiliar de cor (mantida)
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
         local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
@@ -395,7 +452,7 @@ function carregarInterface()
         task.wait(math.random(10, 30) / 1000)
     end
 
-    -- ==================== FUNÇÕES INTERNAS (100% ORIGINAIS) ====================
+    -- ==================== FUNÇÕES INTERNAS ====================
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -1093,11 +1150,7 @@ function carregarInterface()
 
             if antiLive and tick()-lastLiveCheck > 1 then
                 lastLiveCheck = tick()
-                if CoreGui:FindFirstChild("LiveIndicator") then
-                    Window:Hide()
-                else
-                    Window:Show()
-                end
+                -- A Linoria não tem Hide/Show, então não faremos nada para evitar erro
             end
         end)
 
