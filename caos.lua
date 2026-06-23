@@ -1,26 +1,6 @@
 -- Snow S4zx Mod – Ultimate Bypass Edition (Linoria UI)
--- Sistema de Key padrão (sem bypass offline)
-
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-XXX2710"
-
--- =================== FUNÇÕES DE BYPASS ===================
-local function deepCleanAttributes()
-    pcall(function()
-        local player = game:GetService("Players").LocalPlayer
-        if player then
-            player:SetAttribute("SpeedHack", nil)
-            player:SetAttribute("FlyHack", nil)
-            player:SetAttribute("TeleportDetect", nil)
-            player:SetAttribute("ExploitFlag", nil)
-            player:SetAttribute("AntiCheatFlag", nil)
-        end
-    end)
-end
-
-local function humanDelay()
-    task.wait(math.random(10, 30) / 1000)  -- 10-30ms delay humano
-end
+local DONO_KEY = "S4zx-DonoSupreme2026"
 
 -- =================== TELA DE LOGIN ===================
 local function mostrarLogin()
@@ -160,9 +140,9 @@ local function mostrarLogin()
     end)
 end
 
--- =================== INTERFACE LINORIA + FUNÇÕES PRINCIPAIS ===================
+-- =================== INTERFACE LINORIA + FUNÇÕES ===================
 function carregarInterface()
-    -- Carrega biblioteca Linoria
+    -- Carrega biblioteca Linoria (interface primeiro)
     local LinoriaLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/richie0866/Linoria/main/linoria.lua"))()
     if not LinoriaLib then
         game:GetService("Players").LocalPlayer:Kick("Falha ao carregar interface")
@@ -175,7 +155,7 @@ function carregarInterface()
         Library = { Enabled = true, Save = true }
     })
 
-    -- Abas
+    -- Abas da interface
     local AimbotTab = Library:CreateTab("AIMBOT")
     local ESPTab = Library:CreateTab("ESP")
     local VisualTab = Library:CreateTab("VISUAL")
@@ -188,7 +168,7 @@ function carregarInterface()
     local StreamTab = Library:CreateTab("STREAM")
     local ConfigTab = Library:CreateTab("CONFIG")
 
-    -- Serviços e variáveis
+    -- Serviços e variáveis de estado
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
@@ -198,7 +178,7 @@ function carregarInterface()
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
 
-    -- Flags originais (todas mantidas)
+    -- Todas as flags originais
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
     local wallCheck = false; local silentAimEnabled = false
     local fovCircle = false; local fovRainbow = false
@@ -231,11 +211,6 @@ function carregarInterface()
     local vehicleAlign = nil
     local vehicleVel = nil
     local vehicleGyro = nil
-
-    -- Bypass interno
-    local lastCleanup = 0
-    local CLEANUP_INTERVAL = 2.0
-    local flyStartY = nil
 
     -- ========== CONFIGURAÇÃO DOS ELEMENTOS DA UI (LINORIA) ==========
     -- AIMBOT
@@ -377,12 +352,31 @@ function carregarInterface()
     -- CONFIG
     ConfigTab:AddToggle("Anti Live", false, function(v) antiLive = v end)
 
+    -- Função auxiliar de cor
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
         local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
         if named[s] then s = named[s] end
         if #s == 6 and s:match("^%x+$") then return Color3.fromRGB(tonumber(s:sub(1,2),16), tonumber(s:sub(3,4),16), tonumber(s:sub(5,6),16)) end
         return nil
+    end
+
+    -- ==================== FUNÇÕES DE BYPASS (AO FINAL) ====================
+    local function deepCleanAttributes()
+        pcall(function()
+            local player = game:GetService("Players").LocalPlayer
+            if player then
+                player:SetAttribute("SpeedHack", nil)
+                player:SetAttribute("FlyHack", nil)
+                player:SetAttribute("TeleportDetect", nil)
+                player:SetAttribute("ExploitFlag", nil)
+                player:SetAttribute("AntiCheatFlag", nil)
+            end
+        end)
+    end
+
+    local function humanDelay()
+        task.wait(math.random(10, 30) / 1000)  -- 10-30ms delay humano
     end
 
     -- ==================== FUNÇÕES INTERNAS (ORIGINAIS MANTIDAS) ====================
@@ -781,6 +775,7 @@ function carregarInterface()
         end
 
         -- Fly Avançado
+        local flyStartY
         local function flyStep()
             if not flyEnabled then flyStartY = nil; return end
             local char = Player.Character
@@ -914,9 +909,10 @@ function carregarInterface()
         end
 
         -- Bypass Cleanup
+        local lastCleanup = 0
         local function bypassCleanup()
             local now = tick()
-            if now - lastCleanup < CLEANUP_INTERVAL then return end
+            if now - lastCleanup < 2 then return end
             lastCleanup = now
             deepCleanAttributes()
             local char = Player.Character
