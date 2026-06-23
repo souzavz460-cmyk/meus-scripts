@@ -1,6 +1,6 @@
 -- Snow S4zx Mod – Sistema PEGAR/TACAR veículo + todas as funções anteriores
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-2710"
+local DONO_KEY = "S4zx-DonoSupreme2027"
 
 -- Tela de Login
 local function mostrarLogin()
