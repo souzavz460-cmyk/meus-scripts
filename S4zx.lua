@@ -1,7 +1,7 @@
 -- Snow S4zx Mod – Ultimate Edition (Rayfield/Orion/Nativo + Todas as Funções)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2026"
+local DONO_KEY = "S4zx-DonoSupreme2027"
 
 -- ========== SEGURANÇA ==========
 local function getHWID()
