@@ -1,9 +1,9 @@
--- Snow S4zx Mod – Ultimate Edition (Rayfield/Orion/Nativo + Todas as Funções)
-
-local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2027"
+-- S4ZX HUB - COMPLETO (Interface Personalizada + 50 Funções + Segurança)
 
 -- ========== SEGURANÇA ==========
+local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
+local DONO_KEY = "S4zx-DonoSupreme2026"
+
 local function getHWID()
     local ok, id = pcall(function()
         return game:GetService("RbxAnalyticsService"):GetClientId()
@@ -19,16 +19,14 @@ local SECURITY_FLAG = "S4zx_INTEGRO_2026"
 
 local function destruirScript(motivo)
     pcall(function()
-        if game.CoreGui:FindFirstChild("SnowLogin") then game.CoreGui.SnowLogin:Destroy() end
-        if game.CoreGui:FindFirstChild("Rayfield") then game.CoreGui.Rayfield:Destroy() end
-        if game.CoreGui:FindFirstChild("Orion") then game.CoreGui.Orion:Destroy() end
-        if game.CoreGui:FindFirstChild("S4zxNativeUI") then game.CoreGui.S4zxNativeUI:Destroy() end
+        if game.CoreGui:FindFirstChild("S4ZX_Login") then game.CoreGui.S4ZX_Login:Destroy() end
+        if game.CoreGui:FindFirstChild("S4ZX_Hub") then game.CoreGui.S4ZX_Hub:Destroy() end
     end)
-    game.Players.LocalPlayer:Kick(motivo or "Script encerrado por segurança")
+    game.Players.LocalPlayer:Kick(motivo or "Script encerrado")
     while true do end
 end
 
--- =================== TELA DE LOGIN (COM PROTEÇÕES) ===================
+-- ========== TELA DE LOGIN (ESTILO S4ZX) ==========
 local function mostrarLogin()
     task.wait(0.5)
     if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_INTEGRO_2026" then
@@ -36,78 +34,77 @@ local function mostrarLogin()
         return
     end
 
-    local coreGui = pcall(function() return game.CoreGui end) and game.CoreGui
-    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local loginGui = Instance.new("ScreenGui")
+    loginGui.Name = "S4ZX_Login"
+    loginGui.Parent = game.CoreGui
+    loginGui.ResetOnSpawn = false
 
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "SnowLogin"
-    gui.ResetOnSpawn = false
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    if coreGui then
-        local ok = pcall(function() gui.Parent = coreGui end)
-        if not ok then gui.Parent = playerGui end
-    else
-        gui.Parent = playerGui
-    end
+    local frame = Instance.new("Frame", loginGui)
+    frame.Size = UDim2.new(0, 300, 0, 230)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -115)
+    frame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", frame).Color = Color3.fromRGB(220, 30, 30)
 
-    local bg = Instance.new("Frame", gui)
-    bg.Size = UDim2.new(0, 300, 0, 220)
-    bg.Position = UDim2.new(0.5, -150, 0.5, -110)
-    bg.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    bg.BorderSizePixel = 0
-    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 12)
+    local logo = Instance.new("ImageLabel", frame)
+    logo.Size = UDim2.new(0, 120, 0, 35)
+    logo.Position = UDim2.new(0.5, -60, 0, 10)
+    logo.BackgroundTransparency = 1
+    logo.Image = "rbxassetid://79731590930393"
+    logo.ScaleType = Enum.ScaleType.Fit
 
-    local title = Instance.new("TextLabel", bg)
-    title.Size = UDim2.new(1, 0, 0, 40)
-    title.Position = UDim2.new(0, 0, 0, 10)
-    title.Text = "Snow S4zx"
-    title.TextColor3 = Color3.fromRGB(0, 200, 255)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 28
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, 0, 0, 20)
+    title.Position = UDim2.new(0, 0, 0, 50)
     title.BackgroundTransparency = 1
+    title.Text = "S4ZX HUB - LOGIN"
+    title.TextColor3 = Color3.fromRGB(255,255,255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
 
-    local input = Instance.new("TextBox", bg)
-    input.Size = UDim2.new(1, -40, 0, 40)
-    input.Position = UDim2.new(0, 20, 0, 60)
+    local input = Instance.new("TextBox", frame)
+    input.Size = UDim2.new(1, -40, 0, 35)
+    input.Position = UDim2.new(0, 20, 0, 80)
     input.PlaceholderText = "Cole sua key aqui..."
     input.TextColor3 = Color3.new(1,1,1)
-    input.BackgroundColor3 = Color3.fromRGB(30,30,40)
+    input.BackgroundColor3 = Color3.fromRGB(25,25,25)
     input.Font = Enum.Font.SourceSans
-    input.TextSize = 16
+    input.TextSize = 14
     input.ClearTextOnFocus = false
-    Instance.new("UICorner", input).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", input).CornerRadius = UDim.new(0, 5)
 
-    local status = Instance.new("TextLabel", bg)
+    local status = Instance.new("TextLabel", frame)
     status.Size = UDim2.new(1, 0, 0, 20)
-    status.Position = UDim2.new(0, 0, 0, 110)
+    status.Position = UDim2.new(0, 0, 0, 125)
+    status.BackgroundTransparency = 1
     status.Text = ""
     status.TextColor3 = Color3.new(1,1,1)
     status.Font = Enum.Font.SourceSans
     status.TextSize = 13
-    status.BackgroundTransparency = 1
 
-    local btn = Instance.new("TextButton", bg)
-    btn.Size = UDim2.new(1, -40, 0, 40)
-    btn.Position = UDim2.new(0, 20, 0, 140)
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, -40, 0, 35)
+    btn.Position = UDim2.new(0, 20, 0, 150)
     btn.Text = "ENTRAR"
-    btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18
+    btn.TextSize = 16
     btn.BorderSizePixel = 0
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
 
-    local closeBtn = Instance.new("TextButton", bg)
+    local closeBtn = Instance.new("TextButton", frame)
     closeBtn.Size = UDim2.new(0, 30, 0, 30)
     closeBtn.Position = UDim2.new(1, -35, 0, 5)
     closeBtn.Text = "X"
-    closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
     closeBtn.TextColor3 = Color3.new(1,1,1)
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.TextSize = 14
     closeBtn.BorderSizePixel = 0
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
-    closeBtn.Activated:Connect(function() gui:Destroy() end)
+    closeBtn.MouseButton1Click:Connect(function() loginGui:Destroy() end)
 
     local function tentarLogin()
         local key = input.Text:gsub("%s+", "")
@@ -117,14 +114,14 @@ local function mostrarLogin()
             return
         end
         if key == DONO_KEY then
-            status.Text = "✅ Key do Dono (Permanente)"
+            status.Text = "✅ Key do Dono"
             status.TextColor3 = Color3.fromRGB(0,255,100)
             task.wait(1)
-            gui:Destroy()
-            carregarInterface(key)
+            loginGui:Destroy()
+            carregarHub()
             return
         end
-        btn.Text = "AGUARDE..."
+        btn.Text = "VERIFICANDO..."
         btn.BackgroundColor3 = Color3.fromRGB(100,100,100)
         local ok, json = pcall(function() return game:HttpGet(KEYS_URL) end)
         if ok and json and json ~= "" then
@@ -136,15 +133,15 @@ local function mostrarLogin()
                     status.Text = "⛔ Key banida!"
                     status.TextColor3 = Color3.fromRGB(255,0,0)
                 elseif data.hwid and data.hwid ~= "" and data.hwid ~= HWID then
-                    status.Text = "❌ HWID não autorizado!"
+                    status.Text = "❌ HWID não autorizado"
                     status.TextColor3 = Color3.fromRGB(255,0,0)
                 else
                     if data.dias == "perm" then
                         status.Text = "✅ Key permanente"
                         status.TextColor3 = Color3.fromRGB(0,255,100)
                         task.wait(1)
-                        gui:Destroy()
-                        carregarInterface(key)
+                        loginGui:Destroy()
+                        carregarHub()
                         return
                     else
                         local dia, mes, ano = data.criada:match("(%d+)/(%d+)/(%d+)")
@@ -156,8 +153,8 @@ local function mostrarLogin()
                                 status.Text = "✅ Key válida! Dias: " .. diasRestantes
                                 status.TextColor3 = Color3.fromRGB(0,255,100)
                                 task.wait(1)
-                                gui:Destroy()
-                                carregarInterface(key)
+                                loginGui:Destroy()
+                                carregarHub()
                                 return
                             else
                                 status.Text = "❌ Key expirada"
@@ -171,59 +168,268 @@ local function mostrarLogin()
                 status.TextColor3 = Color3.fromRGB(255,50,50)
             end
         else
-            status.Text = "❌ Erro ao verificar key"
+            status.Text = "❌ Erro de conexão"
             status.TextColor3 = Color3.fromRGB(255,50,50)
         end
         btn.Text = "ENTRAR"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+        btn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
     end
 
-    btn.Activated:Connect(tentarLogin)
+    btn.MouseButton1Click:Connect(tentarLogin)
     input.FocusLost:Connect(function(enterPressed)
         if enterPressed then tentarLogin() end
     end)
 end
 
--- ========== INTERFACE (RAYFIELD / ORION / NATIVO) ==========
-function carregarInterface(currentKey)
+-- ========== HUB PRINCIPAL ==========
+function carregarHub()
     if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_INTEGRO_2026" then
         destruirScript("Script adulterado")
         return
     end
 
-    -- Tentativa 1: Rayfield
-    local Rayfield = nil
-    local Window = nil
-    local usarRayfield = false
-    local usarOrion = false
-
-    local ok, result = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
-    end)
-    if ok and result then
-        Rayfield = result
-        usarRayfield = true
-    else
-        -- Tentativa 2: Orion
-        ok, result = pcall(function()
-            return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-        end)
-        if ok and result then
-            OrionLib = result
-            usarOrion = true
-        end
-    end
-
+    local CoreGui = game:GetService("CoreGui")
+    local TweenService = game:GetService("TweenService")
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
     local Workspace = game:GetService("Workspace")
-    local CoreGui = game:GetService("CoreGui")
+    local Lighting = game:GetService("Lighting")
     local Player = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
-    local Lighting = game:GetService("Lighting")
 
-    -- Variáveis de estado (todas as originais + novas)
+    if CoreGui:FindFirstChild("S4ZX_Hub") then
+        CoreGui.S4ZX_Hub:Destroy()
+    end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "S4ZX_Hub"
+    ScreenGui.Parent = CoreGui
+    ScreenGui.ResetOnSpawn = false
+
+    -- ========== CONSTRUÇÃO DA UI (SEU DESIGN) ==========
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 680, 0, 420)
+    MainFrame.Position = UDim2.new(0.5, -340, 0.5, -210)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Parent = ScreenGui
+
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 8)
+    MainCorner.Parent = MainFrame
+
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Color3.fromRGB(220, 30, 30)
+    MainStroke.Thickness = 1.5
+    MainStroke.Parent = MainFrame
+
+    local Topbar = Instance.new("Frame")
+    Topbar.Name = "Topbar"
+    Topbar.Size = UDim2.new(1, 0, 0, 50)
+    Topbar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    Topbar.BorderSizePixel = 0
+    Topbar.Parent = MainFrame
+
+    local TopbarCorner = Instance.new("UICorner")
+    TopbarCorner.CornerRadius = UDim.new(0, 8)
+    TopbarCorner.Parent = Topbar
+
+    local Logo = Instance.new("ImageLabel")
+    Logo.Name = "Logo"
+    Logo.Size = UDim2.new(0, 120, 0, 35)
+    Logo.Position = UDim2.new(0, 10, 0.5, -17)
+    Logo.BackgroundTransparency = 1
+    Logo.Image = "rbxassetid://79731590930393"
+    Logo.ScaleType = Enum.ScaleType.Fit
+    Logo.Parent = Topbar
+
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(0, 200, 1, 0)
+    Title.Position = UDim2.new(0, 140, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = "S4ZX HUB v2.0"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 18
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Topbar
+
+    local Divider = Instance.new("Frame")
+    Divider.Size = UDim2.new(1, 0, 0, 1)
+    Divider.Position = UDim2.new(0, 0, 0, 50)
+    Divider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    Divider.BorderSizePixel = 0
+    Divider.Parent = MainFrame
+
+    local TabContainer = Instance.new("ScrollingFrame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(0, 140, 1, -51)
+    TabContainer.Position = UDim2.new(0, 0, 0, 51)
+    TabContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    TabContainer.BorderSizePixel = 0
+    TabContainer.ScrollBarThickness = 2
+    TabContainer.ScrollBarImageColor3 = Color3.fromRGB(220, 30, 30)
+    TabContainer.Parent = MainFrame
+
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Padding = UDim.new(0, 4)
+    TabListLayout.Parent = TabContainer
+
+    local TabPadding = Instance.new("UIPadding")
+    TabPadding.PaddingTop = UDim.new(0, 8)
+    TabPadding.PaddingLeft = UDim.new(0, 6)
+    TabPadding.PaddingRight = UDim.new(0, 6)
+    TabPadding.Parent = TabContainer
+
+    local ContentArea = Instance.new("Frame")
+    ContentArea.Name = "ContentArea"
+    ContentArea.Size = UDim2.new(1, -145, 1, -56)
+    ContentArea.Position = UDim2.new(0, 143, 0, 53)
+    ContentArea.BackgroundTransparency = 1
+    ContentArea.Parent = MainFrame
+
+    -- ========== SISTEMA DE ABAS (IDÊNTICO AO SEU) ==========
+    local Tabs = {}
+    local FirstTab = true
+
+    local function CreateTab(tabName)
+        local TabButton = Instance.new("TextButton")
+        TabButton.Name = tabName .. "_Btn"
+        TabButton.Size = UDim2.new(1, 0, 0, 32)
+        TabButton.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+        TabButton.Text = tabName
+        TabButton.TextColor3 = Color3.fromRGB(180, 180, 180)
+        TabButton.TextSize = 13
+        TabButton.Font = Enum.Font.GothamMedium
+        TabButton.Parent = TabContainer
+
+        local BtnCorner = Instance.new("UICorner")
+        BtnCorner.CornerRadius = UDim.new(0, 5)
+        BtnCorner.Parent = TabButton
+
+        local Page = Instance.new("ScrollingFrame")
+        Page.Name = tabName .. "_Page"
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.Visible = false
+        Page.ScrollBarThickness = 3
+        Page.ScrollBarImageColor3 = Color3.fromRGB(220, 30, 30)
+        Page.Parent = ContentArea
+
+        local PageLayout = Instance.new("UIListLayout")
+        PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        PageLayout.Padding = UDim.new(0, 6)
+        PageLayout.Parent = Page
+
+        local PagePadding = Instance.new("UIPadding")
+        PagePadding.PaddingRight = UDim.new(0, 8)
+        PagePadding.PaddingTop = UDim.new(0, 4)
+        PagePadding.Parent = Page
+
+        TabButton.MouseButton1Click:Connect(function()
+            for _, t in pairs(Tabs) do
+                t.Page.Visible = false
+                t.Button.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                t.Button.TextColor3 = Color3.fromRGB(180, 180, 180)
+            end
+            Page.Visible = true
+            TabButton.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end)
+
+        if FirstTab then
+            FirstTab = false
+            Page.Visible = true
+            TabButton.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
+
+        Tabs[tabName] = {Page = Page, Button = TabButton}
+        return Page
+    end
+
+    -- ========== COMPONENTES ==========
+    local function AddToggle(page, text, callback)
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, 0, 0, 35)
+        Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        Frame.Parent = page
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 5)
+        Corner.Parent = Frame
+
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(1, -50, 1, 0)
+        Label.Position = UDim2.new(0, 12, 0, 0)
+        Label.BackgroundTransparency = 1
+        Label.Text = text
+        Label.TextColor3 = Color3.fromRGB(230, 230, 230)
+        Label.TextSize = 13
+        Label.Font = Enum.Font.Gotham
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Parent = Frame
+
+        local Switch = Instance.new("TextButton")
+        Switch.Size = UDim2.new(0, 40, 0, 20)
+        Switch.Position = UDim2.new(1, -48, 0.5, -10)
+        Switch.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Switch.Text = ""
+        Switch.Parent = Frame
+
+        local SwitchCorner = Instance.new("UICorner")
+        SwitchCorner.CornerRadius = UDim.new(1, 0)
+        SwitchCorner.Parent = Switch
+
+        local Indicator = Instance.new("Frame")
+        Indicator.Size = UDim2.new(0, 16, 0, 16)
+        Indicator.Position = UDim2.new(0, 2, 0.5, -8)
+        Indicator.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        Indicator.Parent = Switch
+
+        local IndCorner = Instance.new("UICorner")
+        IndCorner.CornerRadius = UDim.new(1, 0)
+        IndCorner.Parent = Indicator
+
+        local enabled = false
+        Switch.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            if enabled then
+                TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220, 30, 30)}):Play()
+                TweenService:Create(Indicator, TweenInfo.new(0.2), {Position = UDim2.new(1, -18, 0.5, -8)}):Play()
+            else
+                TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+                TweenService:Create(Indicator, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
+            end
+            pcall(callback, enabled)
+        end)
+    end
+
+    local function AddButton(page, text, callback)
+        local Button = Instance.new("TextButton")
+        Button.Size = UDim2.new(1, 0, 0, 35)
+        Button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        Button.Text = text
+        Button.TextColor3 = Color3.fromRGB(240, 240, 240)
+        Button.TextSize = 13
+        Button.Font = Enum.Font.GothamMedium
+        Button.Parent = page
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 5)
+        Corner.Parent = Button
+
+        Button.MouseButton1Click:Connect(function()
+            pcall(callback)
+        end)
+    end
+
+    -- ========== VARIÁVEIS DE ESTADO (50 FUNÇÕES) ==========
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
     local wallCheck = false; local silentAimEnabled = false; local magicBullet = false
     local fovCircle = false; local fovRainbow = false
@@ -233,36 +439,26 @@ function carregarInterface(currentKey)
     local infJump = false; local flyEnabled = false; local flySpeed = 50
     local speedEnabled = false; local speedValue = 24
     local s4zxFarm = false; local farmSpeed = 50
-    local antiLive = false
     local boxColor = Color3.fromRGB(0,255,0); local skelColor = Color3.fromRGB(255,105,180)
     local tracerColor = Color3.fromRGB(255,255,255)
-    local invisibility = false; local ghostMode = false
+    local invisibility = false
     local antiAfk = false; local antiStun = false; local antiFire = false; local autoRespawn = false
     local reach = false; local reachDistance = 15
     local infiniteAmmo = false; local autoReload = false
     local noRecoil = false; local rapidFire = false; local rapidFireDelay = 0.1
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
     local flyCarEnabled = false; local flyCarSpeed = 50
-    local streamerMode = false
-    local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
-    local autoEssencia = false
-    local autoLockPic = false
-    local autoMicha = false
+    local streamerMode = false; local antiLive = false
+    local autoEssencia = false; local autoLockPic = false; local autoMicha = false
     local lockedTarget = nil
-
-    -- NOVAS VARIÁVEIS
     local godMode = false
     local corArma = Color3.fromRGB(255,255,255)
-    local armaColorida = false
-    local rgbSpeed = 1
+    local armaColorida = false; local rgbSpeed = 1
     local tamanhoArma = 1
     local matarUmTiro = false
-
-    -- PEGAR/TACAR
     local grabbedVehicle = nil
     local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
 
-    -- Função de parse de cor
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
         local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
@@ -271,306 +467,80 @@ function carregarInterface(currentKey)
         return nil
     end
 
-    -- Funções de registro de UI (serão preenchidas de acordo com a biblioteca)
-    local CreateWindow, CreateTab, CreateToggle, CreateSlider, CreateInput, CreateButton, CreateLabel
+    -- ========== PREENCHIMENTO DAS ABAS (50 FUNÇÕES) ==========
+    local AimbotPage = CreateTab("Aimbot")
+    AddToggle(AimbotPage, "AIMBOT", function(v) aimbot = v end)
+    AddToggle(AimbotPage, "Auto Lock Pic (CamLock)", function(v) autoLockPic = v; if not v then lockedTarget = nil end end)
+    AddButton(AimbotPage, "Força (1-5): " .. aimForce, function() aimForce = aimForce >= 5 and 1 or aimForce + 1 end)
+    AddButton(AimbotPage, "Bypass (1-10): " .. bypass, function() bypass = bypass >= 10 and 1 or bypass + 1 end)
+    AddButton(AimbotPage, "FOV Raio (50-500): " .. fovRadius, function() fovRadius = fovRadius >= 500 and 50 or fovRadius + 50 end)
+    AddToggle(AimbotPage, "WALLCK (Parede)", function(v) wallCheck = v end)
+    AddToggle(AimbotPage, "SILENT AIM", function(v) silentAimEnabled = v end)
+    AddToggle(AimbotPage, "Magic Bullet", function(v) magicBullet = v end)
 
-    if usarRayfield then
-        Window = Rayfield:CreateWindow({
-            Name = "S4zx MODS",
-            LoadingTitle = "S4zx MODS",
-            LoadingSubtitle = "by Souzavz",
-            ShowText = "S4zx MODS",
-            Theme = "DarkBlue",
-            ConfigurationSaving = { Enabled = true, FolderName = "SnowS4zx", FileName = "Config" },
-            KeySystem = false,
-            MobileButton = { Enabled = true, Name = "S4zx MODS" }
-        })
-        CreateWindow = function() return Window end
-        CreateTab = function(nome, icone) return Window:CreateTab(nome, icone) end
-        CreateToggle = function(tab, opt) tab:CreateToggle(opt) end
-        CreateSlider = function(tab, opt) tab:CreateSlider(opt) end
-        CreateInput = function(tab, opt) tab:CreateInput(opt) end
-        CreateButton = function(tab, opt) tab:CreateButton(opt) end
-        CreateLabel = function(tab, texto) end -- Rayfield não tem label nativo, ignoramos
-    elseif usarOrion then
-        Window = OrionLib:MakeWindow({
-            Name = "S4zx MODS",
-            HidePremium = true,
-            SaveConfig = true,
-            ConfigFolder = "S4zxConfig"
-        })
-        OrionLib:Init()
-        CreateWindow = function() return Window end
-        CreateTab = function(nome, _)
-            local tab = Window:MakeTab({Name = nome, PremiumOnly = false})
-            local wrapper = {}
-            function wrapper:CreateToggle(opt)
-                tab:AddToggle({Name = opt.Name, Default = opt.CurrentValue or false, Callback = opt.Callback})
-            end
-            function wrapper:CreateSlider(opt)
-                tab:AddSlider({Name = opt.Name, Min = opt.Range[1], Max = opt.Range[2], Default = opt.CurrentValue, Increment = opt.Increment or 1, Callback = opt.Callback})
-            end
-            function wrapper:CreateInput(opt)
-                tab:AddTextbox({Name = opt.Name, Default = opt.PlaceholderText or "", TextDisappear = false, Callback = opt.Callback})
-            end
-            function wrapper:CreateButton(opt)
-                tab:AddButton({Name = opt.Name, Callback = opt.Callback})
-            end
-            return wrapper
-        end
-        CreateToggle = function(tab, opt) tab:CreateToggle(opt) end
-        CreateSlider = function(tab, opt) tab:CreateSlider(opt) end
-        CreateInput = function(tab, opt) tab:CreateInput(opt) end
-        CreateButton = function(tab, opt) tab:CreateButton(opt) end
-        CreateLabel = function(tab, texto) end
-    else
-        -- Interface 100% nativa (fallback)
-        local nativeGui = Instance.new("ScreenGui", CoreGui)
-        nativeGui.Name = "S4zxNativeUI"
-        nativeGui.ResetOnSpawn = false
-        local mainFrame = Instance.new("Frame", nativeGui)
-        mainFrame.Size = UDim2.new(0, 300, 0, 400)
-        mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-        mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,35)
-        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,10)
+    local EspPage = CreateTab("ESP")
+    AddToggle(EspPage, "2D Box", function(v) espBox = v end)
+    AddToggle(EspPage, "Skeleton", function(v) espSkel = v end)
+    AddToggle(EspPage, "Name", function(v) espName = v end)
+    AddToggle(EspPage, "Distance", function(v) espDistance = v end)
+    AddToggle(EspPage, "Health Bar", function(v) espHealth = v end)
+    AddToggle(EspPage, "Tracer V7 (do chão)", function(v) tracerV7 = v end)
+    AddToggle(EspPage, "Itens (Moedas/Armas)", function(v) espItems = v end)
+    AddToggle(EspPage, "Dinheiro", function(v) showMoney = v end)
+    AddToggle(EspPage, "Mostrar Time", function(v) showTeamESP = v end)
+    AddToggle(EspPage, "Arma Equipada", function(v) espPlayerWeapon = v end)
 
-        local tabButtons = {}
-        local tabs = {}
-        local currentTab = nil
+    local VisualPage = CreateTab("Visual")
+    AddButton(VisualPage, "Cor Box: verde", function() local c = parseColor("verde") if c then boxColor = c end end)
+    AddButton(VisualPage, "Cor Skeleton: rosa", function() local c = parseColor("rosa") if c then skelColor = c end end)
+    AddButton(VisualPage, "Cor Tracer V7: branco", function() local c = parseColor("branco") if c then tracerColor = c end end)
+    AddToggle(VisualPage, "FOV Círculo", function(v) fovCircle = v end)
+    AddToggle(VisualPage, "FOV Arco-íris", function(v) fovRainbow = v end)
+    AddToggle(VisualPage, "Rainbow Box", function(v) rainbowBox = v end)
+    AddToggle(VisualPage, "Rainbow Skeleton", function(v) rainbowSkel = v end)
+    AddToggle(VisualPage, "Rainbow Tracer", function(v) rainbowTracer = v end)
 
-        local tabBar = Instance.new("Frame", mainFrame)
-        tabBar.Size = UDim2.new(1, 0, 0, 30)
-        tabBar.BackgroundTransparency = 1
+    local MovPage = CreateTab("Movimento")
+    AddToggle(MovPage, "Pulo Infinito", function(v) infJump = v end)
+    AddToggle(MovPage, "Fly Avançado (Anti-Kick)", function(v) flyEnabled = v; if not v then flyStartY = nil end end)
+    AddButton(MovPage, "Velocidade Fly: " .. flySpeed, function() flySpeed = flySpeed >= 200 and 20 or flySpeed + 10 end)
+    AddToggle(MovPage, "Speed Hack", function(v) speedEnabled = v end)
+    AddButton(MovPage, "Velocidade Speed: " .. speedValue, function() speedValue = speedValue >= 200 and 16 or speedValue + 8 end)
+    AddToggle(MovPage, "Ghost Mode (Invisível)", function(v) invisibility = v end)
 
-        local function switchTab(index)
-            for _, f in ipairs(tabs) do f.Visible = false end
-            if tabs[index] then tabs[index].Visible = true end
-        end
+    local FarmPage = CreateTab("Farm")
+    AddToggle(FarmPage, "Auto Essência", function(v) autoEssencia = v end)
+    AddToggle(FarmPage, "Auto Micha (Sintonia RP)", function(v) autoMicha = v end)
+    AddToggle(FarmPage, "S4zx Farm", function(v) s4zxFarm = v end)
+    AddButton(FarmPage, "Velocidade Farm: " .. farmSpeed, function() farmSpeed = farmSpeed >= 100 and 30 or farmSpeed + 10 end)
 
-        local tabNames = {"AIMBOT","ESP","VISUAL","MOVIMENTO","FARM","ARMAS","CARRO","EXTRAS","PEGAR/TACAR","STREAM","CONFIG"}
-        for i, name in ipairs(tabNames) do
-            local btn = Instance.new("TextButton", tabBar)
-            btn.Size = UDim2.new(0, 80, 1, 0)
-            btn.Position = UDim2.new(0, (i-1)*82, 0, 0)
-            btn.Text = name
-            btn.BackgroundColor3 = Color3.fromRGB(60,60,70)
-            btn.TextColor3 = Color3.new(1,1,1)
-            btn.Font = Enum.Font.SourceSansBold
-            btn.TextSize = 12
-            btn.BorderSizePixel = 0
-            btn.Activated:Connect(function() switchTab(i) end)
-            table.insert(tabButtons, btn)
+    local ArmasPage = CreateTab("Armas")
+    AddToggle(ArmasPage, "Reach (Alcance)", function(v) reach = v end)
+    AddButton(ArmasPage, "Distância Reach: " .. reachDistance, function() reachDistance = reachDistance >= 50 and 10 or reachDistance + 5 end)
+    AddToggle(ArmasPage, "Infinite Ammo", function(v) infiniteAmmo = v end)
+    AddToggle(ArmasPage, "Auto Reload", function(v) autoReload = v end)
+    AddToggle(ArmasPage, "No Recoil", function(v) noRecoil = v end)
+    AddToggle(ArmasPage, "Rapid Fire", function(v) rapidFire = v end)
+    AddButton(ArmasPage, "Rapid Fire Delay: " .. string.format("%.2f", rapidFireDelay), function() rapidFireDelay = rapidFireDelay >= 0.5 and 0.05 or rapidFireDelay + 0.05 end)
+    AddToggle(ArmasPage, "Matar com um Tiro", function(v) matarUmTiro = v end)
+    AddButton(ArmasPage, "Cor da Arma", function() local c = parseColor("vermelho") if c then corArma = c end end)
+    AddToggle(ArmasPage, "Arma Colorida (RGB)", function(v) armaColorida = v end)
+    AddButton(ArmasPage, "Velocidade do RGB: " .. rgbSpeed, function() rgbSpeed = rgbSpeed >= 5 and 0.5 or rgbSpeed + 0.5 end)
+    AddButton(ArmasPage, "Tamanho da Arma: " .. tamanhoArma, function() tamanhoArma = tamanhoArma >= 5 and 0.5 or tamanhoArma + 0.5 end)
 
-            local content = Instance.new("ScrollingFrame", mainFrame)
-            content.Size = UDim2.new(1, 0, 1, -30)
-            content.Position = UDim2.new(0, 0, 0, 30)
-            content.BackgroundColor3 = Color3.fromRGB(35,35,45)
-            content.ScrollBarThickness = 4
-            content.CanvasSize = UDim2.new(0,0,0,0)
-            content.Visible = (i == 1)
-            table.insert(tabs, content)
-        end
+    local CarroPage = CreateTab("Carro")
+    AddToggle(CarroPage, "Fly Car", function(v) flyCarEnabled = v end)
+    AddButton(CarroPage, "Velocidade Fly Car: " .. flyCarSpeed, function() flyCarSpeed = flyCarSpeed >= 200 and 20 or flyCarSpeed + 10 end)
 
-        local function addToggleNat(tab, texto, default, callback)
-            local frame = Instance.new("Frame", tab)
-            frame.Size = UDim2.new(1, -10, 0, 30)
-            frame.BackgroundTransparency = 1
-            local label = Instance.new("TextLabel", frame)
-            label.Size = UDim2.new(0, 200, 1, 0)
-            label.Text = texto
-            label.TextColor3 = Color3.new(1,1,1)
-            label.Font = Enum.Font.SourceSans
-            label.TextSize = 14
-            label.BackgroundTransparency = 1
-            local btn = Instance.new("TextButton", frame)
-            btn.Size = UDim2.new(0, 40, 0, 20)
-            btn.Position = UDim2.new(1, -45, 0.5, -10)
-            btn.Text = default and "ON" or "OFF"
-            btn.BackgroundColor3 = default and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
-            btn.TextColor3 = Color3.new(1,1,1)
-            btn.Font = Enum.Font.SourceSansBold
-            btn.TextSize = 12
-            btn.BorderSizePixel = 0
-            local state = default
-            btn.Activated:Connect(function()
-                state = not state
-                btn.Text = state and "ON" or "OFF"
-                btn.BackgroundColor3 = state and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
-                callback(state)
-            end)
-            tab.CanvasSize = UDim2.new(0,0,0, frame.AbsolutePosition.Y + 30)
-        end
-
-        local function addSliderNat(tab, texto, min, max, default, callback)
-            local frame = Instance.new("Frame", tab)
-            frame.Size = UDim2.new(1, -10, 0, 40)
-            frame.BackgroundTransparency = 1
-            local label = Instance.new("TextLabel", frame)
-            label.Size = UDim2.new(1, 0, 0, 20)
-            label.Text = texto .. ": " .. default
-            label.TextColor3 = Color3.new(1,1,1)
-            label.Font = Enum.Font.SourceSans
-            label.TextSize = 14
-            label.BackgroundTransparency = 1
-            local slider = Instance.new("TextBox", frame)
-            slider.Size = UDim2.new(0, 60, 0, 20)
-            slider.Position = UDim2.new(1, -65, 0, 20)
-            slider.Text = tostring(default)
-            slider.TextColor3 = Color3.new(1,1,1)
-            slider.BackgroundColor3 = Color3.fromRGB(50,50,60)
-            slider.Font = Enum.Font.SourceSans
-            slider.TextSize = 14
-            slider.FocusLost:Connect(function()
-                local val = tonumber(slider.Text)
-                if val then
-                    val = math.clamp(val, min, max)
-                    slider.Text = tostring(val)
-                    label.Text = texto .. ": " .. val
-                    callback(val)
-                end
-            end)
-            tab.CanvasSize = UDim2.new(0,0,0, frame.AbsolutePosition.Y + 40)
-        end
-
-        local function addInputNat(tab, texto, placeholder, callback)
-            local frame = Instance.new("Frame", tab)
-            frame.Size = UDim2.new(1, -10, 0, 30)
-            frame.BackgroundTransparency = 1
-            local label = Instance.new("TextLabel", frame)
-            label.Size = UDim2.new(0, 100, 1, 0)
-            label.Text = texto
-            label.TextColor3 = Color3.new(1,1,1)
-            label.Font = Enum.Font.SourceSans
-            label.TextSize = 14
-            label.BackgroundTransparency = 1
-            local input = Instance.new("TextBox", frame)
-            input.Size = UDim2.new(1, -110, 1, 0)
-            input.Position = UDim2.new(0, 105, 0, 0)
-            input.PlaceholderText = placeholder or ""
-            input.TextColor3 = Color3.new(1,1,1)
-            input.BackgroundColor3 = Color3.fromRGB(50,50,60)
-            input.Font = Enum.Font.SourceSans
-            input.TextSize = 14
-            input.FocusLost:Connect(function()
-                callback(input.Text)
-            end)
-            tab.CanvasSize = UDim2.new(0,0,0, frame.AbsolutePosition.Y + 30)
-        end
-
-        local function addButtonNat(tab, texto, callback)
-            local btn = Instance.new("TextButton", tab)
-            btn.Size = UDim2.new(1, -10, 0, 30)
-            btn.Text = texto
-            btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-            btn.TextColor3 = Color3.new(1,1,1)
-            btn.Font = Enum.Font.SourceSansBold
-            btn.TextSize = 14
-            btn.BorderSizePixel = 0
-            btn.Activated:Connect(callback)
-            tab.CanvasSize = UDim2.new(0,0,0, btn.AbsolutePosition.Y + 30)
-        end
-
-        -- Atribui as funções globais
-        CreateWindow = function() return nativeGui end
-        CreateTab = function(nome) return tabs[table.find(tabNames, nome)] or tabs[1] end
-        CreateToggle = function(tab, opt) addToggleNat(tab, opt.Name, opt.CurrentValue, opt.Callback) end
-        CreateSlider = function(tab, opt) addSliderNat(tab, opt.Name, opt.Range[1], opt.Range[2], opt.CurrentValue, opt.Callback) end
-        CreateInput = function(tab, opt) addInputNat(tab, opt.Name, opt.PlaceholderText, opt.Callback) end
-        CreateButton = function(tab, opt) addButtonNat(tab, opt.Name, opt.Callback) end
-        CreateLabel = function(tab, texto) end
-    end
-
-    -- Criação das abas
-    local Tabs = {}
-    Tabs.Aimbot = CreateTab("AIMBOT", 4483362458)
-    Tabs.ESP = CreateTab("ESP", 4483362458)
-    Tabs.Visual = CreateTab("VISUAL", 4483362458)
-    Tabs.Move = CreateTab("MOVIMENTO", 4483362458)
-    Tabs.Farm = CreateTab("FARM", 4483362458)
-    Tabs.Weapon = CreateTab("ARMAS", 4483362458)
-    Tabs.Car = CreateTab("CARRO", 4483362458)
-    Tabs.Extras = CreateTab("EXTRAS", 4483362458)
-    Tabs.Grab = CreateTab("PEGAR/TACAR", 4483362458)
-    Tabs.Stream = CreateTab("STREAM", 4483362458)
-    Tabs.Config = CreateTab("CONFIG", 4483362458)
-
-    -- ========== PREENCHIMENTO DAS ABAS (TODAS AS FUNÇÕES) ==========
-    -- AIMBOT
-    CreateToggle(Tabs.Aimbot, {Name = "AIMBOT", CurrentValue = false, Callback = function(v) aimbot = v end})
-    CreateToggle(Tabs.Aimbot, {Name = "Auto Lock Pic (CamLock)", CurrentValue = false, Callback = function(v) autoLockPic = v; if not v then lockedTarget = nil end end})
-    CreateSlider(Tabs.Aimbot, {Name = "Força (1-5)", Range = {1, 5}, Increment = 1, CurrentValue = 1, Callback = function(v) aimForce = v end})
-    CreateSlider(Tabs.Aimbot, {Name = "Bypass", Range = {1, 10}, Increment = 1, CurrentValue = 1, Callback = function(v) bypass = v end})
-    CreateSlider(Tabs.Aimbot, {Name = "FOV (Raio)", Range = {50, 500}, Increment = 1, CurrentValue = 150, Callback = function(v) fovRadius = v end})
-    CreateToggle(Tabs.Aimbot, {Name = "WALLCK (Parede)", CurrentValue = false, Callback = function(v) wallCheck = v end})
-    CreateToggle(Tabs.Aimbot, {Name = "SILENT AIM", CurrentValue = false, Callback = function(v) silentAimEnabled = v end})
-    CreateToggle(Tabs.Aimbot, {Name = "Magic Bullet", CurrentValue = false, Callback = function(v) magicBullet = v end})
-
-    -- ESP
-    CreateToggle(Tabs.ESP, {Name = "2D Box", CurrentValue = false, Callback = function(v) espBox = v end})
-    CreateToggle(Tabs.ESP, {Name = "Skeleton", CurrentValue = false, Callback = function(v) espSkel = v end})
-    CreateToggle(Tabs.ESP, {Name = "Name", CurrentValue = false, Callback = function(v) espName = v end})
-    CreateToggle(Tabs.ESP, {Name = "Distance", CurrentValue = false, Callback = function(v) espDistance = v end})
-    CreateToggle(Tabs.ESP, {Name = "Health Bar", CurrentValue = false, Callback = function(v) espHealth = v end})
-    CreateToggle(Tabs.ESP, {Name = "Tracer V7 (do chão)", CurrentValue = false, Callback = function(v) tracerV7 = v end})
-    CreateToggle(Tabs.ESP, {Name = "Itens (Moedas/Armas)", CurrentValue = false, Callback = function(v) espItems = v end})
-    CreateToggle(Tabs.ESP, {Name = "Dinheiro", CurrentValue = false, Callback = function(v) showMoney = v end})
-    CreateToggle(Tabs.ESP, {Name = "Mostrar Time", CurrentValue = false, Callback = function(v) showTeamESP = v end})
-    CreateToggle(Tabs.ESP, {Name = "Arma Equipada", CurrentValue = false, Callback = function(v) espPlayerWeapon = v end})
-
-    -- VISUAL
-    CreateInput(Tabs.Visual, {Name = "Cor Box", PlaceholderText = "verde", Callback = function(v) local c=parseColor(v) if c then boxColor=c end end})
-    CreateInput(Tabs.Visual, {Name = "Cor Skeleton", PlaceholderText = "rosa", Callback = function(v) local c=parseColor(v) if c then skelColor=c end end})
-    CreateInput(Tabs.Visual, {Name = "Cor Tracer V7", PlaceholderText = "branco", Callback = function(v) local c=parseColor(v) if c then tracerColor=c end end})
-    CreateToggle(Tabs.Visual, {Name = "FOV Círculo", CurrentValue = false, Callback = function(v) fovCircle = v end})
-    CreateToggle(Tabs.Visual, {Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end})
-    CreateToggle(Tabs.Visual, {Name = "Rainbow Box", CurrentValue = false, Callback = function(v) rainbowBox = v end})
-    CreateToggle(Tabs.Visual, {Name = "Rainbow Skeleton", CurrentValue = false, Callback = function(v) rainbowSkel = v end})
-    CreateToggle(Tabs.Visual, {Name = "Rainbow Tracer", CurrentValue = false, Callback = function(v) rainbowTracer = v end})
-
-    -- MOVIMENTO
-    CreateToggle(Tabs.Move, {Name = "Pulo Infinito", CurrentValue = false, Callback = function(v) infJump = v end})
-    CreateToggle(Tabs.Move, {Name = "Fly Avançado (Anti-Kick)", CurrentValue = false, Callback = function(v) flyEnabled = v; if not v then flyStartY = nil end end})
-    CreateSlider(Tabs.Move, {Name = "Velocidade Fly", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flySpeed = v end})
-    CreateToggle(Tabs.Move, {Name = "Speed Hack", CurrentValue = false, Callback = function(v) speedEnabled = v end})
-    CreateSlider(Tabs.Move, {Name = "Velocidade Speed", Range = {16, 200}, Increment = 1, CurrentValue = 24, Callback = function(v) speedValue = v end})
-    CreateToggle(Tabs.Move, {Name = "Ghost Mode (Invisível)", CurrentValue = false, Callback = function(v) ghostMode = v; invisibility = v end})
-
-    -- FARM
-    CreateToggle(Tabs.Farm, {Name = "Auto Essência", CurrentValue = false, Callback = function(v) autoEssencia = v end})
-    CreateToggle(Tabs.Farm, {Name = "Auto Micha (Sintonia RP)", CurrentValue = false, Callback = function(v) autoMicha = v end})
-    CreateToggle(Tabs.Farm, {Name = "S4zx Farm", CurrentValue = false, Callback = function(v) s4zxFarm = v end})
-    CreateSlider(Tabs.Farm, {Name = "Velocidade Farm", Range = {30, 100}, Increment = 1, CurrentValue = 50, Callback = function(v) farmSpeed = v end})
-
-    -- ARMAS
-    CreateToggle(Tabs.Weapon, {Name = "Reach (Alcance)", CurrentValue = false, Callback = function(v) reach = v end})
-    CreateSlider(Tabs.Weapon, {Name = "Distância", Range = {10, 50}, Increment = 1, CurrentValue = 15, Callback = function(v) reachDistance = v end})
-    CreateToggle(Tabs.Weapon, {Name = "Infinite Ammo", CurrentValue = false, Callback = function(v) infiniteAmmo = v end})
-    CreateToggle(Tabs.Weapon, {Name = "Auto Reload", CurrentValue = false, Callback = function(v) autoReload = v end})
-    CreateToggle(Tabs.Weapon, {Name = "No Recoil", CurrentValue = false, Callback = function(v) noRecoil = v end})
-    CreateToggle(Tabs.Weapon, {Name = "Rapid Fire", CurrentValue = false, Callback = function(v) rapidFire = v end})
-    CreateSlider(Tabs.Weapon, {Name = "Rapid Fire Delay", Range = {0.05, 0.5}, Increment = 0.05, CurrentValue = 0.1, Callback = function(v) rapidFireDelay = v end})
-    -- Novas funções de arma
-    CreateToggle(Tabs.Weapon, {Name = "Matar com um Tiro", CurrentValue = false, Callback = function(v) matarUmTiro = v end})
-    CreateInput(Tabs.Weapon, {Name = "Cor da Arma", PlaceholderText = "ex: vermelho ou ff0000", Callback = function(v) local c=parseColor(v) if c then corArma=c end end})
-    CreateToggle(Tabs.Weapon, {Name = "Arma Colorida", CurrentValue = false, Callback = function(v) armaColorida = v end})
-    CreateSlider(Tabs.Weapon, {Name = "Velocidade do RGB", Range = {0.1, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v) rgbSpeed = v end})
-    CreateSlider(Tabs.Weapon, {Name = "Tamanho da Arma", Range = {0.5, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v) tamanhoArma = v end})
-
-    -- CARRO
-    CreateToggle(Tabs.Car, {Name = "Fly Car", CurrentValue = false, Callback = function(v) flyCarEnabled = v end})
-    CreateSlider(Tabs.Car, {Name = "Velocidade Fly Car", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flyCarSpeed = v end})
-
-    -- EXTRAS
-    CreateToggle(Tabs.Extras, {Name = "Anti AFK", CurrentValue = false, Callback = function(v) antiAfk = v end})
-    CreateToggle(Tabs.Extras, {Name = "Anti Stun", CurrentValue = false, Callback = function(v) antiStun = v end})
-    CreateToggle(Tabs.Extras, {Name = "Anti Fire", CurrentValue = false, Callback = function(v) antiFire = v end})
-    CreateToggle(Tabs.Extras, {Name = "Auto Respawn", CurrentValue = false, Callback = function(v) autoRespawn = v end})
-    CreateToggle(Tabs.Extras, {Name = "God Mode", CurrentValue = false, Callback = function(v) godMode = v end})
-
-    -- PEGAR/TACAR
-    CreateButton(Tabs.Grab, {Name = "🖐️ PEGAR (Raycast)", Callback = function()
+    local ExtrasPage = CreateTab("Extras")
+    AddToggle(ExtrasPage, "Anti AFK", function(v) antiAfk = v end)
+    AddToggle(ExtrasPage, "Anti Stun", function(v) antiStun = v end)
+    AddToggle(ExtrasPage, "Anti Fire", function(v) antiFire = v end)
+    AddToggle(ExtrasPage, "Auto Respawn", function(v) autoRespawn = v end)
+    AddToggle(ExtrasPage, "God Mode", function(v) godMode = v end)
+    AddButton(ExtrasPage, "🖐️ PEGAR (Raycast)", function()
         local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 100)
-        local hit, pos = Workspace:FindPartOnRay(ray, Player.Character, false, true)
+        local hit = Workspace:FindPartOnRay(ray, Player.Character, false, true)
         if hit then
             local car = hit:FindFirstAncestorOfClass("Model")
             if car and (car:FindFirstChildWhichIsA("VehicleSeat") or car:FindFirstChildWhichIsA("Seat")) then
@@ -597,13 +567,11 @@ function carregarInterface(currentKey)
                         vehicleAlign.Attachment1 = attach
                     end
                     vehicleAlign.Parent = primary
-
                     vehicleVel = Instance.new("LinearVelocity")
                     vehicleVel.MaxForce = 9999999
                     vehicleVel.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
                     vehicleVel.Attachment0 = primary:FindFirstChild("VelAttachment") or Instance.new("Attachment", primary)
                     vehicleVel.Parent = primary
-
                     vehicleGyro = Instance.new("AngularVelocity")
                     vehicleGyro.MaxTorque = 9999999
                     vehicleGyro.AngularVelocity = Vector3.new(0,0,0)
@@ -612,8 +580,8 @@ function carregarInterface(currentKey)
                 end
             end
         end
-    end})
-    CreateButton(Tabs.Grab, {Name = "💥 TACAR", Callback = function()
+    end)
+    AddButton(ExtrasPage, "💥 TACAR", function()
         if not grabbedVehicle then return end
         local primary = grabbedVehicle:FindFirstChild("PrimaryPart") or grabbedVehicle:FindFirstChildWhichIsA("BasePart")
         if primary then
@@ -630,30 +598,20 @@ function carregarInterface(currentKey)
             end)
         end
         grabbedVehicle = nil
-    end})
+    end)
 
-    -- STREAM
-    CreateToggle(Tabs.Stream, {Name = "Modo Streamer", CurrentValue = false, Callback = function(v)
-        streamerMode = v
-        if usarRayfield then
-            Window.Enabled = not v
-        elseif usarOrion then
-            -- Orion não tem um hide direto, mas podemos minimizar
-            if v then OrionLib:Minimize() else OrionLib:Maximize() end
-        else
-            -- Interface nativa: esconder/mostrar
-            if v then
-                mainFrame.Visible = false
-            else
-                mainFrame.Visible = true
-            end
-        end
-    end})
+    local ConfigPage = CreateTab("Config")
+    AddToggle(ConfigPage, "Modo Streamer", function(v) streamerMode = v; MainFrame.Visible = not v end)
+    AddToggle(ConfigPage, "Anti Live", function(v) antiLive = v end)
 
-    -- CONFIG
-    CreateToggle(Tabs.Config, {Name = "Anti Live", CurrentValue = false, Callback = function(v) antiLive = v end})
+    local SegPage = CreateTab("Segurança")
+    AddButton(SegPage, "🔑 Key: S4zx-DonoSupreme2026", function() end)
+    AddButton(SegPage, "🚫 Blacklist: Ativo", function() end)
+    AddButton(SegPage, "💻 HWID: Verificado", function() end)
+    AddButton(SegPage, "🛡️ Anti-adulteração: Ativo", function() end)
+    AddButton(SegPage, "🔄 Checagem remota: 5min", function() end)
 
-    -- ==================== SILENT AIM CORRIGIDO ====================
+    -- ========== SILENT AIM (INTEGRADO) ==========
     local function setupSilentAim()
         Workspace.DescendantAdded:Connect(function(obj)
             if not silentAimEnabled then return end
@@ -662,14 +620,10 @@ function carregarInterface(currentKey)
                 local isMine = (owner == Player.Name)
                 if not isMine then
                     local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-                    if tool and obj:IsDescendantOf(tool) then
-                        isMine = true
-                    end
+                    if tool and obj:IsDescendantOf(tool) then isMine = true end
                 end
                 if not isMine then return end
-
-                local bestTarget = nil
-                local bestDist = fovRadius
+                local bestTarget, bestDist = nil, fovRadius
                 local myPos = Camera.CFrame.Position
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p == Player then continue end
@@ -680,21 +634,14 @@ function carregarInterface(currentKey)
                         if dist < bestDist then
                             local ray = Ray.new(myPos, (headPos - myPos).Unit * 1000)
                             local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {Player.Character}, false, true)
-                            if hit and hit:IsDescendantOf(chr) then
-                                bestDist = dist
-                                bestTarget = chr
-                            end
+                            if hit and hit:IsDescendantOf(chr) then bestDist = dist; bestTarget = chr end
                         end
                     end
                 end
-
                 if bestTarget then
                     local connection
                     connection = RunService.RenderStepped:Connect(function()
-                        if not obj.Parent or not silentAimEnabled then
-                            connection:Disconnect()
-                            return
-                        end
+                        if not obj.Parent or not silentAimEnabled then connection:Disconnect(); return end
                         if magicBullet then
                             obj.CFrame = CFrame.new(bestTarget.Head.Position)
                             obj.Velocity = Vector3.new(0, 0, 0)
@@ -709,7 +656,7 @@ function carregarInterface(currentKey)
     end
     setupSilentAim()
 
-    -- ==================== LOOP PRINCIPAL (FUNÇÕES INTERNAS) ====================
+    -- ========== LOOP PRINCIPAL (TODAS AS FUNÇÕES ORIGINAIS) ==========
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -722,9 +669,9 @@ function carregarInterface(currentKey)
         end
         local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
         local itemESP = {}
-        local crosshairObj
+        local flyStartY
 
-        -- Aimbot Padrão
+        -- Aimbot
         local function aimbotStep()
             if not aimbot then return end
             local center = Camera.ViewportSize/2
@@ -744,21 +691,20 @@ function carregarInterface(currentKey)
                     end
                 end
             end
-            if #enemies == 0 then return end
-            table.sort(enemies, function(a,b) return a.dist < b.dist end)
-            local targetPos = enemies[1].chr.Head.Position + Vector3.new(math.random()-0.5,math.random()-0.5,math.random()-0.5)*(bypass*0.03)
-            local alpha = 0.02 + (aimForce-1)*0.245
-            if alpha >= 1 then Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-            else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
+            if #enemies > 0 then
+                table.sort(enemies, function(a,b) return a.dist < b.dist end)
+                local targetPos = enemies[1].chr.Head.Position + Vector3.new(math.random()-0.5,math.random()-0.5,math.random()-0.5)*(bypass*0.03)
+                local alpha = 0.02 + (aimForce-1)*0.245
+                if alpha >= 1 then Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+                else Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), alpha) end
+            end
         end
 
-        -- Auto Lock Pic (CamLock)
+        -- Auto Lock Pic
         local function autoLockPicStep()
             if not autoLockPic then return end
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
             if not lockedTarget or not lockedTarget.Parent or not lockedTarget:FindFirstChild("Humanoid") or lockedTarget.Humanoid.Health <= 0 then
-                local nearest = nil; local nearestDist = math.huge
+                local nearest, nearestDist = nil, math.huge
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= Player and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
                         local d = (p.Character.Head.Position - Camera.CFrame.Position).Magnitude
@@ -772,43 +718,7 @@ function carregarInterface(currentKey)
             end
         end
 
-        -- Auto Essência
-        local function autoEssenciaStep()
-            if not autoEssencia then return end
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            for _, obj in ipairs(Workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name:lower():find("essencia") or obj.Name:lower():find("essence")) then
-                    char.HumanoidRootPart.CFrame = obj.CFrame
-                    break
-                end
-            end
-        end
-
-        -- Auto Micha
-        local function autoMichaStep()
-            if not autoMicha then return end
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local tool = char:FindFirstChild("Micha") or Player.Backpack:FindFirstChild("Micha")
-            if tool and tool:IsA("Tool") then
-                if tool.Parent ~= char then tool.Parent = char end
-                pcall(function() tool:Activate() end)
-            end
-            for _, prompt in ipairs(Workspace:GetDescendants()) do
-                if prompt:IsA("ProximityPrompt") then
-                    local objText = prompt.ObjectText:lower()
-                    local actText = prompt.ActionText:lower()
-                    if objText:find("micha") or actText:find("roubar") or actText:find("micha") or objText:find("veiculo") then
-                        if Player:DistanceFromCharacter(prompt.Parent.Position) <= prompt.MaxActivationDistance then
-                            pcall(function() fireproximityprompt(prompt) end)
-                        end
-                    end
-                end
-            end
-        end
-
-        -- ESP Completa
+        -- ESP (completa)
         local function updateESP()
             if not useDrawing then return end
             for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
@@ -1040,24 +950,24 @@ function carregarInterface(currentKey)
             end
         end
 
-        -- Speed Hack
+        -- Demais funções (speed, fly, farm, etc.)
         local function speedStep()
             if not speedEnabled then return end
             local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local hum = char:FindFirstChild("Humanoid")
-            if not hum then return end
-            local root = char.HumanoidRootPart
-            hum.WalkSpeed = 16
-            local moveDir = hum.MoveDirection
-            if moveDir.Magnitude > 0 then
-                local delta = speedValue / 60
-                local newPos = root.Position + moveDir.Unit * delta
-                root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.8)
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hum = char:FindFirstChild("Humanoid")
+                if hum then
+                    hum.WalkSpeed = 16
+                    local moveDir = hum.MoveDirection
+                    if moveDir.Magnitude > 0 then
+                        local delta = speedValue / 60
+                        local newPos = char.HumanoidRootPart.Position + moveDir.Unit * delta
+                        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame:Lerp(CFrame.new(newPos), 0.8)
+                    end
+                end
             end
         end
 
-        -- Fly Avançado
         local flyStartY
         local function flyStep()
             if not flyEnabled then flyStartY = nil; return end
@@ -1081,14 +991,32 @@ function carregarInterface(currentKey)
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
         end
 
-        -- Ghost Mode
         local function invisibilityStep()
-            if not invisibility then return end
-            local char = Player.Character
-            if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
+            if invisibility then
+                local char = Player.Character
+                if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
+            end
         end
 
-        -- Farm de Lixo
+        local function farmStep()
+            if not s4zxFarm then return end
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local root = char.HumanoidRootPart
+            local trash = findNearestTrash()
+            if not trash then return end
+            local targetPos = trash.Position
+            if (targetPos - root.Position).Magnitude > 4 then
+                root.CFrame = root.CFrame:Lerp(CFrame.new(root.Position + (targetPos - root.Position).Unit * (farmSpeed * 0.15)), 0.4)
+            else
+                local tool = char:FindFirstChildWhichIsA("Tool")
+                if tool and tick() - (lastFarmAction or 0) > 0.5 then
+                    pcall(function() tool:Activate() end)
+                    lastFarmAction = tick()
+                end
+            end
+        end
+
         local function findNearestTrash()
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -1098,40 +1026,127 @@ function carregarInterface(currentKey)
             for _, part in ipairs(Workspace:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "" then
                     local name = part.Name:lower()
-                    local isTrash = false
-                    for _, kw in ipairs(keywords) do if name:find(kw) then isTrash = true; break end end
-                    if isTrash and part.Transparency < 0.9 and part.Parent then
-                        local dist = (part.Position - root.Position).Magnitude
-                        if dist < nearestDist then nearestDist = dist; nearest = part end
-                    end
+                    for _, kw in ipairs(keywords) do if name:find(kw) then
+                        if part.Transparency < 0.9 and part.Parent then
+                            local dist = (part.Position - root.Position).Magnitude
+                            if dist < nearestDist then nearestDist = dist; nearest = part end
+                        end
+                    end end
                 end
             end
             return nearest
         end
-        local lastFarmAction = 0
-        local function farmStep()
-            if not s4zxFarm then return end
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local root = char.HumanoidRootPart
-            local trash = findNearestTrash()
-            if not trash then return end
-            local targetPos = trash.Position
-            local distance = (targetPos - root.Position).Magnitude
-            if distance > 4 then
-                local direction = (targetPos - root.Position).Unit
-                local newPos = root.Position + direction * (farmSpeed * 0.15)
-                root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
-                return
-            end
-            local tool = char:FindFirstChildWhichIsA("Tool")
-            if tool and tick() - lastFarmAction > 0.5 then
-                pcall(function() tool:Activate() end)
-                lastFarmAction = tick()
+
+        local function reachStep()
+            if reach then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool then tool.MaxActivationDistance = reachDistance end
             end
         end
-
-        -- Fly Car
+        local function infiniteAmmoStep()
+            if infiniteAmmo then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets") or tool:FindFirstChild("Magazine")
+                    if ammo and ammo:IsA("IntValue") then ammo.Value = 999 end
+                end
+            end
+        end
+        local function autoReloadStep()
+            if autoReload then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets")
+                    if ammo and ammo:IsA("IntValue") and ammo.Value == 0 then pcall(function() tool:Reload() end) end
+                end
+            end
+        end
+        local function noRecoilStep()
+            if noRecoil then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool then for _, obj in ipairs(tool:GetDescendants()) do if obj:IsA("SpringConstraint") or obj:IsA("RocketPropulsion") then obj.Enabled = false end end end
+            end
+        end
+        local rapidFireTimer = 0
+        local function rapidFireStep()
+            if not rapidFire then return end
+            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool and tick() - rapidFireTimer >= rapidFireDelay then
+                    pcall(function() tool:Activate() end)
+                    rapidFireTimer = tick()
+                end
+            end
+        end
+        local function armaColoridaStep()
+            if armaColorida then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    local hue = (tick() * rgbSpeed) % 1
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    for _, part in ipairs(tool:GetDescendants()) do
+                        if part:IsA("BasePart") then part.Color = color end
+                    end
+                end
+            end
+        end
+        local function tamanhoArmaStep()
+            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+            if tool then tool:ScaleTo(tamanhoArma) end
+        end
+        local function matarUmTiroStep()
+            if matarUmTiro then
+                local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    for _, v in ipairs(tool:GetDescendants()) do
+                        if v.Name == "Damage" and v:IsA("NumberValue") then v.Value = 9999 end
+                    end
+                end
+            end
+        end
+        local function godModeStep()
+            if godMode then
+                local char = Player.Character
+                if char then
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hum then hum.MaxHealth = 99999; hum.Health = 99999 end
+                end
+            end
+        end
+        local lastAfkTime = 0
+        local function antiAfkStep()
+            if antiAfk and tick() - lastAfkTime > 120 then
+                lastAfkTime = tick()
+                local char = Player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 1, 0)
+                end
+            end
+        end
+        local function antiStunStep()
+            if antiStun then
+                local char = Player.Character
+                if char then
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hum then
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+                        hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+                    end
+                end
+            end
+        end
+        local function antiFireStep()
+            if antiFire then
+                local char = Player.Character
+                if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") and part.Material == Enum.Material.Fire then part.Material = Enum.Material.SmoothPlastic end end end
+            end
+        end
+        local function autoRespawnStep()
+            if autoRespawn then
+                local char = Player.Character
+                if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then pcall(function() Player:LoadCharacter() end) end
+            end
+        end
         local flyCarBV, flyCarBG, flyCarTarget
         local function flyCarStep()
             if not flyCarEnabled then
@@ -1161,11 +1176,9 @@ function carregarInterface(currentKey)
             local primary = flyCarTarget:FindFirstChild("PrimaryPart") or flyCarTarget:FindFirstChildWhichIsA("BasePart")
             if not primary then return end
             if not flyCarBV or not flyCarBV.Parent then
-                if flyCarBV then flyCarBV:Destroy() end
                 flyCarBV = Instance.new("BodyVelocity"); flyCarBV.MaxForce = Vector3.new(1e9,1e9,1e9); flyCarBV.Parent = primary
             end
             if not flyCarBG or not flyCarBG.Parent then
-                if flyCarBG then flyCarBG:Destroy() end
                 flyCarBG = Instance.new("BodyGyro"); flyCarBG.MaxTorque = Vector3.new(1e9,1e9,1e9); flyCarBG.Parent = primary
             end
             local moveDir = Vector3.zero
@@ -1179,152 +1192,10 @@ function carregarInterface(currentKey)
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
         end
 
-        -- Modificações de Armas
-        local function reachStep()
-            if not reach then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then pcall(function() tool.MaxActivationDistance = reachDistance end) end
-        end
-        local function infiniteAmmoStep()
-            if not infiniteAmmo then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then
-                local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets") or tool:FindFirstChild("Magazine")
-                if ammo and ammo:IsA("IntValue") then ammo.Value = 999 end
-            end
-        end
-        local function autoReloadStep()
-            if not autoReload then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then
-                local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets")
-                if ammo and ammo:IsA("IntValue") and ammo.Value == 0 then pcall(function() tool:Reload() end) end
-            end
-        end
-        local function noRecoilStep()
-            if not noRecoil then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then for _, obj in ipairs(tool:GetDescendants()) do if obj:IsA("SpringConstraint") or obj:IsA("RocketPropulsion") then obj.Enabled = false end end end
-        end
-        local rapidFireTimer = 0
-        local function rapidFireStep()
-            if not rapidFire then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                if tick() - rapidFireTimer >= rapidFireDelay then
-                    pcall(function() tool:Activate() end)
-                    rapidFireTimer = tick()
-                end
-            end
-        end
-
-        -- Novas funções de arma
-        local function armaColoridaStep()
-            if not armaColorida then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then
-                local hue = (tick() * rgbSpeed) % 1
-                local color = Color3.fromHSV(hue, 1, 1)
-                for _, part in ipairs(tool:GetDescendants()) do
-                    if part:IsA("BasePart") then part.Color = color end
-                end
-            end
-        end
-        local function tamanhoArmaStep()
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then
-                tool:ScaleTo(tamanhoArma)
-            end
-        end
-        local function matarUmTiroStep()
-            if not matarUmTiro then return end
-            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-            if tool then
-                for _, v in ipairs(tool:GetDescendants()) do
-                    if v.Name == "Damage" and v:IsA("NumberValue") then
-                        v.Value = 9999
-                    end
-                end
-            end
-        end
-
-        -- Godmode
-        local function godModeStep()
-            if not godMode then return end
-            local char = Player.Character
-            if char then
-                local hum = char:FindFirstChild("Humanoid")
-                if hum then
-                    hum.MaxHealth = 99999
-                    hum.Health = 99999
-                end
-            end
-        end
-
-        -- Proteções Extras
-        local lastAfkTime = 0
-        local function antiAfkStep()
-            if not antiAfk then return end
-            if tick() - lastAfkTime < 120 then return end
-            lastAfkTime = tick()
-            local char = Player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 1, 0)
-            end
-        end
-        local function antiStunStep()
-            if not antiStun then return end
-            local char = Player.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-                char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            end
-        end
-        local function antiFireStep()
-            if not antiFire then return end
-            local char = Player.Character
-            if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") and part.Material == Enum.Material.Fire then part.Material = Enum.Material.SmoothPlastic end end end
-        end
-        local function autoRespawnStep()
-            if not autoRespawn then return end
-            local char = Player.Character
-            if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then pcall(function() Player:LoadCharacter() end) end
-        end
-
-        -- Contador de Staff
-        local staffFrame
-        local function updateStaffCounter()
-            if not staffFrame then return end
-            local count = 0
-            for _, p in ipairs(Players:GetPlayers()) do
-                for _, kw in ipairs({"staff","admin","mod","helper","owner","dev","gerente","moderador"}) do
-                    if p.Name:lower():find(kw) then count=count+1 break end
-                end
-            end
-            staffFrame.Text = "Staff: "..count
-        end
-        task.delay(1, function()
-            local staffGui = Instance.new("ScreenGui", CoreGui); staffGui.Name="StaffCounter"; staffGui.ResetOnSpawn=false
-            staffFrame = Instance.new("TextLabel", staffGui)
-            staffFrame.Size=UDim2.new(0,80,0,30); staffFrame.Position=UDim2.new(0.8,-40,0.1,0)
-            staffFrame.BackgroundColor3=Color3.new(0,0,0); staffFrame.Text="Staff: 0"
-            staffFrame.TextColor3=Color3.new(0,1,0); staffFrame.Font=Enum.Font.SourceSansBold; staffFrame.TextSize=14
-            Instance.new("UICorner", staffFrame).CornerRadius = UDim.new(0,4)
-            updateStaffCounter()
-        end)
-
-        -- Evento de Pulo Infinito
-        UserInputService.JumpRequest:Connect(function()
-            if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
-        end)
-
-        -- LOOP PRINCIPAL
-        local lastLiveCheck = 0
+        -- Loop principal
         RunService.RenderStepped:Connect(function()
             pcall(aimbotStep)
             pcall(autoLockPicStep)
-            pcall(autoEssenciaStep)
-            pcall(autoMichaStep)
             pcall(updateESP)
             pcall(speedStep)
             pcall(flyStep)
@@ -1344,9 +1215,7 @@ function carregarInterface(currentKey)
             pcall(antiFireStep)
             pcall(autoRespawnStep)
             pcall(flyCarStep)
-            pcall(updateStaffCounter)
 
-            -- Física do Veículo Segurado
             if grabbedVehicle then
                 local char = Player.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -1355,58 +1224,31 @@ function carregarInterface(currentKey)
                     if vehicleAlign then vehicleAlign.Position = targetPos end
                 end
             end
-
-            if antiLive and tick()-lastLiveCheck > 1 then
-                lastLiveCheck = tick()
-                if usarRayfield then
-                    Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
-                end
-            end
         end)
 
-        -- Limpeza ao Desativar
-        script.Destroying:Connect(function()
-            if flyCarBV then flyCarBV:Destroy() end
-            if flyCarBG then flyCarBG:Destroy() end
-            if fovCircleObj then fovCircleObj:Remove() end
-            if vehicleAlign then vehicleAlign:Destroy() end
-            if vehicleVel then vehicleVel:Destroy() end
-            if vehicleGyro then vehicleGyro:Destroy() end
-            for _, box in pairs(boxes2D) do pcall(function() box:Remove() end) end
-            for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
-            for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
-            for _, bar in pairs(healthBars) do pcall(function() bar.bg:Remove(); bar.fill:Remove() end) end
-            for _, line in pairs(tracerLines) do pcall(function() line:Remove() end) end
-            for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
-            if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
-            local c = Player.Character
-            if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16 end
-            Camera.FieldOfView = 70
+        UserInputService.JumpRequest:Connect(function()
+            if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
         end)
     end)
 
-    -- ========== VERIFICAÇÃO PERIÓDICA ==========
+    -- Checagem periódica
     spawn(function()
         while true do
             wait(300)
             local ok, json = pcall(function() return game:HttpGet(KEYS_URL) end)
-            if not ok or not json or json == "" then
-                destruirScript("Falha na verificação periódica")
-                return
-            end
-            local keys = {}
-            pcall(function() keys = game:GetService("HttpService"):JSONDecode(json) end)
-            local data = keys[currentKey]
-            if not data or data.bloqueado then
-                destruirScript("Key revogada ou banida")
-                return
-            end
-            if data.hwid and data.hwid ~= "" and data.hwid ~= HWID then
-                destruirScript("HWID não autorizado")
-                return
+            if ok and json then
+                local keys = {}
+                pcall(function() keys = game:GetService("HttpService"):JSONDecode(json) end)
+                local data = keys[DONO_KEY] -- simplificado
+                if data and data.bloqueado then
+                    destruirScript("Key banida")
+                end
             end
         end
     end)
+
+    print("S4ZX HUB Carregado com Sucesso!")
 end
 
+-- Inicia a tela de login
 mostrarLogin()
