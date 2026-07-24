@@ -1,16 +1,14 @@
--- Snow S4zx Mod – Versão Suprema Ultimate (Sintonia RP Edition)
--- Com proteções integradas: HWID, Blacklist, Anti‑adulteração, Verificação Periódica
+-- Snow S4zx Mod – Ultimate Edition (Rayfield + Novas Funções de Arma + Godmode + Silent Aim Corrigido)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2026"  -- apenas você conhece
+local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- ========== SISTEMA DE SEGURANÇA ==========
+-- ========== SISTEMA DE HWID ==========
 local function getHWID()
     local ok, id = pcall(function()
         return game:GetService("RbxAnalyticsService"):GetClientId()
     end)
     if ok and id then return id end
-    -- fallback: IP público
     ok, id = pcall(function()
         return game:HttpGet("https://api.ipify.org")
     end)
@@ -18,39 +16,37 @@ local function getHWID()
 end
 local HWID = getHWID()
 
-local SECURITY_FLAG = "S4zx_Intacto_2026"
+-- ========== ANTI‑ADULTERAÇÃO ==========
+local SECURITY_FLAG = "S4zx_INTEGRO_2026"
 
 local function destruirScript(motivo)
     pcall(function()
-        if game:GetService("CoreGui"):FindFirstChild("SnowLogin") then
-            game:GetService("CoreGui").SnowLogin:Destroy()
+        if game.CoreGui:FindFirstChild("SnowLogin") then
+            game.CoreGui.SnowLogin:Destroy()
         end
-        if game:GetService("CoreGui"):FindFirstChild("Rayfield") then
-            game:GetService("CoreGui").Rayfield:Destroy()
+        if game.CoreGui:FindFirstChild("Rayfield") then
+            game.CoreGui.Rayfield:Destroy()
         end
     end)
-    game:GetService("Players").LocalPlayer:Kick(motivo or "Script encerrado por segurança")
+    game.Players.LocalPlayer:Kick(motivo or "Script encerrado por segurança")
     while true do end
 end
 
 -- =================== TELA DE LOGIN (COM PROTEÇÕES) ===================
 local function mostrarLogin()
     task.wait(0.5)
-
-    -- Anti‑adulteração
-    if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_Intacto_2026" then
+    if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_INTEGRO_2026" then
         destruirScript("Script adulterado")
         return
     end
 
-    local coreGui = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui")
-    local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local coreGui = pcall(function() return game.CoreGui end) and game.CoreGui
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
     local gui = Instance.new("ScreenGui")
     gui.Name = "SnowLogin"
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
     if coreGui then
         local ok = pcall(function() gui.Parent = coreGui end)
         if not ok then gui.Parent = playerGui end
@@ -124,8 +120,6 @@ local function mostrarLogin()
             status.TextColor3 = Color3.fromRGB(255,200,0)
             return
         end
-
-        -- Key do dono (mestra) – nunca é verificada em blacklist ou HWID
         if key == DONO_KEY then
             status.Text = "✅ Key do Dono (Permanente)"
             status.TextColor3 = Color3.fromRGB(0,255,100)
@@ -134,60 +128,45 @@ local function mostrarLogin()
             carregarInterface(key)
             return
         end
-
         btn.Text = "AGUARDE..."
         btn.BackgroundColor3 = Color3.fromRGB(100,100,100)
-
         local ok, json = pcall(function() return game:HttpGet(KEYS_URL) end)
         if ok and json and json ~= "" then
             local keys = {}
             pcall(function() keys = game:GetService("HttpService"):JSONDecode(json) end)
             local data = keys[key]
             if data then
-                -- Blacklist (campo "bloqueado")
                 if data.bloqueado then
                     status.Text = "⛔ Key banida!"
                     status.TextColor3 = Color3.fromRGB(255,0,0)
-                    btn.Text = "ENTRAR"
-                    btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-                    return
-                end
-
-                -- HWID (se existir no objeto da key)
-                if data.hwid and data.hwid ~= "" then
-                    if data.hwid ~= HWID then
-                        status.Text = "❌ HWID não autorizado!"
-                        status.TextColor3 = Color3.fromRGB(255,0,0)
-                        btn.Text = "ENTRAR"
-                        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-                        return
-                    end
-                end
-
-                -- Validade temporal
-                if data.dias == "perm" then
-                    status.Text = "✅ Key permanente"
-                    status.TextColor3 = Color3.fromRGB(0,255,100)
-                    task.wait(1)
-                    gui:Destroy()
-                    carregarInterface(key)
-                    return
+                elseif data.hwid and data.hwid ~= "" and data.hwid ~= HWID then
+                    status.Text = "❌ HWID não autorizado!"
+                    status.TextColor3 = Color3.fromRGB(255,0,0)
                 else
-                    local dia, mes, ano = data.criada:match("(%d+)/(%d+)/(%d+)")
-                    if dia then
-                        local criada = os.time({year=tonumber(ano), month=tonumber(mes), day=tonumber(dia)})
-                        local expira = criada + (tonumber(data.dias) * 86400)
-                        if os.time() <= expira then
-                            local diasRestantes = math.ceil((expira - os.time()) / 86400)
-                            status.Text = "✅ Key válida! Dias: " .. diasRestantes
-                            status.TextColor3 = Color3.fromRGB(0,255,100)
-                            task.wait(1)
-                            gui:Destroy()
-                            carregarInterface(key)
-                            return
-                        else
-                            status.Text = "❌ Key expirada"
-                            status.TextColor3 = Color3.fromRGB(255,50,50)
+                    if data.dias == "perm" then
+                        status.Text = "✅ Key permanente"
+                        status.TextColor3 = Color3.fromRGB(0,255,100)
+                        task.wait(1)
+                        gui:Destroy()
+                        carregarInterface(key)
+                        return
+                    else
+                        local dia, mes, ano = data.criada:match("(%d+)/(%d+)/(%d+)")
+                        if dia then
+                            local criada = os.time({year=tonumber(ano), month=tonumber(mes), day=tonumber(dia)})
+                            local expira = criada + (tonumber(data.dias) * 86400)
+                            if os.time() <= expira then
+                                local diasRestantes = math.ceil((expira - os.time()) / 86400)
+                                status.Text = "✅ Key válida! Dias: " .. diasRestantes
+                                status.TextColor3 = Color3.fromRGB(0,255,100)
+                                task.wait(1)
+                                gui:Destroy()
+                                carregarInterface(key)
+                                return
+                            else
+                                status.Text = "❌ Key expirada"
+                                status.TextColor3 = Color3.fromRGB(255,50,50)
+                            end
                         end
                     end
                 end
@@ -199,7 +178,6 @@ local function mostrarLogin()
             status.Text = "❌ Erro ao verificar key"
             status.TextColor3 = Color3.fromRGB(255,50,50)
         end
-
         btn.Text = "ENTRAR"
         btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
     end
@@ -210,17 +188,16 @@ local function mostrarLogin()
     end)
 end
 
--- =================== INTERFACE RAYFIELD (COMPLETA + PROTEÇÕES) ===================
+-- =================== INTERFACE RAYFIELD (COMPLETA) ===================
 function carregarInterface(currentKey)
-    -- Anti‑adulteração
-    if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_Intacto_2026" then
+    if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_INTEGRO_2026" then
         destruirScript("Script adulterado")
         return
     end
 
     local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
     if not Rayfield then
-        game:GetService("Players").LocalPlayer:Kick("Falha ao carregar Rayfield")
+        game.Players.LocalPlayer:Kick("Falha ao carregar Rayfield")
         return
     end
 
@@ -244,9 +221,9 @@ function carregarInterface(currentKey)
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
 
-    -- Variáveis de estado (todas mantidas do original)
+    -- Variáveis de estado
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
-    local wallCheck = false; local silentAimEnabled = false
+    local wallCheck = false; local silentAimEnabled = false; local magicBullet = false
     local fovCircle = false; local fovRainbow = false
     local espBox = false; local espSkel = false; local espName = false
     local espDistance = false; local espHealth = false; local tracerV7 = false
@@ -262,104 +239,142 @@ function carregarInterface(currentKey)
     local reach = false; local reachDistance = 15
     local infiniteAmmo = false; local autoReload = false
     local noRecoil = false; local rapidFire = false; local rapidFireDelay = 0.1
-    local rainbowChar = false; local rainbowSpeed = 0.5
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
     local flyCarEnabled = false; local flyCarSpeed = 50
     local streamerMode = false
-    local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
-    local autoEssencia = false
-    local autoLockPic = false
-    local autoMicha = false
+    local autoEssencia = false; local autoLockPic = false; local autoMicha = false
     local lockedTarget = nil
+
+    -- Novas variáveis
+    local godMode = false
+    local corArma = Color3.fromRGB(255,255,255)
+    local armaColorida = false
+    local rgbSpeed = 1
+    local tamanhoArma = 1
+    local matarUmTiro = false
 
     -- PEGAR/TACAR
     local grabbedVehicle = nil
-    local vehicleAlign = nil
-    local vehicleVel = nil
-    local vehicleGyro = nil
+    local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
 
-    -- Abas (todas mantidas)
-    local function safeTab(n, i) local t; pcall(function() t = Window:CreateTab(n, i) end); return t end
-    local AimbotTab = safeTab("AIMBOT", 4483362458)
-    local ESPTab = safeTab("ESP", 4483362458)
-    local VisualTab = safeTab("VISUAL", 4483362458)
-    local MoveTab = safeTab("MOVIMENTO", 4483362458)
-    local FarmTab = safeTab("FARM", 4483362458)
-    local WeaponTab = safeTab("ARMAS", 4483362458)
-    local CarTab = safeTab("CAR", 4483362458)
-    local ExtrasTab = safeTab("EXTRAS", 4483362458)
-    local StreamTab = safeTab("STREAM", 4483362458)
-    local GrabTab = safeTab("PEGAR/TACAR", 4483362458)
-    local ConfigTab = safeTab("CONFIG", 4483362458)
-
-    local function safeToggle(tab, name, d, cb) if tab then pcall(function() tab:CreateToggle({Name=name, CurrentValue=d, Callback=cb}) end) end end
-    local function safeSlider(tab, name, min, max, d, cb) if tab then pcall(function() tab:CreateSlider({Name=name, Range={min, max}, Increment=1, CurrentValue=d, Callback=cb, Flag=name:gsub("%s","_")}) end) end end
-    local function safeInput(tab, name, ph, cb) if tab then pcall(function() tab:CreateInput({Name=name, PlaceholderText=ph, RemoveTextAfterFocusLost=false, Callback=cb}) end) end end
-    local function safeButton(tab, name, cb) if tab then pcall(function() tab:CreateButton({Name=name, Callback=cb}) end) end end
+    -- Abas
+    local AimbotTab = Window:CreateTab("AIMBOT", 4483362458)
+    local ESPTab = Window:CreateTab("ESP", 4483362458)
+    local VisualTab = Window:CreateTab("VISUAL", 4483362458)
+    local MoveTab = Window:CreateTab("MOVIMENTO", 4483362458)
+    local FarmTab = Window:CreateTab("FARM", 4483362458)
+    local WeaponTab = Window:CreateTab("ARMAS", 4483362458)
+    local CarTab = Window:CreateTab("CARRO", 4483362458)
+    local ExtrasTab = Window:CreateTab("EXTRAS", 4483362458)
+    local GrabTab = Window:CreateTab("PEGAR/TACAR", 4483362458)
+    local StreamTab = Window:CreateTab("STREAM", 4483362458)
+    local ConfigTab = Window:CreateTab("CONFIG", 4483362458)
 
     -- AIMBOT
-    safeToggle(AimbotTab, "AIMBOT", false, function(v) aimbot = v end)
-    safeToggle(AimbotTab, "Auto Lock Pic (CamLock)", false, function(v) autoLockPic = v if not v then lockedTarget = nil end end)
-    safeSlider(AimbotTab, "Força (1-5)", 1, 5, 1, function(v) aimForce = v end)
-    safeSlider(AimbotTab, "Bypass", 1, 10, 1, function(v) bypass = v end)
-    safeSlider(AimbotTab, "FOV (Raio)", 50, 500, 150, function(v) fovRadius = v end)
-    safeToggle(AimbotTab, "WALLCK (Parede)", false, function(v) wallCheck = v end)
-    safeToggle(AimbotTab, "SILENT AIM", false, function(v) silentAimEnabled = v end)
+    AimbotTab:CreateToggle({Name = "AIMBOT", CurrentValue = false, Callback = function(v) aimbot = v end})
+    AimbotTab:CreateToggle({Name = "Auto Lock Pic (CamLock)", CurrentValue = false, Callback = function(v) autoLockPic = v; if not v then lockedTarget = nil end end})
+    AimbotTab:CreateSlider({Name = "Força (1-5)", Range = {1, 5}, Increment = 1, CurrentValue = 1, Callback = function(v) aimForce = v end})
+    AimbotTab:CreateSlider({Name = "Bypass", Range = {1, 10}, Increment = 1, CurrentValue = 1, Callback = function(v) bypass = v end})
+    AimbotTab:CreateSlider({Name = "FOV (Raio)", Range = {50, 500}, Increment = 1, CurrentValue = 150, Callback = function(v) fovRadius = v end})
+    AimbotTab:CreateToggle({Name = "WALLCK (Parede)", CurrentValue = false, Callback = function(v) wallCheck = v end})
+    AimbotTab:CreateToggle({Name = "SILENT AIM", CurrentValue = false, Callback = function(v) silentAimEnabled = v end})
+    AimbotTab:CreateToggle({Name = "Magic Bullet", CurrentValue = false, Callback = function(v) magicBullet = v end})
 
     -- ESP
-    safeToggle(ESPTab, "2D Box", false, function(v) espBox = v end)
-    safeToggle(ESPTab, "Skeleton", false, function(v) espSkel = v end)
-    safeToggle(ESPTab, "Name", false, function(v) espName = v end)
-    safeToggle(ESPTab, "Distance", false, function(v) espDistance = v end)
-    safeToggle(ESPTab, "Health Bar", false, function(v) espHealth = v end)
-    safeToggle(ESPTab, "Tracer V7 (do chão)", false, function(v) tracerV7 = v end)
-    safeToggle(ESPTab, "Itens (Moedas/Armas)", false, function(v) espItems = v end)
-    safeToggle(ESPTab, "Dinheiro", false, function(v) showMoney = v end)
-    safeToggle(ESPTab, "Mostrar Time", false, function(v) showTeamESP = v end)
-    safeToggle(ESPTab, "Arma Equipada", false, function(v) espPlayerWeapon = v end)
+    ESPTab:CreateToggle({Name = "2D Box", CurrentValue = false, Callback = function(v) espBox = v end})
+    ESPTab:CreateToggle({Name = "Skeleton", CurrentValue = false, Callback = function(v) espSkel = v end})
+    ESPTab:CreateToggle({Name = "Name", CurrentValue = false, Callback = function(v) espName = v end})
+    ESPTab:CreateToggle({Name = "Distance", CurrentValue = false, Callback = function(v) espDistance = v end})
+    ESPTab:CreateToggle({Name = "Health Bar", CurrentValue = false, Callback = function(v) espHealth = v end})
+    ESPTab:CreateToggle({Name = "Tracer V7 (do chão)", CurrentValue = false, Callback = function(v) tracerV7 = v end})
+    ESPTab:CreateToggle({Name = "Itens (Moedas/Armas)", CurrentValue = false, Callback = function(v) espItems = v end})
+    ESPTab:CreateToggle({Name = "Dinheiro", CurrentValue = false, Callback = function(v) showMoney = v end})
+    ESPTab:CreateToggle({Name = "Mostrar Time", CurrentValue = false, Callback = function(v) showTeamESP = v end})
+    ESPTab:CreateToggle({Name = "Arma Equipada", CurrentValue = false, Callback = function(v) espPlayerWeapon = v end})
 
     -- VISUAL
-    safeInput(VisualTab, "Cor Box", "verde", function(v) local c=parseColor(v) if c then boxColor=c end end)
-    safeInput(VisualTab, "Cor Skeleton", "rosa", function(v) local c=parseColor(v) if c then skelColor=c end end)
-    safeInput(VisualTab, "Cor Tracer V7", "branco", function(v) local c=parseColor(v) if c then tracerColor=c end end)
-    safeToggle(VisualTab, "FOV Círculo", false, function(v) fovCircle = v end)
-    safeToggle(VisualTab, "FOV Arco-íris", false, function(v) fovRainbow = v end)
+    VisualTab:CreateInput({Name = "Cor Box", PlaceholderText = "verde", RemoveTextAfterFocusLost = false, Callback = function(v) local c=parseColor(v) if c then boxColor=c end end})
+    VisualTab:CreateInput({Name = "Cor Skeleton", PlaceholderText = "rosa", RemoveTextAfterFocusLost = false, Callback = function(v) local c=parseColor(v) if c then skelColor=c end end})
+    VisualTab:CreateInput({Name = "Cor Tracer V7", PlaceholderText = "branco", RemoveTextAfterFocusLost = false, Callback = function(v) local c=parseColor(v) if c then tracerColor=c end end})
+    VisualTab:CreateToggle({Name = "FOV Círculo", CurrentValue = false, Callback = function(v) fovCircle = v end})
+    VisualTab:CreateToggle({Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end})
+    VisualTab:CreateToggle({Name = "Rainbow Box", CurrentValue = false, Callback = function(v) rainbowBox = v end})
+    VisualTab:CreateToggle({Name = "Rainbow Skeleton", CurrentValue = false, Callback = function(v) rainbowSkel = v end})
+    VisualTab:CreateToggle({Name = "Rainbow Tracer", CurrentValue = false, Callback = function(v) rainbowTracer = v end})
 
     -- MOVIMENTO
-    safeToggle(MoveTab, "Pulo Infinito", false, function(v) infJump = v end)
-    safeToggle(MoveTab, "Fly Avançado (Anti-Kick)", false, function(v) flyEnabled = v; if not v then flyStartY = nil end end)
-    safeSlider(MoveTab, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
-    safeToggle(MoveTab, "Speed Hack", false, function(v) speedEnabled = v end)
-    safeSlider(MoveTab, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
-    safeToggle(MoveTab, "Ghost Mode (Invisível)", false, function(v) ghostMode = v; invisibility = v end)
+    MoveTab:CreateToggle({Name = "Pulo Infinito", CurrentValue = false, Callback = function(v) infJump = v end})
+    MoveTab:CreateToggle({Name = "Fly Avançado (Anti-Kick)", CurrentValue = false, Callback = function(v) flyEnabled = v; if not v then flyStartY = nil end end})
+    MoveTab:CreateSlider({Name = "Velocidade Fly", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flySpeed = v end})
+    MoveTab:CreateToggle({Name = "Speed Hack", CurrentValue = false, Callback = function(v) speedEnabled = v end})
+    MoveTab:CreateSlider({Name = "Velocidade Speed", Range = {16, 200}, Increment = 1, CurrentValue = 24, Callback = function(v) speedValue = v end})
+    MoveTab:CreateToggle({Name = "Ghost Mode (Invisível)", CurrentValue = false, Callback = function(v) ghostMode = v; invisibility = v end})
 
     -- FARM
-    safeToggle(FarmTab, "Auto Essência", false, function(v) autoEssencia = v end)
-    safeToggle(FarmTab, "Auto Micha (Sintonia RP)", false, function(v) autoMicha = v end)
-    safeToggle(FarmTab, "S4zx Farm", false, function(v) s4zxFarm = v end)
-    safeSlider(FarmTab, "Velocidade Farm", 30, 100, 50, function(v) farmSpeed = v end)
+    FarmTab:CreateToggle({Name = "Auto Essência", CurrentValue = false, Callback = function(v) autoEssencia = v end})
+    FarmTab:CreateToggle({Name = "Auto Micha (Sintonia RP)", CurrentValue = false, Callback = function(v) autoMicha = v end})
+    FarmTab:CreateToggle({Name = "S4zx Farm", CurrentValue = false, Callback = function(v) s4zxFarm = v end})
+    FarmTab:CreateSlider({Name = "Velocidade Farm", Range = {30, 100}, Increment = 1, CurrentValue = 50, Callback = function(v) farmSpeed = v end})
 
-    -- ARMAS
-    safeToggle(WeaponTab, "Reach (Alcance)", false, function(v) reach = v end)
-    safeSlider(WeaponTab, "Distância", 10, 50, 15, function(v) reachDistance = v end)
-    safeToggle(WeaponTab, "Infinite Ammo", false, function(v) infiniteAmmo = v end)
-    safeToggle(WeaponTab, "Auto Reload", false, function(v) autoReload = v end)
-    safeToggle(WeaponTab, "No Recoil", false, function(v) noRecoil = v end)
-    safeToggle(WeaponTab, "Rapid Fire", false, function(v) rapidFire = v end)
-    safeSlider(WeaponTab, "Rapid Fire Delay", 0.05, 0.5, 0.1, function(v) rapidFireDelay = v end)
+    -- ARMAS (básicas + novas)
+    WeaponTab:CreateToggle({Name = "Reach (Alcance)", CurrentValue = false, Callback = function(v) reach = v end})
+    WeaponTab:CreateSlider({Name = "Distância", Range = {10, 50}, Increment = 1, CurrentValue = 15, Callback = function(v) reachDistance = v end})
+    WeaponTab:CreateToggle({Name = "Infinite Ammo", CurrentValue = false, Callback = function(v) infiniteAmmo = v end})
+    WeaponTab:CreateToggle({Name = "Auto Reload", CurrentValue = false, Callback = function(v) autoReload = v end})
+    WeaponTab:CreateToggle({Name = "No Recoil", CurrentValue = false, Callback = function(v) noRecoil = v end})
+    WeaponTab:CreateToggle({Name = "Rapid Fire", CurrentValue = false, Callback = function(v) rapidFire = v end})
+    WeaponTab:CreateSlider({Name = "Rapid Fire Delay", Range = {0.05, 0.5}, Increment = 0.05, CurrentValue = 0.1, Callback = function(v) rapidFireDelay = v end})
 
-    -- CAR
-    safeToggle(CarTab, "Fly Car", false, function(v) flyCarEnabled = v end)
-    safeSlider(CarTab, "Velocidade Fly Car", 20, 200, 50, function(v) flyCarSpeed = v end)
+    -- NOVAS FUNÇÕES DE ARMA
+    WeaponTab:CreateToggle({Name = "Matar com um Tiro", CurrentValue = false, Callback = function(v)
+        matarUmTiro = v
+        -- Implementação: aumentará o dano da arma atual drasticamente
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool and tool:FindFirstChild("Settings") then
+            -- Alguns jogos usam configurações nas ferramentas
+            for _, cfg in ipairs(tool:GetDescendants()) do
+                if cfg.Name == "Damage" and cfg:IsA("NumberValue") then
+                    cfg.Value = v and 9999 or 15
+                end
+            end
+        end
+    end})
+    WeaponTab:CreateInput({Name = "Cor da Arma", PlaceholderText = "ex: vermelho ou ff0000", RemoveTextAfterFocusLost = false, Callback = function(v)
+        local c = parseColor(v)
+        if c then corArma = c end
+    end})
+    WeaponTab:CreateToggle({Name = "Arma Colorida", CurrentValue = false, Callback = function(v) armaColorida = v end})
+    WeaponTab:CreateSlider({Name = "Velocidade do RGB", Range = {0.1, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v) rgbSpeed = v end})
+    WeaponTab:CreateSlider({Name = "Tamanho da Arma", Range = {0.5, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v)
+        tamanhoArma = v
+        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            tool:ScaleTo(v)
+        end
+    end})
 
-    -- EXTRAS
-    safeToggle(ExtrasTab, "Anti AFK", false, function(v) antiAfk = v end)
-    safeToggle(ExtrasTab, "Anti Stun", false, function(v) antiStun = v end)
-    safeToggle(ExtrasTab, "Anti Fire", false, function(v) antiFire = v end)
-    safeToggle(ExtrasTab, "Auto Respawn", false, function(v) autoRespawn = v end)
+    -- CARRO
+    CarTab:CreateToggle({Name = "Fly Car", CurrentValue = false, Callback = function(v) flyCarEnabled = v end})
+    CarTab:CreateSlider({Name = "Velocidade Fly Car", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flyCarSpeed = v end})
+
+    -- EXTRAS (com Godmode)
+    ExtrasTab:CreateToggle({Name = "Anti AFK", CurrentValue = false, Callback = function(v) antiAfk = v end})
+    ExtrasTab:CreateToggle({Name = "Anti Stun", CurrentValue = false, Callback = function(v) antiStun = v end})
+    ExtrasTab:CreateToggle({Name = "Anti Fire", CurrentValue = false, Callback = function(v) antiFire = v end})
+    ExtrasTab:CreateToggle({Name = "Auto Respawn", CurrentValue = false, Callback = function(v) autoRespawn = v end})
+    ExtrasTab:CreateToggle({Name = "God Mode", CurrentValue = false, Callback = function(v)
+        godMode = v
+        if Player.Character then
+            local hum = Player.Character:FindFirstChild("Humanoid")
+            if hum then
+                hum.MaxHealth = v and 99999 or 100
+                hum.Health = v and 99999 or 100
+            end
+        end
+    end})
 
     -- PEGAR/TACAR
-    safeButton(GrabTab, "🖐️ PEGAR (Raycast)", function()
+    GrabTab:CreateButton({Name = "🖐️ PEGAR (Raycast)", Callback = function()
         local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 100)
         local hit, pos = Workspace:FindPartOnRay(ray, Player.Character, false, true)
         if hit then
@@ -403,9 +418,8 @@ function carregarInterface(currentKey)
                 end
             end
         end
-    end)
-
-    safeButton(GrabTab, "💥 TACAR", function()
+    end})
+    GrabTab:CreateButton({Name = "💥 TACAR", Callback = function()
         if not grabbedVehicle then return end
         local primary = grabbedVehicle:FindFirstChild("PrimaryPart") or grabbedVehicle:FindFirstChildWhichIsA("BasePart")
         if primary then
@@ -422,16 +436,16 @@ function carregarInterface(currentKey)
             end)
         end
         grabbedVehicle = nil
-    end)
+    end})
 
     -- STREAM
-    safeToggle(StreamTab, "Modo Streamer", false, function(v)
+    StreamTab:CreateToggle({Name = "Modo Streamer", CurrentValue = false, Callback = function(v)
         streamerMode = v
         Window.Enabled = not v
-    end)
+    end})
 
     -- CONFIG
-    safeToggle(ConfigTab, "Anti Live", false, function(v) antiLive = v end)
+    ConfigTab:CreateToggle({Name = "Anti Live", CurrentValue = false, Callback = function(v) antiLive = v end})
 
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
@@ -440,6 +454,62 @@ function carregarInterface(currentKey)
         if #s == 6 and s:match("^%x+$") then return Color3.fromRGB(tonumber(s:sub(1,2),16), tonumber(s:sub(3,4),16), tonumber(s:sub(5,6),16)) end
         return nil
     end
+
+    -- ==================== SILENT AIM CORRIGIDO ====================
+    local function setupSilentAim()
+        Workspace.DescendantAdded:Connect(function(obj)
+            if not silentAimEnabled then return end
+            if obj:IsA("BasePart") and obj.Velocity.Magnitude > 100 then
+                local owner = obj:GetAttribute("Owner")
+                local isMine = (owner == Player.Name)
+                if not isMine then
+                    local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+                    if tool and obj:IsDescendantOf(tool) then
+                        isMine = true
+                    end
+                end
+                if not isMine then return end
+
+                local bestTarget = nil
+                local bestDist = fovRadius
+                local myPos = Camera.CFrame.Position
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p == Player then continue end
+                    local chr = p.Character
+                    if chr and chr:FindFirstChild("Head") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
+                        local headPos = chr.Head.Position
+                        local dist = (headPos - myPos).Magnitude
+                        if dist < bestDist then
+                            local ray = Ray.new(myPos, (headPos - myPos).Unit * 1000)
+                            local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {Player.Character}, false, true)
+                            if hit and hit:IsDescendantOf(chr) then
+                                bestDist = dist
+                                bestTarget = chr
+                            end
+                        end
+                    end
+                end
+
+                if bestTarget then
+                    local connection
+                    connection = RunService.RenderStepped:Connect(function()
+                        if not obj.Parent or not silentAimEnabled then
+                            connection:Disconnect()
+                            return
+                        end
+                        if magicBullet then
+                            obj.CFrame = CFrame.new(bestTarget.Head.Position)
+                            obj.Velocity = Vector3.new(0, 0, 0)
+                        else
+                            local dir = (bestTarget.Head.Position - obj.Position).Unit
+                            obj.Velocity = dir * 300
+                        end
+                    end)
+                end
+            end
+        end)
+    end
+    setupSilentAim()
 
     -- ==================== FUNÇÕES INTERNAS (ORIGINAIS) ====================
     task.spawn(function()
@@ -455,33 +525,6 @@ function carregarInterface(currentKey)
         local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
         local itemESP = {}
         local crosshairObj
-
-        -- Silent Aim
-        local silentAimConnection
-        local function setupSilentAim()
-            if silentAimConnection then silentAimConnection:Disconnect() end
-            if not silentAimEnabled then return end
-            silentAimConnection = Workspace.DescendantAdded:Connect(function(obj)
-                if not silentAimEnabled then return end
-                if obj:IsA("BasePart") and (obj.Velocity.Magnitude > 50 or obj:GetAttribute("Owner") == Player.Name) then
-                    local nearest, nearestDist = nil, fovRadius
-                    for _, p in ipairs(Players:GetPlayers()) do
-                        if p == Player then continue end
-                        local chr = p.Character
-                        if chr and chr:FindFirstChild("Head") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
-                            local dist = (chr.Head.Position - obj.Position).Magnitude
-                            if dist < nearestDist then nearestDist=dist; nearest=chr end
-                        end
-                    end
-                    if nearest then
-                        local headPos = nearest.Head.Position
-                        local dir = (headPos - obj.Position).Unit
-                        obj.Velocity = dir * obj.Velocity.Magnitude
-                        obj.CFrame = CFrame.new(obj.Position, headPos)
-                    end
-                end
-            end)
-        end
 
         -- Aimbot Padrão
         local function aimbotStep()
@@ -516,8 +559,6 @@ function carregarInterface(currentKey)
             if not autoLockPic then return end
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local myRoot = char.HumanoidRootPart
-
             if not lockedTarget or not lockedTarget.Parent or not lockedTarget:FindFirstChild("Humanoid") or lockedTarget.Humanoid.Health <= 0 then
                 local nearest = nil; local nearestDist = math.huge
                 for _, p in ipairs(Players:GetPlayers()) do
@@ -551,13 +592,11 @@ function carregarInterface(currentKey)
             if not autoMicha then return end
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-
             local tool = char:FindFirstChild("Micha") or Player.Backpack:FindFirstChild("Micha")
             if tool and tool:IsA("Tool") then
                 if tool.Parent ~= char then tool.Parent = char end
                 pcall(function() tool:Activate() end)
             end
-
             for _, prompt in ipairs(Workspace:GetDescendants()) do
                 if prompt:IsA("ProximityPrompt") then
                     local objText = prompt.ObjectText:lower()
@@ -571,7 +610,7 @@ function carregarInterface(currentKey)
             end
         end
 
-        -- ESP Completa
+        -- ESP Completa (mesmo do original)
         local function updateESP()
             if not useDrawing then return end
             for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
@@ -585,7 +624,7 @@ function carregarInterface(currentKey)
             local screenSize = Camera.ViewportSize
             local tracerOrigin = Vector2.new(screenSize.X / 2, screenSize.Y - 5)
             local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-            local hue = (tick() * rainbowSpeed) % 1
+            local hue = (tick() * 0.5) % 1
             local rainbowColor = Color3.fromHSV(hue, 1, 1)
 
             if espItems then
@@ -801,22 +840,6 @@ function carregarInterface(currentKey)
                 fovCircleObj.Visible = fovCircle
                 if fovCircle and fovRainbow then fovCircleObj.Color = rainbowColor else fovCircleObj.Color = Color3.new(1,1,1) end
             end
-
-            if customCrosshair then
-                if not crosshairObj then
-                    pcall(function()
-                        crosshairObj = Drawing.new("Square")
-                        crosshairObj.Filled = true; crosshairObj.Color = crosshairColor
-                    end)
-                end
-                if crosshairObj then
-                    crosshairObj.Size = Vector2.new(crosshairSize/2, crosshairSize/2)
-                    crosshairObj.Position = screenSize/2 - Vector2.new(crosshairSize/4, crosshairSize/4)
-                    crosshairObj.Visible = true
-                end
-            else
-                if crosshairObj then crosshairObj.Visible = false end
-            end
         end
 
         -- Speed Hack
@@ -845,28 +868,17 @@ function carregarInterface(currentKey)
             local root = char.HumanoidRootPart
             local hum = char:FindFirstChild("Humanoid")
             if hum then hum.PlatformStand = true end
-
             if not flyStartY then flyStartY = root.Position.Y end
             local camDir = Camera.CFrame.LookVector
             local moveDir = Vector3.zero
-            local moving = false
-
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude; moving = true end
-
-            local verticalChange = 0
-            if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalChange = 1; moving = true end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalChange = -1; moving = true end
-
-            if verticalChange ~= 0 then flyStartY = flyStartY + verticalChange * (flySpeed * 0.15) end
-
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+            if UserInputService:IsKeyDown(Enum.KeyCode.E) then flyStartY = flyStartY + flySpeed * 0.15 end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then flyStartY = flyStartY - flySpeed * 0.15 end
             local newPos = root.Position
-            if moving and moveDir.Magnitude > 0 then
-                newPos = root.Position + moveDir.Unit * (flySpeed * 0.2)
-            end
-
+            if moveDir.Magnitude > 0 then newPos = root.Position + moveDir.Unit * (flySpeed * 0.2) end
             newPos = Vector3.new(newPos.X, flyStartY, newPos.Z)
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
         end
@@ -1036,6 +1048,36 @@ function carregarInterface(currentKey)
             end
         end
 
+        -- Novas funções de arma (executadas no loop)
+        local function armaColoridaStep()
+            if not armaColorida then return end
+            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+            if tool then
+                local hue = (tick() * rgbSpeed) % 1
+                local color = Color3.fromHSV(hue, 1, 1)
+                for _, part in ipairs(tool:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Color = color
+                    end
+                end
+            else
+                -- Também aplica ao handle na mochila?
+            end
+        end
+
+        -- Godmode
+        local function godModeStep()
+            if not godMode then return end
+            local char = Player.Character
+            if char then
+                local hum = char:FindFirstChild("Humanoid")
+                if hum then
+                    hum.MaxHealth = 99999
+                    hum.Health = 99999
+                end
+            end
+        end
+
         -- Proteções Extras
         local lastAfkTime = 0
         local function antiAfkStep()
@@ -1110,6 +1152,8 @@ function carregarInterface(currentKey)
             pcall(autoReloadStep)
             pcall(noRecoilStep)
             pcall(rapidFireStep)
+            pcall(armaColoridaStep)
+            pcall(godModeStep)
             pcall(antiAfkStep)
             pcall(antiStunStep)
             pcall(antiFireStep)
@@ -1118,7 +1162,7 @@ function carregarInterface(currentKey)
             pcall(updateStaffCounter)
             pcall(bypassCleanup)
 
-            -- Física do Veículo Segurado (Sistema PEGAR/TACAR)
+            -- Física do Veículo Segurado
             if grabbedVehicle then
                 local char = Player.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -1128,13 +1172,6 @@ function carregarInterface(currentKey)
                         vehicleAlign.Position = targetPos
                     end
                 end
-            end
-
-            if silentAimEnabled and not silentAimConnection then
-                pcall(setupSilentAim)
-            elseif not silentAimEnabled and silentAimConnection then
-                silentAimConnection:Disconnect()
-                silentAimConnection = nil
             end
 
             if antiLive and tick()-lastLiveCheck > 1 then
@@ -1147,7 +1184,6 @@ function carregarInterface(currentKey)
         script.Destroying:Connect(function()
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
-            if silentAimConnection then silentAimConnection:Disconnect() end
             if fovCircleObj then fovCircleObj:Remove() end
             if crosshairObj then crosshairObj:Remove() end
             if vehicleAlign then vehicleAlign:Destroy() end
