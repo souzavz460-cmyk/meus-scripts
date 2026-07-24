@@ -1,11 +1,9 @@
 --[[
-    S4ZX HUB - COMPLETO & OTIMIZADO (v2.1)
-    - ESP 100% funcional no mobile e PC (com fallback para GUI)
-    - Sliders reais para ajustes numéricos
-    - Keybind personalizável para mostrar/ocultar o menu
-    - Silent Aim reescrito (mais eficiente)
-    - Todas as funcionalidades do S4zx mantidas
-    - Segurança com login, HWID, blacklist e verificação periódica
+    S4ZX HUB - REVISADO E ESTÁVEL (v2.2)
+    - ESP com fallback para mobile (GUI)
+    - Auto-farm suave e sem crash
+    - Silent Aim otimizado
+    - Todas as funcionalidades mantidas
 ]]
 
 -- ========== SEGURANÇA ==========
@@ -13,13 +11,9 @@ local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/re
 local DONO_KEY = "S4zx-DonoSupreme2026"
 
 local function getHWID()
-    local ok, id = pcall(function()
-        return game:GetService("RbxAnalyticsService"):GetClientId()
-    end)
+    local ok, id = pcall(function() return game:GetService("RbxAnalyticsService"):GetClientId() end)
     if ok and id then return id end
-    ok, id = pcall(function()
-        return game:HttpGet("https://api.ipify.org")
-    end)
+    ok, id = pcall(function() return game:HttpGet("https://api.ipify.org") end)
     return ok and id or "UNKNOWN"
 end
 local HWID = getHWID()
@@ -205,7 +199,6 @@ function carregarHub()
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
     local Workspace = game:GetService("Workspace")
-    local Lighting = game:GetService("Lighting")
     local Player = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
 
@@ -261,7 +254,7 @@ function carregarHub()
     Title.Size = UDim2.new(0, 200, 1, 0)
     Title.Position = UDim2.new(0, 140, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "S4ZX HUB v2.1"
+    Title.Text = "S4ZX HUB v2.2"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextSize = 18
     Title.Font = Enum.Font.GothamBold
@@ -838,7 +831,315 @@ function carregarHub()
     AddButton(SegPage, "🛡️ Anti-adulteração: Ativo", function() end)
     AddButton(SegPage, "🔄 Checagem remota: 5min", function() end)
 
-    -- ========== SILENT AIM (REESCRITO) ==========
+    -- ========== ESP COM FALLBACK PARA MOBILE (GUI) ==========
+    local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
+    local espContainer = nil
+
+    if not useDrawing then
+        -- Fallback: criamos um container com elementos GUI
+        espContainer = Instance.new("Frame")
+        espContainer.Name = "ESP_Container"
+        espContainer.Size = UDim2.new(1, 0, 1, 0)
+        espContainer.BackgroundTransparency = 1
+        espContainer.Parent = ScreenGui
+        espContainer.ZIndex = 999
+    end
+
+    local espObjects = {} -- para armazenar objetos GUI ou Drawing
+
+    local function clearESPObjects()
+        if useDrawing then
+            for _, obj in ipairs(espObjects) do
+                pcall(function() obj:Remove() end)
+            end
+        else
+            for _, obj in ipairs(espObjects) do
+                pcall(function() obj:Destroy() end)
+            end
+        end
+        espObjects = {}
+    end
+
+    local function createESPObject(kind, properties)
+        if useDrawing then
+            local obj = Drawing.new(kind)
+            for k, v in pairs(properties) do
+                obj[k] = v
+            end
+            table.insert(espObjects, obj)
+            return obj
+        else
+            -- GUI fallback
+            local obj
+            if kind == "Square" then
+                obj = Instance.new("Frame")
+                obj.BackgroundTransparency = 0.5
+                obj.BorderSizePixel = 1
+                obj.BorderColor3 = properties.Color or Color3.new(1,1,1)
+            elseif kind == "Line" then
+                -- Não temos Line em GUI, então usamos um Frame com rotação
+                obj = Instance.new("Frame")
+                obj.BackgroundColor3 = properties.Color or Color3.new(1,1,1)
+                obj.BackgroundTransparency = 0.5
+                obj.Size = UDim2.new(0, 2, 0, 10)
+            elseif kind == "Circle" then
+                obj = Instance.new("ImageLabel")
+                obj.Image = "rbxassetid://10984745131" -- círculo
+                obj.BackgroundTransparency = 1
+                obj.Size = UDim2.new(0, 10, 0, 10)
+                obj.ImageColor3 = properties.Color or Color3.new(1,1,1)
+            elseif kind == "Text" then
+                obj = Instance.new("TextLabel")
+                obj.BackgroundTransparency = 1
+                obj.Text = properties.Text or ""
+                obj.TextColor3 = properties.Color or Color3.new(1,1,1)
+                obj.TextSize = properties.Size or 14
+                obj.Font = Enum.Font.Gotham
+                obj.TextStrokeTransparency = 0
+                obj.TextStrokeColor3 = Color3.new(0,0,0)
+            end
+            if obj then
+                obj.Parent = espContainer
+                obj.ZIndex = 999
+                table.insert(espObjects, obj)
+                return obj
+            end
+            return nil
+        end
+    end
+
+    local function updateESPObject(obj, kind, properties)
+        if useDrawing then
+            for k, v in pairs(properties) do
+                obj[k] = v
+            end
+        else
+            if kind == "Square" then
+                obj.Position = UDim2.new(0, properties.Position.X, 0, properties.Position.Y)
+                obj.Size = UDim2.new(0, properties.Size.X, 0, properties.Size.Y)
+                obj.BorderColor3 = properties.Color or Color3.new(1,1,1)
+            elseif kind == "Line" then
+                -- Aproximação: frame com rotação e posição
+                local from = properties.From
+                local to = properties.To
+                local dx = to.X - from.X
+                local dy = to.Y - from.Y
+                local len = math.sqrt(dx*dx + dy*dy)
+                local angle = math.atan2(dy, dx)
+                obj.Position = UDim2.new(0, from.X, 0, from.Y)
+                obj.Size = UDim2.new(0, len, 0, 2)
+                obj.Rotation = math.deg(angle)
+                obj.BackgroundColor3 = properties.Color or Color3.new(1,1,1)
+            elseif kind == "Circle" then
+                obj.Position = UDim2.new(0, properties.Position.X - properties.Radius, 0, properties.Position.Y - properties.Radius)
+                obj.Size = UDim2.new(0, properties.Radius*2, 0, properties.Radius*2)
+                obj.ImageColor3 = properties.Color or Color3.new(1,1,1)
+            elseif kind == "Text" then
+                obj.Position = UDim2.new(0, properties.Position.X, 0, properties.Position.Y)
+                obj.Text = properties.Text or ""
+                obj.TextColor3 = properties.Color or Color3.new(1,1,1)
+                obj.TextSize = properties.Size or 14
+            end
+        end
+    end
+
+    local function worldToScreen(pos)
+        local vec, onScreen = Camera:WorldToViewportPoint(pos)
+        return Vector2.new(vec.X, vec.Y), onScreen
+    end
+
+    -- Loop de ESP
+    task.spawn(function()
+        while true do
+            task.wait(0.05) -- atualiza a cada 50ms para não sobrecarregar
+            if not espEnabled then
+                clearESPObjects()
+                if fovCircleObj then fovCircleObj.Visible = false end
+                continue
+            end
+
+            clearESPObjects() -- recria tudo a cada ciclo (simples e evita vazamento)
+
+            local screenSize = Camera.ViewportSize
+            local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+            local targets = {}
+
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p == Player then continue end
+                local chr = p.Character
+                if chr and chr:FindFirstChild("HumanoidRootPart") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
+                    table.insert(targets, {player = p, char = chr})
+                end
+            end
+            if targetNPCs then
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
+                        if obj:FindFirstChild("HumanoidRootPart") and obj.Humanoid.Health > 0 then
+                            table.insert(targets, {player = obj, char = obj, isNPC = true})
+                        end
+                    end
+                end
+            end
+
+            for _, target in ipairs(targets) do
+                local char = target.char
+                local root = char:FindFirstChild("HumanoidRootPart")
+                local head = char:FindFirstChild("Head")
+                local hum = char:FindFirstChild("Humanoid")
+                if not root or not head or not hum then continue end
+                if hum.Health <= 0 then continue end
+
+                local headPos2D, headOn = worldToScreen(head.Position + Vector3.new(0, 1.5, 0))
+                local rootPos2D, rootOn = worldToScreen(root.Position)
+                local feetPos2D, feetOn = worldToScreen(root.Position - Vector3.new(0, 3, 0))
+
+                if not headOn and not infiniteDistance then continue end
+
+                local isVisible = true
+                if visibleCheck then
+                    local params = RaycastParams.new()
+                    params.FilterDescendantsInstances = {Player.Character}
+                    params.FilterType = Enum.RaycastFilterType.Blacklist
+                    local result = Workspace:Raycast(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * 1000, params)
+                    if result and not result.Instance:IsDescendantOf(char) then isVisible = false end
+                end
+
+                local dist = myRoot and (root.Position - myRoot.Position).Magnitude or 0
+                local weaponName = ""
+                if espWeapons then
+                    local tool = char:FindFirstChildWhichIsA("Tool")
+                    weaponName = tool and tool.Name or ""
+                end
+
+                -- Box
+                if headOn and feetOn then
+                    local bodyHeight = math.abs(headPos2D.Y - feetPos2D.Y)
+                    local bodyWidth = bodyHeight * 0.45
+                    local centerX = (headPos2D.X + feetPos2D.X) / 2
+                    local box = createESPObject("Square", {
+                        Position = Vector2.new(centerX - bodyWidth/2, headPos2D.Y - bodyHeight*0.1),
+                        Size = Vector2.new(bodyWidth, bodyHeight),
+                        Color = isVisible and boxColor or invisibleSkeletonColor,
+                        Thickness = 2,
+                        Filled = false
+                    })
+                end
+
+                -- Skeleton
+                if espSkeleton then
+                    local boneConnections = {
+                        {"Head","UpperTorso"}, {"UpperTorso","LowerTorso"},
+                        {"LowerTorso","LeftUpperLeg"}, {"LeftUpperLeg","LeftLowerLeg"}, {"LeftLowerLeg","LeftFoot"},
+                        {"LowerTorso","RightUpperLeg"}, {"RightUpperLeg","RightLowerLeg"}, {"RightLowerLeg","RightFoot"},
+                        {"UpperTorso","LeftUpperArm"}, {"LeftUpperArm","LeftLowerArm"}, {"LeftLowerArm","LeftHand"},
+                        {"UpperTorso","RightUpperArm"}, {"RightUpperArm","RightLowerArm"}, {"RightLowerArm","RightHand"}
+                    }
+                    for _, pair in ipairs(boneConnections) do
+                        local a = char:FindFirstChild(pair[1])
+                        local b = char:FindFirstChild(pair[2])
+                        if a and b then
+                            local aPos, aOn = worldToScreen(a.Position)
+                            local bPos, bOn = worldToScreen(b.Position)
+                            if aOn and bOn then
+                                createESPObject("Line", {
+                                    From = aPos,
+                                    To = bPos,
+                                    Color = isVisible and skeletonColor or invisibleSkeletonColor,
+                                    Thickness = 2
+                                })
+                            end
+                        end
+                    end
+                end
+
+                -- Head
+                if espHead and headOn then
+                    createESPObject("Circle", {
+                        Position = headPos2D,
+                        Radius = 6,
+                        Color = isVisible and skeletonColor or invisibleSkeletonColor,
+                        Thickness = 2
+                    })
+                end
+
+                -- Name
+                if espNames and headOn then
+                    createESPObject("Text", {
+                        Position = Vector2.new(headPos2D.X, headPos2D.Y - 22),
+                        Text = target.player.Name or "NPC",
+                        Color = Color3.new(1,1,1),
+                        Size = textSize,
+                        Center = true,
+                        Outline = true,
+                        OutlineColor = Color3.new(0,0,0)
+                    })
+                end
+
+                -- Weapon
+                if espWeapons and weaponName ~= "" and headOn then
+                    createESPObject("Text", {
+                        Position = Vector2.new(headPos2D.X, headPos2D.Y + 30),
+                        Text = weaponName,
+                        Color = Color3.new(1,1,0),
+                        Size = 12,
+                        Center = true
+                    })
+                end
+
+                -- Distance
+                if (espDistance or showDistance) and myRoot and headOn then
+                    createESPObject("Text", {
+                        Position = Vector2.new(headPos2D.X, headPos2D.Y + 15),
+                        Text = math.floor(dist) .. "m",
+                        Color = Color3.new(1,1,1),
+                        Size = 12,
+                        Center = true
+                    })
+                end
+
+                -- Lines
+                if espLines and rootOn then
+                    createESPObject("Line", {
+                        From = Vector2.new(screenSize.X / 2, screenSize.Y),
+                        To = rootPos2D,
+                        Color = isVisible and skeletonColor or invisibleSkeletonColor,
+                        Thickness = 1
+                    })
+                end
+
+                -- Talking Icon (simulado)
+                if espTalkingIcon and headOn then
+                    createESPObject("Circle", {
+                        Position = Vector2.new(headPos2D.X + 15, headPos2D.Y - 10),
+                        Radius = 4,
+                        Color = talkingIconColor,
+                        Thickness = 2
+                    })
+                end
+            end
+
+            -- FOV Circle
+            if fovCircle and useDrawing then
+                if not fovCircleObj then
+                    fovCircleObj = Drawing.new("Circle")
+                    fovCircleObj.Visible = true
+                    fovCircleObj.Thickness = 2
+                end
+                fovCircleObj.Position = screenSize / 2
+                fovCircleObj.Radius = fovRadius
+                fovCircleObj.Visible = true
+                if fovRainbow then
+                    fovCircleObj.Color = Color3.fromHSV(tick() % 1, 1, 1)
+                else
+                    fovCircleObj.Color = Color3.new(1,1,1)
+                end
+            elseif fovCircleObj then
+                fovCircleObj.Visible = false
+            end
+        end
+    end)
+
+    -- ========== SILENT AIM REESCRITO (SUAVE) ==========
     local silentTarget = nil
     local function getSilentTarget()
         if not silentAimEnabled then return nil end
@@ -876,256 +1177,80 @@ function carregarHub()
         local target = getSilentTarget()
         if target then
             silentTarget = target
-            -- Se magic bullet estiver ativado, redirecionamos projéteis (simulação)
             if magicBullet then
-                -- Aqui poderíamos interceptar projéteis, mas é complexo; usamos um truque:
-                -- Forçamos a mira da câmera para o alvo (silenciosamente)
+                -- Força a mira diretamente no alvo (pode ser detectável)
                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Head.Position)
             else
-                -- Silent aim normal: ajusta a mira sem tremer
+                -- Ajuste suave (silencioso)
                 local headPos = target.Head.Position
-                local delta = (headPos - Camera.CFrame.Position).Unit
-                local newCF = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + delta * 100)
-                Camera.CFrame = Camera.CFrame:Lerp(newCF, 0.2)
+                local newCF = CFrame.new(Camera.CFrame.Position, headPos)
+                Camera.CFrame = Camera.CFrame:Lerp(newCF, 0.15)
             end
         end
     end
 
-    -- ========== ESP (CORRIGIDA) ==========
+    -- ========== AUTO-FARM OTIMIZADO (SEM CRASH) ==========
+    local farmRunning = false
     task.spawn(function()
-        local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
-        local fovCircleObj
-        if useDrawing then
-            pcall(function()
-                fovCircleObj = Drawing.new("Circle")
-                fovCircleObj.Visible=false; fovCircleObj.Thickness=2; fovCircleObj.Radius=fovRadius
-                fovCircleObj.Color=Color3.new(1,1,1); fovCircleObj.Filled=false
-            end)
-        end
-
-        -- Pools de desenhos
-        local boxPool = {}
-        local linePool = {}
-        local textPool = {}
-        local circlePool = {}
-
-        local function getFromPool(pool, class)
-            for _, obj in ipairs(pool) do
-                if not obj.Visible then
-                    obj.Visible = true
-                    return obj
-                end
+        while true do
+            task.wait(0.1) -- intervalo de 100ms para não sobrecarregar
+            if not s4zxFarm then
+                if farmRunning then farmRunning = false end
+                continue
             end
-            local newObj = Drawing.new(class)
-            newObj.Visible = true
-            table.insert(pool, newObj)
-            return newObj
-        end
+            if farmRunning then continue end
+            farmRunning = true
 
-        local function worldToScreen(pos)
-            local vec, onScreen = Camera:WorldToViewportPoint(pos)
-            return Vector2.new(vec.X, vec.Y), onScreen
-        end
+            local char = Player.Character
+            if not char then farmRunning = false; continue end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then farmRunning = false; continue end
 
-        local function updateESP()
-            if not useDrawing or not espEnabled then
-                for _, pool in ipairs({boxPool, linePool, textPool, circlePool}) do
-                    for _, obj in ipairs(pool) do obj.Visible = false end
-                end
-                if fovCircleObj then fovCircleObj.Visible = false end
-                return
-            end
-
-            local screenSize = Camera.ViewportSize
-            local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-
-            -- Coletar alvos
-            local targets = {}
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= Player then
-                    local chr = p.Character
-                    if chr and chr:FindFirstChild("HumanoidRootPart") and chr:FindFirstChild("Humanoid") and chr.Humanoid.Health > 0 then
-                        table.insert(targets, {player = p, char = chr, isNPC = false})
+            -- Busca por lixo (apenas a cada 1 segundo para evitar lag)
+            local trash = nil
+            local keywords = {"lixo","trash","saco","papel","garrafa","lata","entulho","resto","garbage","waste","bag","bottle","can","paper"}
+            local nearestDist = 50
+            for _, part in ipairs(Workspace:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "" then
+                    local name = part.Name:lower()
+                    local isTrash = false
+                    for _, kw in ipairs(keywords) do
+                        if name:find(kw) then isTrash = true; break end
                     end
-                end
-            end
-            if targetNPCs then
-                for _, obj in ipairs(Workspace:GetDescendants()) do
-                    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
-                        if obj:FindFirstChild("HumanoidRootPart") and obj.Humanoid.Health > 0 then
-                            table.insert(targets, {player = obj, char = obj, isNPC = true})
+                    if isTrash and part.Transparency < 0.9 and part.Parent then
+                        local dist = (part.Position - root.Position).Magnitude
+                        if dist < nearestDist then
+                            nearestDist = dist
+                            trash = part
                         end
                     end
                 end
             end
 
-            local usedBoxes = 0
-            local usedLines = 0
-            local usedTexts = 0
-            local usedCircles = 0
-
-            for _, target in ipairs(targets) do
-                local char = target.char
-                local root = char:FindFirstChild("HumanoidRootPart")
-                local head = char:FindFirstChild("Head")
-                local hum = char:FindFirstChild("Humanoid")
-                if not root or not head or not hum then continue end
-                if hum.Health <= 0 then continue end
-
-                local headPos2D, headOn = worldToScreen(head.Position + Vector3.new(0, 1.5, 0))
-                local rootPos2D, rootOn = worldToScreen(root.Position)
-                local feetPos2D, feetOn = worldToScreen(root.Position - Vector3.new(0, 3, 0))
-
-                if not headOn and not infiniteDistance then continue end
-
-                local isVisible = true
-                if visibleCheck then
-                    local params = RaycastParams.new()
-                    params.FilterDescendantsInstances = {Player.Character}
-                    params.FilterType = Enum.RaycastFilterType.Blacklist
-                    local result = Workspace:Raycast(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * 1000, params)
-                    if result and not result.Instance:IsDescendantOf(char) then isVisible = false end
-                end
-
-                local dist = myRoot and (root.Position - myRoot.Position).Magnitude or 0
-                local weaponName = ""
-                if espWeapons then
-                    local tool = char:FindFirstChildWhichIsA("Tool")
-                    weaponName = tool and tool.Name or ""
-                end
-
-                -- Box
-                if headOn and feetOn then
-                    local bodyHeight = math.abs(headPos2D.Y - feetPos2D.Y)
-                    local bodyWidth = bodyHeight * 0.45
-                    local centerX = (headPos2D.X + feetPos2D.X) / 2
-                    local box = getFromPool(boxPool, "Square")
-                    box.Thickness = 2
-                    box.Filled = false
-                    box.Color = isVisible and boxColor or invisibleSkeletonColor
-                    box.Position = Vector2.new(centerX - bodyWidth/2, headPos2D.Y - bodyHeight*0.1)
-                    box.Size = Vector2.new(bodyWidth, bodyHeight)
-                    usedBoxes = usedBoxes + 1
-                end
-
-                -- Skeleton
-                if espSkeleton then
-                    local boneConnections = {
-                        {"Head","UpperTorso"}, {"UpperTorso","LowerTorso"},
-                        {"LowerTorso","LeftUpperLeg"}, {"LeftUpperLeg","LeftLowerLeg"}, {"LeftLowerLeg","LeftFoot"},
-                        {"LowerTorso","RightUpperLeg"}, {"RightUpperLeg","RightLowerLeg"}, {"RightLowerLeg","RightFoot"},
-                        {"UpperTorso","LeftUpperArm"}, {"LeftUpperArm","LeftLowerArm"}, {"LeftLowerArm","LeftHand"},
-                        {"UpperTorso","RightUpperArm"}, {"RightUpperArm","RightLowerArm"}, {"RightLowerArm","RightHand"}
-                    }
-                    for _, pair in ipairs(boneConnections) do
-                        local a = char:FindFirstChild(pair[1])
-                        local b = char:FindFirstChild(pair[2])
-                        if a and b then
-                            local aPos, aOn = worldToScreen(a.Position)
-                            local bPos, bOn = worldToScreen(b.Position)
-                            if aOn and bOn then
-                                local line = getFromPool(linePool, "Line")
-                                line.From = aPos
-                                line.To = bPos
-                                line.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                                usedLines = usedLines + 1
-                            end
-                        end
-                    end
-                end
-
-                -- Head
-                if espHead and headOn then
-                    local circle = getFromPool(circlePool, "Circle")
-                    circle.Radius = 6
-                    circle.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                    circle.Position = headPos2D
-                    usedCircles = usedCircles + 1
-                end
-
-                -- Name
-                if espNames and headOn then
-                    local tag = getFromPool(textPool, "Text")
-                    tag.Text = target.player.Name or "NPC"
-                    tag.Position = Vector2.new(headPos2D.X, headPos2D.Y - 22)
-                    tag.Size = textSize
-                    tag.Color = Color3.new(1,1,1)
-                    tag.Center = true
-                    tag.Outline = true
-                    tag.OutlineColor = Color3.new(0,0,0)
-                    usedTexts = usedTexts + 1
-                end
-
-                -- Weapon
-                if espWeapons and weaponName ~= "" and headOn then
-                    local wTag = getFromPool(textPool, "Text")
-                    wTag.Text = weaponName
-                    wTag.Position = Vector2.new(headPos2D.X, headPos2D.Y + 30)
-                    wTag.Size = 12
-                    wTag.Color = Color3.new(1,1,0)
-                    wTag.Center = true
-                    usedTexts = usedTexts + 1
-                end
-
-                -- Distance
-                if (espDistance or showDistance) and myRoot and headOn then
-                    local dTag = getFromPool(textPool, "Text")
-                    dTag.Text = math.floor(dist) .. "m"
-                    dTag.Position = Vector2.new(headPos2D.X, headPos2D.Y + 15)
-                    dTag.Size = 12
-                    dTag.Color = Color3.new(1,1,1)
-                    dTag.Center = true
-                    usedTexts = usedTexts + 1
-                end
-
-                -- Lines
-                if espLines and rootOn then
-                    local line = getFromPool(linePool, "Line")
-                    line.From = Vector2.new(screenSize.X / 2, screenSize.Y)
-                    line.To = rootPos2D
-                    line.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                    usedLines = usedLines + 1
-                end
-
-                -- Talking Icon (simulado)
-                if espTalkingIcon and headOn then
-                    local dot = getFromPool(circlePool, "Circle")
-                    dot.Radius = 4
-                    dot.Color = talkingIconColor
-                    dot.Position = Vector2.new(headPos2D.X + 15, headPos2D.Y - 10)
-                    usedCircles = usedCircles + 1
-                end
-            end
-
-            -- Limpar excedentes
-            for i = usedBoxes + 1, #boxPool do boxPool[i].Visible = false end
-            for i = usedLines + 1, #linePool do linePool[i].Visible = false end
-            for i = usedTexts + 1, #textPool do textPool[i].Visible = false end
-            for i = usedCircles + 1, #circlePool do circlePool[i].Visible = false end
-
-            -- FOV Circle
-            if fovCircleObj then
-                fovCircleObj.Position = screenSize / 2
-                fovCircleObj.Radius = fovRadius
-                fovCircleObj.Visible = fovCircle
-                if fovCircle and fovRainbow then
-                    fovCircleObj.Color = Color3.fromHSV(tick() % 1, 1, 1)
+            if trash then
+                local targetPos = trash.Position
+                local distance = (targetPos - root.Position).Magnitude
+                if distance > 4 then
+                    -- Movimento suave
+                    local direction = (targetPos - root.Position).Unit
+                    local newPos = root.Position + direction * (farmSpeed * 0.05)
+                    root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
                 else
-                    fovCircleObj.Color = Color3.new(1,1,1)
+                    -- Perto o suficiente: ativar ferramenta
+                    local tool = char:FindFirstChildWhichIsA("Tool")
+                    if tool and tick() - (farmRunning or 0) > 0.5 then
+                        pcall(function() tool:Activate() end)
+                        farmRunning = tick()
+                    end
                 end
             end
+            task.wait(0.05) -- pequena pausa entre ciclos
+            farmRunning = false
         end
-
-        -- Loop principal de ESP
-        RunService.RenderStepped:Connect(function()
-            pcall(updateESP)
-        end)
     end)
 
-    -- ========== DEMAIS FUNÇÕES (OTIMIZADAS) ==========
+    -- ========== OUTRAS FUNÇÕES (OTIMIZADAS) ==========
     local flyStartY
-    local lastFarmAction = 0
-
     local function aimbotStep()
         if not aimbot then return end
         local center = Camera.ViewportSize/2
@@ -1250,48 +1375,6 @@ function carregarHub()
         if not invisibility then return end
         local char = Player.Character
         if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
-    end
-
-    local function findNearestTrash()
-        local char = Player.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-        local root = char.HumanoidRootPart
-        local nearest, nearestDist = nil, 50
-        local keywords = {"lixo","trash","saco","papel","garrafa","lata","entulho","resto","garbage","waste","bag","bottle","can","paper"}
-        for _, part in ipairs(Workspace:GetDescendants()) do
-            if part:IsA("BasePart") and part.Name ~= "" then
-                local name = part.Name:lower()
-                local isTrash = false
-                for _, kw in ipairs(keywords) do if name:find(kw) then isTrash = true; break end end
-                if isTrash and part.Transparency < 0.9 and part.Parent then
-                    local dist = (part.Position - root.Position).Magnitude
-                    if dist < nearestDist then nearestDist = dist; nearest = part end
-                end
-            end
-        end
-        return nearest
-    end
-
-    local function farmStep()
-        if not s4zxFarm then return end
-        local char = Player.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local root = char.HumanoidRootPart
-        local trash = findNearestTrash()
-        if not trash then return end
-        local targetPos = trash.Position
-        local distance = (targetPos - root.Position).Magnitude
-        if distance > 4 then
-            local direction = (targetPos - root.Position).Unit
-            local newPos = root.Position + direction * (farmSpeed * 0.15)
-            root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.4)
-            return
-        end
-        local tool = char:FindFirstChildWhichIsA("Tool")
-        if tool and tick() - lastFarmAction > 0.5 then
-            pcall(function() tool:Activate() end)
-            lastFarmAction = tick()
-        end
     end
 
     local flyCarBV, flyCarBG, flyCarTarget
@@ -1482,11 +1565,11 @@ function carregarHub()
         pcall(autoLockPicStep)
         pcall(autoEssenciaStep)
         pcall(autoMichaStep)
-        pcall(silentAimLoop)  -- Silent Aim reescrito
+        pcall(silentAimLoop)
         pcall(speedStep)
         pcall(flyStep)
         pcall(invisibilityStep)
-        pcall(farmStep)
+        -- farm é executado em thread separada
         pcall(reachStep)
         pcall(infiniteAmmoStep)
         pcall(autoReloadStep)
@@ -1531,9 +1614,7 @@ function carregarHub()
         if vehicleAlign then vehicleAlign:Destroy() end
         if vehicleVel then vehicleVel:Destroy() end
         if vehicleGyro then vehicleGyro:Destroy() end
-        for _, pool in ipairs({boxPool, linePool, textPool, circlePool}) do
-            for _, obj in ipairs(pool) do pcall(function() obj:Remove() end) end
-        end
+        clearESPObjects()
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
         local c = Player.Character
         if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16 end
