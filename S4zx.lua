@@ -1,4 +1,4 @@
--- S4ZX HUB - COMPLETO (Interface Personalizada + 50 Funções + Segurança)
+-- S4ZX HUB - COMPLETO (Interface Personalizada + 50 Funções + Segurança + Minimizar para Círculo)
 
 -- ========== SEGURANÇA ==========
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
@@ -21,6 +21,7 @@ local function destruirScript(motivo)
     pcall(function()
         if game.CoreGui:FindFirstChild("S4ZX_Login") then game.CoreGui.S4ZX_Login:Destroy() end
         if game.CoreGui:FindFirstChild("S4ZX_Hub") then game.CoreGui.S4ZX_Hub:Destroy() end
+        if game.CoreGui:FindFirstChild("S4ZX_Minimized") then game.CoreGui.S4ZX_Minimized:Destroy() end
     end)
     game.Players.LocalPlayer:Kick(motivo or "Script encerrado")
     while true do end
@@ -53,6 +54,17 @@ local function mostrarLogin()
     logo.BackgroundTransparency = 1
     logo.Image = "rbxassetid://79731590930393"
     logo.ScaleType = Enum.ScaleType.Fit
+    -- Fallback caso imagem não carregue
+    logo.ImageTransparency = 0
+    local logoText = Instance.new("TextLabel", frame)
+    logoText.Size = UDim2.new(0, 120, 0, 35)
+    logoText.Position = UDim2.new(0.5, -60, 0, 10)
+    logoText.BackgroundTransparency = 1
+    logoText.Text = "S4ZX"
+    logoText.TextColor3 = Color3.fromRGB(255,255,255)
+    logoText.Font = Enum.Font.GothamBold
+    logoText.TextSize = 20
+    logoText.Visible = false  -- só aparece se a imagem falhar
 
     local title = Instance.new("TextLabel", frame)
     title.Size = UDim2.new(1, 0, 0, 20)
@@ -201,6 +213,9 @@ function carregarHub()
     if CoreGui:FindFirstChild("S4ZX_Hub") then
         CoreGui.S4ZX_Hub:Destroy()
     end
+    if CoreGui:FindFirstChild("S4ZX_Minimized") then
+        CoreGui.S4ZX_Minimized:Destroy()
+    end
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "S4ZX_Hub"
@@ -238,6 +253,7 @@ function carregarHub()
     TopbarCorner.CornerRadius = UDim.new(0, 8)
     TopbarCorner.Parent = Topbar
 
+    -- Logo com fallback textual
     local Logo = Instance.new("ImageLabel")
     Logo.Name = "Logo"
     Logo.Size = UDim2.new(0, 120, 0, 35)
@@ -246,6 +262,23 @@ function carregarHub()
     Logo.Image = "rbxassetid://79731590930393"
     Logo.ScaleType = Enum.ScaleType.Fit
     Logo.Parent = Topbar
+
+    local LogoTextFallback = Instance.new("TextLabel", Topbar)
+    LogoTextFallback.Size = UDim2.new(0, 120, 0, 35)
+    LogoTextFallback.Position = UDim2.new(0, 10, 0.5, -17)
+    LogoTextFallback.BackgroundTransparency = 1
+    LogoTextFallback.Text = "S4ZX"
+    LogoTextFallback.TextColor3 = Color3.fromRGB(255,255,255)
+    LogoTextFallback.Font = Enum.Font.GothamBold
+    LogoTextFallback.TextSize = 20
+    LogoTextFallback.Visible = false
+    Logo.Changed:Connect(function()
+        if Logo.IsLoaded and Logo.ContentImageSize.X > 0 then
+            LogoTextFallback.Visible = false
+        else
+            LogoTextFallback.Visible = true
+        end
+    end)
 
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(0, 200, 1, 0)
@@ -257,6 +290,18 @@ function carregarHub()
     Title.Font = Enum.Font.GothamBold
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = Topbar
+
+    -- Botão de MINIMIZAR (substitui o fechar)
+    local minimizeBtn = Instance.new("TextButton", Topbar)
+    minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+    minimizeBtn.Position = UDim2.new(1, -35, 0.5, -15)
+    minimizeBtn.Text = "—"  -- traço
+    minimizeBtn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+    minimizeBtn.TextColor3 = Color3.new(1,1,1)
+    minimizeBtn.Font = Enum.Font.GothamBold
+    minimizeBtn.TextSize = 18
+    minimizeBtn.BorderSizePixel = 0
+    Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(1, 0)
 
     local Divider = Instance.new("Frame")
     Divider.Size = UDim2.new(1, 0, 0, 1)
@@ -292,6 +337,35 @@ function carregarHub()
     ContentArea.Position = UDim2.new(0, 143, 0, 53)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
+
+    -- ========== CÍRCULO FLUTUANTE (MINIMIZADO) ==========
+    local MinimizedCircle = Instance.new("TextButton")
+    MinimizedCircle.Name = "S4ZX_Minimized"
+    MinimizedCircle.Size = UDim2.new(0, 50, 0, 50)
+    MinimizedCircle.Position = UDim2.new(0.9, 0, 0.1, 0)
+    MinimizedCircle.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+    MinimizedCircle.TextColor3 = Color3.new(1,1,1)
+    MinimizedCircle.Text = "S4"
+    MinimizedCircle.Font = Enum.Font.GothamBold
+    MinimizedCircle.TextSize = 14
+    MinimizedCircle.BorderSizePixel = 0
+    MinimizedCircle.Parent = ScreenGui
+    MinimizedCircle.Visible = false
+    MinimizedCircle.Active = true
+    MinimizedCircle.Draggable = true
+    Instance.new("UICorner", MinimizedCircle).CornerRadius = UDim.new(1, 0)
+    Instance.new("UIStroke", MinimizedCircle).Color = Color3.fromRGB(255,255,255)
+
+    -- Ações de minimizar/restaurar
+    minimizeBtn.MouseButton1Click:Connect(function()
+        MainFrame.Visible = false
+        MinimizedCircle.Visible = true
+    end)
+
+    MinimizedCircle.MouseButton1Click:Connect(function()
+        MinimizedCircle.Visible = false
+        MainFrame.Visible = true
+    end)
 
     -- ========== SISTEMA DE ABAS (IDÊNTICO AO SEU) ==========
     local Tabs = {}
@@ -601,7 +675,7 @@ function carregarHub()
     end)
 
     local ConfigPage = CreateTab("Config")
-    AddToggle(ConfigPage, "Modo Streamer", function(v) streamerMode = v; MainFrame.Visible = not v end)
+    AddToggle(ConfigPage, "Modo Streamer", function(v) streamerMode = v; MainFrame.Visible = not v; MinimizedCircle.Visible = v end)
     AddToggle(ConfigPage, "Anti Live", function(v) antiLive = v end)
 
     local SegPage = CreateTab("Segurança")
@@ -1239,7 +1313,7 @@ function carregarHub()
             if ok and json then
                 local keys = {}
                 pcall(function() keys = game:GetService("HttpService"):JSONDecode(json) end)
-                local data = keys[DONO_KEY] -- simplificado
+                local data = keys[DONO_KEY]
                 if data and data.bloqueado then
                     destruirScript("Key banida")
                 end
@@ -1251,4 +1325,4 @@ function carregarHub()
 end
 
 -- Inicia a tela de login
-mostrarLogin()
+mostrarLogin() 
