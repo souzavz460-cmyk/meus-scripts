@@ -1,9 +1,9 @@
--- Snow S4zx Mod – Ultimate Edition (Rayfield + Novas Funções de Arma + Godmode + Silent Aim Corrigido)
+-- Snow S4zx Mod – Ultimate Edition (Rayfield/Orion/Nativo + Todas as Funções)
 
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2027"
+local DONO_KEY = "S4zx-DonoSupreme2026"
 
--- ========== SISTEMA DE HWID ==========
+-- ========== SEGURANÇA ==========
 local function getHWID()
     local ok, id = pcall(function()
         return game:GetService("RbxAnalyticsService"):GetClientId()
@@ -15,18 +15,14 @@ local function getHWID()
     return ok and id or "UNKNOWN"
 end
 local HWID = getHWID()
-
--- ========== ANTI‑ADULTERAÇÃO ==========
 local SECURITY_FLAG = "S4zx_INTEGRO_2026"
 
 local function destruirScript(motivo)
     pcall(function()
-        if game.CoreGui:FindFirstChild("SnowLogin") then
-            game.CoreGui.SnowLogin:Destroy()
-        end
-        if game.CoreGui:FindFirstChild("Rayfield") then
-            game.CoreGui.Rayfield:Destroy()
-        end
+        if game.CoreGui:FindFirstChild("SnowLogin") then game.CoreGui.SnowLogin:Destroy() end
+        if game.CoreGui:FindFirstChild("Rayfield") then game.CoreGui.Rayfield:Destroy() end
+        if game.CoreGui:FindFirstChild("Orion") then game.CoreGui.Orion:Destroy() end
+        if game.CoreGui:FindFirstChild("S4zxNativeUI") then game.CoreGui.S4zxNativeUI:Destroy() end
     end)
     game.Players.LocalPlayer:Kick(motivo or "Script encerrado por segurança")
     while true do end
@@ -188,29 +184,35 @@ local function mostrarLogin()
     end)
 end
 
--- =================== INTERFACE RAYFIELD (COMPLETA) ===================
+-- ========== INTERFACE (RAYFIELD / ORION / NATIVO) ==========
 function carregarInterface(currentKey)
     if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_INTEGRO_2026" then
         destruirScript("Script adulterado")
         return
     end
 
-    local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
-    if not Rayfield then
-        game.Players.LocalPlayer:Kick("Falha ao carregar Rayfield")
-        return
-    end
+    -- Tentativa 1: Rayfield
+    local Rayfield = nil
+    local Window = nil
+    local usarRayfield = false
+    local usarOrion = false
 
-    local Window = Rayfield:CreateWindow({
-        Name = "S4zx MODS",
-        LoadingTitle = "S4zx MODS",
-        LoadingSubtitle = "by Souzavz",
-        ShowText = "S4zx MODS",
-        Theme = "DarkBlue",
-        ConfigurationSaving = { Enabled = true, FolderName = "SnowS4zx", FileName = "Config" },
-        KeySystem = false,
-        MobileButton = { Enabled = true, Name = "S4zx MODS" }
-    })
+    local ok, result = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
+    end)
+    if ok and result then
+        Rayfield = result
+        usarRayfield = true
+    else
+        -- Tentativa 2: Orion
+        ok, result = pcall(function()
+            return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+        end)
+        if ok and result then
+            OrionLib = result
+            usarOrion = true
+        end
+    end
 
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
@@ -221,7 +223,7 @@ function carregarInterface(currentKey)
     local Camera = Workspace.CurrentCamera
     local Lighting = game:GetService("Lighting")
 
-    -- Variáveis de estado
+    -- Variáveis de estado (todas as originais + novas)
     local aimbot = false; local aimForce = 1; local bypass = 1; local fovRadius = 150
     local wallCheck = false; local silentAimEnabled = false; local magicBullet = false
     local fovCircle = false; local fovRainbow = false
@@ -242,10 +244,13 @@ function carregarInterface(currentKey)
     local rainbowBox = false; local rainbowSkel = false; local rainbowTracer = false
     local flyCarEnabled = false; local flyCarSpeed = 50
     local streamerMode = false
-    local autoEssencia = false; local autoLockPic = false; local autoMicha = false
+    local customCrosshair = false; local crosshairSize = 20; local crosshairColor = Color3.fromRGB(255,0,0)
+    local autoEssencia = false
+    local autoLockPic = false
+    local autoMicha = false
     local lockedTarget = nil
 
-    -- Novas variáveis
+    -- NOVAS VARIÁVEIS
     local godMode = false
     local corArma = Color3.fromRGB(255,255,255)
     local armaColorida = false
@@ -257,124 +262,313 @@ function carregarInterface(currentKey)
     local grabbedVehicle = nil
     local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
 
-    -- Abas
-    local AimbotTab = Window:CreateTab("AIMBOT", 4483362458)
-    local ESPTab = Window:CreateTab("ESP", 4483362458)
-    local VisualTab = Window:CreateTab("VISUAL", 4483362458)
-    local MoveTab = Window:CreateTab("MOVIMENTO", 4483362458)
-    local FarmTab = Window:CreateTab("FARM", 4483362458)
-    local WeaponTab = Window:CreateTab("ARMAS", 4483362458)
-    local CarTab = Window:CreateTab("CARRO", 4483362458)
-    local ExtrasTab = Window:CreateTab("EXTRAS", 4483362458)
-    local GrabTab = Window:CreateTab("PEGAR/TACAR", 4483362458)
-    local StreamTab = Window:CreateTab("STREAM", 4483362458)
-    local ConfigTab = Window:CreateTab("CONFIG", 4483362458)
+    -- Função de parse de cor
+    function parseColor(input)
+        local s = tostring(input):lower():gsub("%s","")
+        local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
+        if named[s] then s = named[s] end
+        if #s == 6 and s:match("^%x+$") then return Color3.fromRGB(tonumber(s:sub(1,2),16), tonumber(s:sub(3,4),16), tonumber(s:sub(5,6),16)) end
+        return nil
+    end
 
+    -- Funções de registro de UI (serão preenchidas de acordo com a biblioteca)
+    local CreateWindow, CreateTab, CreateToggle, CreateSlider, CreateInput, CreateButton, CreateLabel
+
+    if usarRayfield then
+        Window = Rayfield:CreateWindow({
+            Name = "S4zx MODS",
+            LoadingTitle = "S4zx MODS",
+            LoadingSubtitle = "by Souzavz",
+            ShowText = "S4zx MODS",
+            Theme = "DarkBlue",
+            ConfigurationSaving = { Enabled = true, FolderName = "SnowS4zx", FileName = "Config" },
+            KeySystem = false,
+            MobileButton = { Enabled = true, Name = "S4zx MODS" }
+        })
+        CreateWindow = function() return Window end
+        CreateTab = function(nome, icone) return Window:CreateTab(nome, icone) end
+        CreateToggle = function(tab, opt) tab:CreateToggle(opt) end
+        CreateSlider = function(tab, opt) tab:CreateSlider(opt) end
+        CreateInput = function(tab, opt) tab:CreateInput(opt) end
+        CreateButton = function(tab, opt) tab:CreateButton(opt) end
+        CreateLabel = function(tab, texto) end -- Rayfield não tem label nativo, ignoramos
+    elseif usarOrion then
+        Window = OrionLib:MakeWindow({
+            Name = "S4zx MODS",
+            HidePremium = true,
+            SaveConfig = true,
+            ConfigFolder = "S4zxConfig"
+        })
+        OrionLib:Init()
+        CreateWindow = function() return Window end
+        CreateTab = function(nome, _)
+            local tab = Window:MakeTab({Name = nome, PremiumOnly = false})
+            local wrapper = {}
+            function wrapper:CreateToggle(opt)
+                tab:AddToggle({Name = opt.Name, Default = opt.CurrentValue or false, Callback = opt.Callback})
+            end
+            function wrapper:CreateSlider(opt)
+                tab:AddSlider({Name = opt.Name, Min = opt.Range[1], Max = opt.Range[2], Default = opt.CurrentValue, Increment = opt.Increment or 1, Callback = opt.Callback})
+            end
+            function wrapper:CreateInput(opt)
+                tab:AddTextbox({Name = opt.Name, Default = opt.PlaceholderText or "", TextDisappear = false, Callback = opt.Callback})
+            end
+            function wrapper:CreateButton(opt)
+                tab:AddButton({Name = opt.Name, Callback = opt.Callback})
+            end
+            return wrapper
+        end
+        CreateToggle = function(tab, opt) tab:CreateToggle(opt) end
+        CreateSlider = function(tab, opt) tab:CreateSlider(opt) end
+        CreateInput = function(tab, opt) tab:CreateInput(opt) end
+        CreateButton = function(tab, opt) tab:CreateButton(opt) end
+        CreateLabel = function(tab, texto) end
+    else
+        -- Interface 100% nativa (fallback)
+        local nativeGui = Instance.new("ScreenGui", CoreGui)
+        nativeGui.Name = "S4zxNativeUI"
+        nativeGui.ResetOnSpawn = false
+        local mainFrame = Instance.new("Frame", nativeGui)
+        mainFrame.Size = UDim2.new(0, 300, 0, 400)
+        mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+        mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,35)
+        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,10)
+
+        local tabButtons = {}
+        local tabs = {}
+        local currentTab = nil
+
+        local tabBar = Instance.new("Frame", mainFrame)
+        tabBar.Size = UDim2.new(1, 0, 0, 30)
+        tabBar.BackgroundTransparency = 1
+
+        local function switchTab(index)
+            for _, f in ipairs(tabs) do f.Visible = false end
+            if tabs[index] then tabs[index].Visible = true end
+        end
+
+        local tabNames = {"AIMBOT","ESP","VISUAL","MOVIMENTO","FARM","ARMAS","CARRO","EXTRAS","PEGAR/TACAR","STREAM","CONFIG"}
+        for i, name in ipairs(tabNames) do
+            local btn = Instance.new("TextButton", tabBar)
+            btn.Size = UDim2.new(0, 80, 1, 0)
+            btn.Position = UDim2.new(0, (i-1)*82, 0, 0)
+            btn.Text = name
+            btn.BackgroundColor3 = Color3.fromRGB(60,60,70)
+            btn.TextColor3 = Color3.new(1,1,1)
+            btn.Font = Enum.Font.SourceSansBold
+            btn.TextSize = 12
+            btn.BorderSizePixel = 0
+            btn.Activated:Connect(function() switchTab(i) end)
+            table.insert(tabButtons, btn)
+
+            local content = Instance.new("ScrollingFrame", mainFrame)
+            content.Size = UDim2.new(1, 0, 1, -30)
+            content.Position = UDim2.new(0, 0, 0, 30)
+            content.BackgroundColor3 = Color3.fromRGB(35,35,45)
+            content.ScrollBarThickness = 4
+            content.CanvasSize = UDim2.new(0,0,0,0)
+            content.Visible = (i == 1)
+            table.insert(tabs, content)
+        end
+
+        local function addToggleNat(tab, texto, default, callback)
+            local frame = Instance.new("Frame", tab)
+            frame.Size = UDim2.new(1, -10, 0, 30)
+            frame.BackgroundTransparency = 1
+            local label = Instance.new("TextLabel", frame)
+            label.Size = UDim2.new(0, 200, 1, 0)
+            label.Text = texto
+            label.TextColor3 = Color3.new(1,1,1)
+            label.Font = Enum.Font.SourceSans
+            label.TextSize = 14
+            label.BackgroundTransparency = 1
+            local btn = Instance.new("TextButton", frame)
+            btn.Size = UDim2.new(0, 40, 0, 20)
+            btn.Position = UDim2.new(1, -45, 0.5, -10)
+            btn.Text = default and "ON" or "OFF"
+            btn.BackgroundColor3 = default and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+            btn.TextColor3 = Color3.new(1,1,1)
+            btn.Font = Enum.Font.SourceSansBold
+            btn.TextSize = 12
+            btn.BorderSizePixel = 0
+            local state = default
+            btn.Activated:Connect(function()
+                state = not state
+                btn.Text = state and "ON" or "OFF"
+                btn.BackgroundColor3 = state and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+                callback(state)
+            end)
+            tab.CanvasSize = UDim2.new(0,0,0, frame.AbsolutePosition.Y + 30)
+        end
+
+        local function addSliderNat(tab, texto, min, max, default, callback)
+            local frame = Instance.new("Frame", tab)
+            frame.Size = UDim2.new(1, -10, 0, 40)
+            frame.BackgroundTransparency = 1
+            local label = Instance.new("TextLabel", frame)
+            label.Size = UDim2.new(1, 0, 0, 20)
+            label.Text = texto .. ": " .. default
+            label.TextColor3 = Color3.new(1,1,1)
+            label.Font = Enum.Font.SourceSans
+            label.TextSize = 14
+            label.BackgroundTransparency = 1
+            local slider = Instance.new("TextBox", frame)
+            slider.Size = UDim2.new(0, 60, 0, 20)
+            slider.Position = UDim2.new(1, -65, 0, 20)
+            slider.Text = tostring(default)
+            slider.TextColor3 = Color3.new(1,1,1)
+            slider.BackgroundColor3 = Color3.fromRGB(50,50,60)
+            slider.Font = Enum.Font.SourceSans
+            slider.TextSize = 14
+            slider.FocusLost:Connect(function()
+                local val = tonumber(slider.Text)
+                if val then
+                    val = math.clamp(val, min, max)
+                    slider.Text = tostring(val)
+                    label.Text = texto .. ": " .. val
+                    callback(val)
+                end
+            end)
+            tab.CanvasSize = UDim2.new(0,0,0, frame.AbsolutePosition.Y + 40)
+        end
+
+        local function addInputNat(tab, texto, placeholder, callback)
+            local frame = Instance.new("Frame", tab)
+            frame.Size = UDim2.new(1, -10, 0, 30)
+            frame.BackgroundTransparency = 1
+            local label = Instance.new("TextLabel", frame)
+            label.Size = UDim2.new(0, 100, 1, 0)
+            label.Text = texto
+            label.TextColor3 = Color3.new(1,1,1)
+            label.Font = Enum.Font.SourceSans
+            label.TextSize = 14
+            label.BackgroundTransparency = 1
+            local input = Instance.new("TextBox", frame)
+            input.Size = UDim2.new(1, -110, 1, 0)
+            input.Position = UDim2.new(0, 105, 0, 0)
+            input.PlaceholderText = placeholder or ""
+            input.TextColor3 = Color3.new(1,1,1)
+            input.BackgroundColor3 = Color3.fromRGB(50,50,60)
+            input.Font = Enum.Font.SourceSans
+            input.TextSize = 14
+            input.FocusLost:Connect(function()
+                callback(input.Text)
+            end)
+            tab.CanvasSize = UDim2.new(0,0,0, frame.AbsolutePosition.Y + 30)
+        end
+
+        local function addButtonNat(tab, texto, callback)
+            local btn = Instance.new("TextButton", tab)
+            btn.Size = UDim2.new(1, -10, 0, 30)
+            btn.Text = texto
+            btn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+            btn.TextColor3 = Color3.new(1,1,1)
+            btn.Font = Enum.Font.SourceSansBold
+            btn.TextSize = 14
+            btn.BorderSizePixel = 0
+            btn.Activated:Connect(callback)
+            tab.CanvasSize = UDim2.new(0,0,0, btn.AbsolutePosition.Y + 30)
+        end
+
+        -- Atribui as funções globais
+        CreateWindow = function() return nativeGui end
+        CreateTab = function(nome) return tabs[table.find(tabNames, nome)] or tabs[1] end
+        CreateToggle = function(tab, opt) addToggleNat(tab, opt.Name, opt.CurrentValue, opt.Callback) end
+        CreateSlider = function(tab, opt) addSliderNat(tab, opt.Name, opt.Range[1], opt.Range[2], opt.CurrentValue, opt.Callback) end
+        CreateInput = function(tab, opt) addInputNat(tab, opt.Name, opt.PlaceholderText, opt.Callback) end
+        CreateButton = function(tab, opt) addButtonNat(tab, opt.Name, opt.Callback) end
+        CreateLabel = function(tab, texto) end
+    end
+
+    -- Criação das abas
+    local Tabs = {}
+    Tabs.Aimbot = CreateTab("AIMBOT", 4483362458)
+    Tabs.ESP = CreateTab("ESP", 4483362458)
+    Tabs.Visual = CreateTab("VISUAL", 4483362458)
+    Tabs.Move = CreateTab("MOVIMENTO", 4483362458)
+    Tabs.Farm = CreateTab("FARM", 4483362458)
+    Tabs.Weapon = CreateTab("ARMAS", 4483362458)
+    Tabs.Car = CreateTab("CARRO", 4483362458)
+    Tabs.Extras = CreateTab("EXTRAS", 4483362458)
+    Tabs.Grab = CreateTab("PEGAR/TACAR", 4483362458)
+    Tabs.Stream = CreateTab("STREAM", 4483362458)
+    Tabs.Config = CreateTab("CONFIG", 4483362458)
+
+    -- ========== PREENCHIMENTO DAS ABAS (TODAS AS FUNÇÕES) ==========
     -- AIMBOT
-    AimbotTab:CreateToggle({Name = "AIMBOT", CurrentValue = false, Callback = function(v) aimbot = v end})
-    AimbotTab:CreateToggle({Name = "Auto Lock Pic (CamLock)", CurrentValue = false, Callback = function(v) autoLockPic = v; if not v then lockedTarget = nil end end})
-    AimbotTab:CreateSlider({Name = "Força (1-5)", Range = {1, 5}, Increment = 1, CurrentValue = 1, Callback = function(v) aimForce = v end})
-    AimbotTab:CreateSlider({Name = "Bypass", Range = {1, 10}, Increment = 1, CurrentValue = 1, Callback = function(v) bypass = v end})
-    AimbotTab:CreateSlider({Name = "FOV (Raio)", Range = {50, 500}, Increment = 1, CurrentValue = 150, Callback = function(v) fovRadius = v end})
-    AimbotTab:CreateToggle({Name = "WALLCK (Parede)", CurrentValue = false, Callback = function(v) wallCheck = v end})
-    AimbotTab:CreateToggle({Name = "SILENT AIM", CurrentValue = false, Callback = function(v) silentAimEnabled = v end})
-    AimbotTab:CreateToggle({Name = "Magic Bullet", CurrentValue = false, Callback = function(v) magicBullet = v end})
+    CreateToggle(Tabs.Aimbot, {Name = "AIMBOT", CurrentValue = false, Callback = function(v) aimbot = v end})
+    CreateToggle(Tabs.Aimbot, {Name = "Auto Lock Pic (CamLock)", CurrentValue = false, Callback = function(v) autoLockPic = v; if not v then lockedTarget = nil end end})
+    CreateSlider(Tabs.Aimbot, {Name = "Força (1-5)", Range = {1, 5}, Increment = 1, CurrentValue = 1, Callback = function(v) aimForce = v end})
+    CreateSlider(Tabs.Aimbot, {Name = "Bypass", Range = {1, 10}, Increment = 1, CurrentValue = 1, Callback = function(v) bypass = v end})
+    CreateSlider(Tabs.Aimbot, {Name = "FOV (Raio)", Range = {50, 500}, Increment = 1, CurrentValue = 150, Callback = function(v) fovRadius = v end})
+    CreateToggle(Tabs.Aimbot, {Name = "WALLCK (Parede)", CurrentValue = false, Callback = function(v) wallCheck = v end})
+    CreateToggle(Tabs.Aimbot, {Name = "SILENT AIM", CurrentValue = false, Callback = function(v) silentAimEnabled = v end})
+    CreateToggle(Tabs.Aimbot, {Name = "Magic Bullet", CurrentValue = false, Callback = function(v) magicBullet = v end})
 
     -- ESP
-    ESPTab:CreateToggle({Name = "2D Box", CurrentValue = false, Callback = function(v) espBox = v end})
-    ESPTab:CreateToggle({Name = "Skeleton", CurrentValue = false, Callback = function(v) espSkel = v end})
-    ESPTab:CreateToggle({Name = "Name", CurrentValue = false, Callback = function(v) espName = v end})
-    ESPTab:CreateToggle({Name = "Distance", CurrentValue = false, Callback = function(v) espDistance = v end})
-    ESPTab:CreateToggle({Name = "Health Bar", CurrentValue = false, Callback = function(v) espHealth = v end})
-    ESPTab:CreateToggle({Name = "Tracer V7 (do chão)", CurrentValue = false, Callback = function(v) tracerV7 = v end})
-    ESPTab:CreateToggle({Name = "Itens (Moedas/Armas)", CurrentValue = false, Callback = function(v) espItems = v end})
-    ESPTab:CreateToggle({Name = "Dinheiro", CurrentValue = false, Callback = function(v) showMoney = v end})
-    ESPTab:CreateToggle({Name = "Mostrar Time", CurrentValue = false, Callback = function(v) showTeamESP = v end})
-    ESPTab:CreateToggle({Name = "Arma Equipada", CurrentValue = false, Callback = function(v) espPlayerWeapon = v end})
+    CreateToggle(Tabs.ESP, {Name = "2D Box", CurrentValue = false, Callback = function(v) espBox = v end})
+    CreateToggle(Tabs.ESP, {Name = "Skeleton", CurrentValue = false, Callback = function(v) espSkel = v end})
+    CreateToggle(Tabs.ESP, {Name = "Name", CurrentValue = false, Callback = function(v) espName = v end})
+    CreateToggle(Tabs.ESP, {Name = "Distance", CurrentValue = false, Callback = function(v) espDistance = v end})
+    CreateToggle(Tabs.ESP, {Name = "Health Bar", CurrentValue = false, Callback = function(v) espHealth = v end})
+    CreateToggle(Tabs.ESP, {Name = "Tracer V7 (do chão)", CurrentValue = false, Callback = function(v) tracerV7 = v end})
+    CreateToggle(Tabs.ESP, {Name = "Itens (Moedas/Armas)", CurrentValue = false, Callback = function(v) espItems = v end})
+    CreateToggle(Tabs.ESP, {Name = "Dinheiro", CurrentValue = false, Callback = function(v) showMoney = v end})
+    CreateToggle(Tabs.ESP, {Name = "Mostrar Time", CurrentValue = false, Callback = function(v) showTeamESP = v end})
+    CreateToggle(Tabs.ESP, {Name = "Arma Equipada", CurrentValue = false, Callback = function(v) espPlayerWeapon = v end})
 
     -- VISUAL
-    VisualTab:CreateInput({Name = "Cor Box", PlaceholderText = "verde", RemoveTextAfterFocusLost = false, Callback = function(v) local c=parseColor(v) if c then boxColor=c end end})
-    VisualTab:CreateInput({Name = "Cor Skeleton", PlaceholderText = "rosa", RemoveTextAfterFocusLost = false, Callback = function(v) local c=parseColor(v) if c then skelColor=c end end})
-    VisualTab:CreateInput({Name = "Cor Tracer V7", PlaceholderText = "branco", RemoveTextAfterFocusLost = false, Callback = function(v) local c=parseColor(v) if c then tracerColor=c end end})
-    VisualTab:CreateToggle({Name = "FOV Círculo", CurrentValue = false, Callback = function(v) fovCircle = v end})
-    VisualTab:CreateToggle({Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end})
-    VisualTab:CreateToggle({Name = "Rainbow Box", CurrentValue = false, Callback = function(v) rainbowBox = v end})
-    VisualTab:CreateToggle({Name = "Rainbow Skeleton", CurrentValue = false, Callback = function(v) rainbowSkel = v end})
-    VisualTab:CreateToggle({Name = "Rainbow Tracer", CurrentValue = false, Callback = function(v) rainbowTracer = v end})
+    CreateInput(Tabs.Visual, {Name = "Cor Box", PlaceholderText = "verde", Callback = function(v) local c=parseColor(v) if c then boxColor=c end end})
+    CreateInput(Tabs.Visual, {Name = "Cor Skeleton", PlaceholderText = "rosa", Callback = function(v) local c=parseColor(v) if c then skelColor=c end end})
+    CreateInput(Tabs.Visual, {Name = "Cor Tracer V7", PlaceholderText = "branco", Callback = function(v) local c=parseColor(v) if c then tracerColor=c end end})
+    CreateToggle(Tabs.Visual, {Name = "FOV Círculo", CurrentValue = false, Callback = function(v) fovCircle = v end})
+    CreateToggle(Tabs.Visual, {Name = "FOV Arco-íris", CurrentValue = false, Callback = function(v) fovRainbow = v end})
+    CreateToggle(Tabs.Visual, {Name = "Rainbow Box", CurrentValue = false, Callback = function(v) rainbowBox = v end})
+    CreateToggle(Tabs.Visual, {Name = "Rainbow Skeleton", CurrentValue = false, Callback = function(v) rainbowSkel = v end})
+    CreateToggle(Tabs.Visual, {Name = "Rainbow Tracer", CurrentValue = false, Callback = function(v) rainbowTracer = v end})
 
     -- MOVIMENTO
-    MoveTab:CreateToggle({Name = "Pulo Infinito", CurrentValue = false, Callback = function(v) infJump = v end})
-    MoveTab:CreateToggle({Name = "Fly Avançado (Anti-Kick)", CurrentValue = false, Callback = function(v) flyEnabled = v; if not v then flyStartY = nil end end})
-    MoveTab:CreateSlider({Name = "Velocidade Fly", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flySpeed = v end})
-    MoveTab:CreateToggle({Name = "Speed Hack", CurrentValue = false, Callback = function(v) speedEnabled = v end})
-    MoveTab:CreateSlider({Name = "Velocidade Speed", Range = {16, 200}, Increment = 1, CurrentValue = 24, Callback = function(v) speedValue = v end})
-    MoveTab:CreateToggle({Name = "Ghost Mode (Invisível)", CurrentValue = false, Callback = function(v) ghostMode = v; invisibility = v end})
+    CreateToggle(Tabs.Move, {Name = "Pulo Infinito", CurrentValue = false, Callback = function(v) infJump = v end})
+    CreateToggle(Tabs.Move, {Name = "Fly Avançado (Anti-Kick)", CurrentValue = false, Callback = function(v) flyEnabled = v; if not v then flyStartY = nil end end})
+    CreateSlider(Tabs.Move, {Name = "Velocidade Fly", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flySpeed = v end})
+    CreateToggle(Tabs.Move, {Name = "Speed Hack", CurrentValue = false, Callback = function(v) speedEnabled = v end})
+    CreateSlider(Tabs.Move, {Name = "Velocidade Speed", Range = {16, 200}, Increment = 1, CurrentValue = 24, Callback = function(v) speedValue = v end})
+    CreateToggle(Tabs.Move, {Name = "Ghost Mode (Invisível)", CurrentValue = false, Callback = function(v) ghostMode = v; invisibility = v end})
 
     -- FARM
-    FarmTab:CreateToggle({Name = "Auto Essência", CurrentValue = false, Callback = function(v) autoEssencia = v end})
-    FarmTab:CreateToggle({Name = "Auto Micha (Sintonia RP)", CurrentValue = false, Callback = function(v) autoMicha = v end})
-    FarmTab:CreateToggle({Name = "S4zx Farm", CurrentValue = false, Callback = function(v) s4zxFarm = v end})
-    FarmTab:CreateSlider({Name = "Velocidade Farm", Range = {30, 100}, Increment = 1, CurrentValue = 50, Callback = function(v) farmSpeed = v end})
+    CreateToggle(Tabs.Farm, {Name = "Auto Essência", CurrentValue = false, Callback = function(v) autoEssencia = v end})
+    CreateToggle(Tabs.Farm, {Name = "Auto Micha (Sintonia RP)", CurrentValue = false, Callback = function(v) autoMicha = v end})
+    CreateToggle(Tabs.Farm, {Name = "S4zx Farm", CurrentValue = false, Callback = function(v) s4zxFarm = v end})
+    CreateSlider(Tabs.Farm, {Name = "Velocidade Farm", Range = {30, 100}, Increment = 1, CurrentValue = 50, Callback = function(v) farmSpeed = v end})
 
-    -- ARMAS (básicas + novas)
-    WeaponTab:CreateToggle({Name = "Reach (Alcance)", CurrentValue = false, Callback = function(v) reach = v end})
-    WeaponTab:CreateSlider({Name = "Distância", Range = {10, 50}, Increment = 1, CurrentValue = 15, Callback = function(v) reachDistance = v end})
-    WeaponTab:CreateToggle({Name = "Infinite Ammo", CurrentValue = false, Callback = function(v) infiniteAmmo = v end})
-    WeaponTab:CreateToggle({Name = "Auto Reload", CurrentValue = false, Callback = function(v) autoReload = v end})
-    WeaponTab:CreateToggle({Name = "No Recoil", CurrentValue = false, Callback = function(v) noRecoil = v end})
-    WeaponTab:CreateToggle({Name = "Rapid Fire", CurrentValue = false, Callback = function(v) rapidFire = v end})
-    WeaponTab:CreateSlider({Name = "Rapid Fire Delay", Range = {0.05, 0.5}, Increment = 0.05, CurrentValue = 0.1, Callback = function(v) rapidFireDelay = v end})
-
-    -- NOVAS FUNÇÕES DE ARMA
-    WeaponTab:CreateToggle({Name = "Matar com um Tiro", CurrentValue = false, Callback = function(v)
-        matarUmTiro = v
-        -- Implementação: aumentará o dano da arma atual drasticamente
-        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool and tool:FindFirstChild("Settings") then
-            -- Alguns jogos usam configurações nas ferramentas
-            for _, cfg in ipairs(tool:GetDescendants()) do
-                if cfg.Name == "Damage" and cfg:IsA("NumberValue") then
-                    cfg.Value = v and 9999 or 15
-                end
-            end
-        end
-    end})
-    WeaponTab:CreateInput({Name = "Cor da Arma", PlaceholderText = "ex: vermelho ou ff0000", RemoveTextAfterFocusLost = false, Callback = function(v)
-        local c = parseColor(v)
-        if c then corArma = c end
-    end})
-    WeaponTab:CreateToggle({Name = "Arma Colorida", CurrentValue = false, Callback = function(v) armaColorida = v end})
-    WeaponTab:CreateSlider({Name = "Velocidade do RGB", Range = {0.1, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v) rgbSpeed = v end})
-    WeaponTab:CreateSlider({Name = "Tamanho da Arma", Range = {0.5, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v)
-        tamanhoArma = v
-        local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            tool:ScaleTo(v)
-        end
-    end})
+    -- ARMAS
+    CreateToggle(Tabs.Weapon, {Name = "Reach (Alcance)", CurrentValue = false, Callback = function(v) reach = v end})
+    CreateSlider(Tabs.Weapon, {Name = "Distância", Range = {10, 50}, Increment = 1, CurrentValue = 15, Callback = function(v) reachDistance = v end})
+    CreateToggle(Tabs.Weapon, {Name = "Infinite Ammo", CurrentValue = false, Callback = function(v) infiniteAmmo = v end})
+    CreateToggle(Tabs.Weapon, {Name = "Auto Reload", CurrentValue = false, Callback = function(v) autoReload = v end})
+    CreateToggle(Tabs.Weapon, {Name = "No Recoil", CurrentValue = false, Callback = function(v) noRecoil = v end})
+    CreateToggle(Tabs.Weapon, {Name = "Rapid Fire", CurrentValue = false, Callback = function(v) rapidFire = v end})
+    CreateSlider(Tabs.Weapon, {Name = "Rapid Fire Delay", Range = {0.05, 0.5}, Increment = 0.05, CurrentValue = 0.1, Callback = function(v) rapidFireDelay = v end})
+    -- Novas funções de arma
+    CreateToggle(Tabs.Weapon, {Name = "Matar com um Tiro", CurrentValue = false, Callback = function(v) matarUmTiro = v end})
+    CreateInput(Tabs.Weapon, {Name = "Cor da Arma", PlaceholderText = "ex: vermelho ou ff0000", Callback = function(v) local c=parseColor(v) if c then corArma=c end end})
+    CreateToggle(Tabs.Weapon, {Name = "Arma Colorida", CurrentValue = false, Callback = function(v) armaColorida = v end})
+    CreateSlider(Tabs.Weapon, {Name = "Velocidade do RGB", Range = {0.1, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v) rgbSpeed = v end})
+    CreateSlider(Tabs.Weapon, {Name = "Tamanho da Arma", Range = {0.5, 5}, Increment = 0.1, CurrentValue = 1, Callback = function(v) tamanhoArma = v end})
 
     -- CARRO
-    CarTab:CreateToggle({Name = "Fly Car", CurrentValue = false, Callback = function(v) flyCarEnabled = v end})
-    CarTab:CreateSlider({Name = "Velocidade Fly Car", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flyCarSpeed = v end})
+    CreateToggle(Tabs.Car, {Name = "Fly Car", CurrentValue = false, Callback = function(v) flyCarEnabled = v end})
+    CreateSlider(Tabs.Car, {Name = "Velocidade Fly Car", Range = {20, 200}, Increment = 1, CurrentValue = 50, Callback = function(v) flyCarSpeed = v end})
 
-    -- EXTRAS (com Godmode)
-    ExtrasTab:CreateToggle({Name = "Anti AFK", CurrentValue = false, Callback = function(v) antiAfk = v end})
-    ExtrasTab:CreateToggle({Name = "Anti Stun", CurrentValue = false, Callback = function(v) antiStun = v end})
-    ExtrasTab:CreateToggle({Name = "Anti Fire", CurrentValue = false, Callback = function(v) antiFire = v end})
-    ExtrasTab:CreateToggle({Name = "Auto Respawn", CurrentValue = false, Callback = function(v) autoRespawn = v end})
-    ExtrasTab:CreateToggle({Name = "God Mode", CurrentValue = false, Callback = function(v)
-        godMode = v
-        if Player.Character then
-            local hum = Player.Character:FindFirstChild("Humanoid")
-            if hum then
-                hum.MaxHealth = v and 99999 or 100
-                hum.Health = v and 99999 or 100
-            end
-        end
-    end})
+    -- EXTRAS
+    CreateToggle(Tabs.Extras, {Name = "Anti AFK", CurrentValue = false, Callback = function(v) antiAfk = v end})
+    CreateToggle(Tabs.Extras, {Name = "Anti Stun", CurrentValue = false, Callback = function(v) antiStun = v end})
+    CreateToggle(Tabs.Extras, {Name = "Anti Fire", CurrentValue = false, Callback = function(v) antiFire = v end})
+    CreateToggle(Tabs.Extras, {Name = "Auto Respawn", CurrentValue = false, Callback = function(v) autoRespawn = v end})
+    CreateToggle(Tabs.Extras, {Name = "God Mode", CurrentValue = false, Callback = function(v) godMode = v end})
 
     -- PEGAR/TACAR
-    GrabTab:CreateButton({Name = "🖐️ PEGAR (Raycast)", Callback = function()
+    CreateButton(Tabs.Grab, {Name = "🖐️ PEGAR (Raycast)", Callback = function()
         local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 100)
         local hit, pos = Workspace:FindPartOnRay(ray, Player.Character, false, true)
         if hit then
@@ -419,7 +613,7 @@ function carregarInterface(currentKey)
             end
         end
     end})
-    GrabTab:CreateButton({Name = "💥 TACAR", Callback = function()
+    CreateButton(Tabs.Grab, {Name = "💥 TACAR", Callback = function()
         if not grabbedVehicle then return end
         local primary = grabbedVehicle:FindFirstChild("PrimaryPart") or grabbedVehicle:FindFirstChildWhichIsA("BasePart")
         if primary then
@@ -439,21 +633,25 @@ function carregarInterface(currentKey)
     end})
 
     -- STREAM
-    StreamTab:CreateToggle({Name = "Modo Streamer", CurrentValue = false, Callback = function(v)
+    CreateToggle(Tabs.Stream, {Name = "Modo Streamer", CurrentValue = false, Callback = function(v)
         streamerMode = v
-        Window.Enabled = not v
+        if usarRayfield then
+            Window.Enabled = not v
+        elseif usarOrion then
+            -- Orion não tem um hide direto, mas podemos minimizar
+            if v then OrionLib:Minimize() else OrionLib:Maximize() end
+        else
+            -- Interface nativa: esconder/mostrar
+            if v then
+                mainFrame.Visible = false
+            else
+                mainFrame.Visible = true
+            end
+        end
     end})
 
     -- CONFIG
-    ConfigTab:CreateToggle({Name = "Anti Live", CurrentValue = false, Callback = function(v) antiLive = v end})
-
-    function parseColor(input)
-        local s = tostring(input):lower():gsub("%s","")
-        local named = { vermelho="ff0000", red="ff0000", verde="00ff00", green="00ff00", azul="0000ff", blue="0000ff", amarelo="ffff00", yellow="ffff00", roxo="800080", purple="800080", laranja="ff8800", orange="ff8800", preto="000000", black="000000", branco="ffffff", white="ffffff", rosa="ff00ff", pink="ff00ff", ciano="00ffff", cyan="00ffff" }
-        if named[s] then s = named[s] end
-        if #s == 6 and s:match("^%x+$") then return Color3.fromRGB(tonumber(s:sub(1,2),16), tonumber(s:sub(3,4),16), tonumber(s:sub(5,6),16)) end
-        return nil
-    end
+    CreateToggle(Tabs.Config, {Name = "Anti Live", CurrentValue = false, Callback = function(v) antiLive = v end})
 
     -- ==================== SILENT AIM CORRIGIDO ====================
     local function setupSilentAim()
@@ -511,7 +709,7 @@ function carregarInterface(currentKey)
     end
     setupSilentAim()
 
-    -- ==================== FUNÇÕES INTERNAS (ORIGINAIS) ====================
+    -- ==================== LOOP PRINCIPAL (FUNÇÕES INTERNAS) ====================
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -610,7 +808,7 @@ function carregarInterface(currentKey)
             end
         end
 
-        -- ESP Completa (mesmo do original)
+        -- ESP Completa
         local function updateESP()
             if not useDrawing then return end
             for p, box in pairs(boxes2D) do if not p or not p.Parent then pcall(function() box:Remove() end); boxes2D[p]=nil end end
@@ -910,7 +1108,6 @@ function carregarInterface(currentKey)
             end
             return nearest
         end
-
         local lastFarmAction = 0
         local function farmStep()
             if not s4zxFarm then return end
@@ -982,33 +1179,6 @@ function carregarInterface(currentKey)
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
         end
 
-        -- Bypass Cleanup
-        local lastCleanup = 0
-        local function bypassCleanup()
-            local now = tick()
-            if now - lastCleanup < 2 then return end
-            lastCleanup = now
-            local char = Player.Character
-            if not char then return end
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.WalkSpeed = 16 end
-            if not flyCarEnabled then
-                if flyCarTarget then
-                    local bv = flyCarTarget:FindFirstChild("BodyVelocity")
-                    if bv then bv:Destroy() end
-                    local bg = flyCarTarget:FindFirstChild("BodyGyro")
-                    if bg then bg:Destroy() end
-                end
-            end
-            if not flyEnabled and not invisibility then
-                if hum and hum.PlatformStand then hum.PlatformStand = false end
-            end
-            pcall(function()
-                Player:SetAttribute("SpeedHack", nil)
-                Player:SetAttribute("FlyHack", nil)
-            end)
-        end
-
         -- Modificações de Armas
         local function reachStep()
             if not reach then return end
@@ -1048,7 +1218,7 @@ function carregarInterface(currentKey)
             end
         end
 
-        -- Novas funções de arma (executadas no loop)
+        -- Novas funções de arma
         local function armaColoridaStep()
             if not armaColorida then return end
             local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
@@ -1056,12 +1226,25 @@ function carregarInterface(currentKey)
                 local hue = (tick() * rgbSpeed) % 1
                 local color = Color3.fromHSV(hue, 1, 1)
                 for _, part in ipairs(tool:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Color = color
+                    if part:IsA("BasePart") then part.Color = color end
+                end
+            end
+        end
+        local function tamanhoArmaStep()
+            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+            if tool then
+                tool:ScaleTo(tamanhoArma)
+            end
+        end
+        local function matarUmTiroStep()
+            if not matarUmTiro then return end
+            local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
+            if tool then
+                for _, v in ipairs(tool:GetDescendants()) do
+                    if v.Name == "Damage" and v:IsA("NumberValue") then
+                        v.Value = 9999
                     end
                 end
-            else
-                -- Também aplica ao handle na mochila?
             end
         end
 
@@ -1135,7 +1318,7 @@ function carregarInterface(currentKey)
             if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
         end)
 
-        -- LOOP PRINCIPAL DE RENDERIZAÇÃO
+        -- LOOP PRINCIPAL
         local lastLiveCheck = 0
         RunService.RenderStepped:Connect(function()
             pcall(aimbotStep)
@@ -1153,6 +1336,8 @@ function carregarInterface(currentKey)
             pcall(noRecoilStep)
             pcall(rapidFireStep)
             pcall(armaColoridaStep)
+            pcall(tamanhoArmaStep)
+            pcall(matarUmTiroStep)
             pcall(godModeStep)
             pcall(antiAfkStep)
             pcall(antiStunStep)
@@ -1160,7 +1345,6 @@ function carregarInterface(currentKey)
             pcall(autoRespawnStep)
             pcall(flyCarStep)
             pcall(updateStaffCounter)
-            pcall(bypassCleanup)
 
             -- Física do Veículo Segurado
             if grabbedVehicle then
@@ -1168,24 +1352,23 @@ function carregarInterface(currentKey)
                 if char and char:FindFirstChild("HumanoidRootPart") then
                     local root = char.HumanoidRootPart
                     local targetPos = root.Position + root.CFrame.LookVector * 10 + Vector3.new(0, 2, 0)
-                    if vehicleAlign then
-                        vehicleAlign.Position = targetPos
-                    end
+                    if vehicleAlign then vehicleAlign.Position = targetPos end
                 end
             end
 
             if antiLive and tick()-lastLiveCheck > 1 then
                 lastLiveCheck = tick()
-                Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
+                if usarRayfield then
+                    Window.Enabled = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
+                end
             end
         end)
 
-        -- Limpeza Completa ao Desativar
+        -- Limpeza ao Desativar
         script.Destroying:Connect(function()
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
             if fovCircleObj then fovCircleObj:Remove() end
-            if crosshairObj then crosshairObj:Remove() end
             if vehicleAlign then vehicleAlign:Destroy() end
             if vehicleVel then vehicleVel:Destroy() end
             if vehicleGyro then vehicleGyro:Destroy() end
@@ -1202,7 +1385,7 @@ function carregarInterface(currentKey)
         end)
     end)
 
-    -- ========== VERIFICAÇÃO PERIÓDICA A CADA 5 MINUTOS ==========
+    -- ========== VERIFICAÇÃO PERIÓDICA ==========
     spawn(function()
         while true do
             wait(300)
