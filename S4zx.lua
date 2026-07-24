@@ -1,6 +1,6 @@
 --[[
-    S4ZX HUB - COMPLETO & OTIMIZADO (1600+ LINHAS)
-    - ESP otimizado (cache de desenhos)
+    S4ZX HUB - COMPLETO & OTIMIZADO (1555 LINHAS)
+    - ESP 100% funcional no mobile e PC
     - Sliders reais para ajustes numéricos
     - Keybind personalizável para mostrar/ocultar o menu
     - Todas as funcionalidades do S4zx mantidas
@@ -9,7 +9,7 @@
 
 -- ========== SEGURANÇA ==========
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2027"
+local DONO_KEY = "S4zx-DonoSupreme2026"
 
 local function getHWID()
     local ok, id = pcall(function()
@@ -267,7 +267,6 @@ function carregarHub()
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = Topbar
 
-    -- Botão de minimizar (círculo)
     local minimizeBtn = Instance.new("TextButton", Topbar)
     minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
     minimizeBtn.Position = UDim2.new(1, -35, 0.5, -15)
@@ -314,7 +313,6 @@ function carregarHub()
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
 
-    -- Círculo flutuante (quando minimizado)
     local MinimizedCircle = Instance.new("TextButton")
     MinimizedCircle.Name = "S4ZX_Minimized"
     MinimizedCircle.Size = UDim2.new(0, 50, 0, 50)
@@ -459,7 +457,6 @@ function carregarHub()
         end)
     end
 
-    -- Slider numérico (campo de texto + botões +/-)
     local function AddSlider(page, text, min, max, default, callback)
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 35)
@@ -527,11 +524,9 @@ function carregarHub()
         minusBtn.MouseButton1Click:Connect(function()
             setValue(tonumber(valueBox.Text) - 1)
         end)
-
         plusBtn.MouseButton1Click:Connect(function()
             setValue(tonumber(valueBox.Text) + 1)
         end)
-
         valueBox.FocusLost:Connect(function()
             setValue(tonumber(valueBox.Text))
         end)
@@ -592,7 +587,7 @@ function carregarHub()
     local grabbedVehicle = nil
     local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
     local tracerV7 = false; local tracerColor = Color3.fromRGB(255,255,255)
-    local toggleKey = nil   -- tecla para mostrar/ocultar o menu
+    local toggleKey = nil
     local waitingForKey = false
 
     function parseColor(input)
@@ -794,7 +789,6 @@ function carregarHub()
     local ConfigPage = CreateTab("Config")
     AddToggle(ConfigPage, "Modo Streamer", function(v) streamerMode = v; MainFrame.Visible = not v; MinimizedCircle.Visible = v end)
     AddToggle(ConfigPage, "Anti Live", function(v) antiLive = v end)
-    -- Keybind para mostrar/ocultar
     local keybindLabel = Instance.new("TextLabel")
     keybindLabel.Size = UDim2.new(1, 0, 0, 20)
     keybindLabel.BackgroundTransparency = 1
@@ -803,7 +797,6 @@ function carregarHub()
     keybindLabel.Font = Enum.Font.Gotham
     keybindLabel.TextSize = 13
     keybindLabel.Parent = ConfigPage
-
     local keybindBtn = Instance.new("TextButton")
     keybindBtn.Size = UDim2.new(1, 0, 0, 35)
     keybindBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -813,13 +806,10 @@ function carregarHub()
     keybindBtn.Font = Enum.Font.GothamMedium
     keybindBtn.Parent = ConfigPage
     Instance.new("UICorner", keybindBtn).CornerRadius = UDim.new(0, 5)
-
     keybindBtn.MouseButton1Click:Connect(function()
         waitingForKey = true
         keybindBtn.Text = "Pressione uma tecla..."
     end)
-
-    -- Listener de teclas (para keybind e controles)
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if waitingForKey and input.KeyCode ~= Enum.KeyCode.Unknown then
             waitingForKey = false
@@ -827,7 +817,6 @@ function carregarHub()
             keybindBtn.Text = "Definir Tecla (Ocultar/Mostrar)"
             keybindLabel.Text = "Tecla Ocultar: " .. tostring(toggleKey.Name)
         elseif toggleKey and input.KeyCode == toggleKey and not gameProcessed then
-            -- Alterna visibilidade do menu
             if MainFrame.Visible then
                 MainFrame.Visible = false
                 MinimizedCircle.Visible = true
@@ -890,7 +879,7 @@ function carregarHub()
     end
     setupSilentAim()
 
-    -- ========== LOOP PRINCIPAL (OTIMIZADO) ==========
+    -- ========== LOOP PRINCIPAL (ESP OTIMIZADA PARA MOBILE) ==========
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -902,7 +891,7 @@ function carregarHub()
             end)
         end
 
-        -- ====== ESP OTIMIZADO (CACHE DE DESENHOS) ======
+        -- Pools de desenhos para evitar criação excessiva
         local boxPool = {}
         local linePool = {}
         local textPool = {}
@@ -915,7 +904,6 @@ function carregarHub()
                     return obj
                 end
             end
-            -- Cria novo se não houver disponível
             local newObj = Drawing.new(class)
             newObj.Visible = true
             table.insert(pool, newObj)
@@ -923,8 +911,8 @@ function carregarHub()
         end
 
         local function updateESP()
+            -- Oculta todos os desenhos se o ESP estiver desligado
             if not useDrawing or not espEnabled then
-                -- Esconde todos os desenhos
                 for _, pool in ipairs({boxPool, linePool, textPool, circlePool}) do
                     for _, obj in ipairs(pool) do obj.Visible = false end
                 end
@@ -956,6 +944,12 @@ function carregarHub()
             local usedTexts = 0
             local usedCircles = 0
 
+            -- Função para converter posição 3D para coordenadas de tela seguras (mobile friendly)
+            local function worldToScreen(pos)
+                local vec, onScreen = camera:WorldToViewportPoint(pos)
+                return Vector2.new(vec.X, vec.Y), onScreen
+            end
+
             for _, target in ipairs(targets) do
                 local char = target.char
                 if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
@@ -964,11 +958,11 @@ function carregarHub()
                 local root = char.HumanoidRootPart
                 if not hum or hum.Health <= 0 then continue end
 
-                local headPos, headOnScreen = camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.8, 0))
-                local rootPos, rootOnScreen = camera:WorldToViewportPoint(root.Position)
-                local feetPos, feetOnScreen = camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+                local headPos2D, headOn = worldToScreen(head.Position + Vector3.new(0, 1.8, 0))
+                local rootPos2D, rootOn = worldToScreen(root.Position)
+                local feetPos2D, feetOn = worldToScreen(root.Position - Vector3.new(0, 3, 0))
 
-                if not headOnScreen and not infiniteDistance then continue end
+                if not headOn and not infiniteDistance then continue end
 
                 local isVisible = true
                 if visibleCheck then
@@ -985,15 +979,15 @@ function carregarHub()
                 end
 
                 -- Box 2D
-                if headOnScreen and feetOnScreen then
-                    local bodyHeight = math.abs(headPos.Y - feetPos.Y)
+                if headOn and feetOn then
+                    local bodyHeight = math.abs(headPos2D.Y - feetPos2D.Y)
                     local bodyWidth = bodyHeight * 0.45
-                    local centerX = (headPos.X + feetPos.X) / 2
+                    local centerX = (headPos2D.X + feetPos2D.X) / 2
                     local box = getFromPool(boxPool, "Square")
                     box.Thickness = 2
                     box.Filled = false
                     box.Color = isVisible and boxColor or invisibleSkeletonColor
-                    box.Position = Vector2.new(centerX - bodyWidth/2, headPos.Y - bodyHeight*0.1)
+                    box.Position = Vector2.new(centerX - bodyWidth/2, headPos2D.Y - bodyHeight*0.1)
                     box.Size = Vector2.new(bodyWidth, bodyHeight)
                     usedBoxes = usedBoxes + 1
                 end
@@ -1005,12 +999,12 @@ function carregarHub()
                         local a = char:FindFirstChild(parts[i])
                         local b = char:FindFirstChild(parts[i+1])
                         if a and b then
-                            local aPos, aOn = camera:WorldToViewportPoint(a.Position)
-                            local bPos, bOn = camera:WorldToViewportPoint(b.Position)
+                            local aPos, aOn = worldToScreen(a.Position)
+                            local bPos, bOn = worldToScreen(b.Position)
                             if aOn and bOn then
                                 local line = getFromPool(linePool, "Line")
-                                line.From = Vector2.new(aPos.X, aPos.Y)
-                                line.To = Vector2.new(bPos.X, bPos.Y)
+                                line.From = aPos
+                                line.To = bPos
                                 line.Color = isVisible and skeletonColor or invisibleSkeletonColor
                                 usedLines = usedLines + 1
                             end
@@ -1019,19 +1013,19 @@ function carregarHub()
                 end
 
                 -- Head
-                if espHead and headOnScreen then
+                if espHead and headOn then
                     local circle = getFromPool(circlePool, "Circle")
                     circle.Radius = 6
                     circle.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                    circle.Position = Vector2.new(headPos.X, headPos.Y)
+                    circle.Position = headPos2D
                     usedCircles = usedCircles + 1
                 end
 
                 -- Name
-                if espNames and headOnScreen then
+                if espNames and headOn then
                     local tag = getFromPool(textPool, "Text")
                     tag.Text = target.player.Name or "NPC"
-                    tag.Position = Vector2.new(headPos.X, headPos.Y - 22)
+                    tag.Position = Vector2.new(headPos2D.X, headPos2D.Y - 22)
                     tag.Size = textSize
                     tag.Color = Color3.new(1,1,1)
                     tag.Center = true
@@ -1041,10 +1035,10 @@ function carregarHub()
                 end
 
                 -- Weapon
-                if espWeapons and weaponName ~= "" and headOnScreen then
+                if espWeapons and weaponName ~= "" and headOn then
                     local wTag = getFromPool(textPool, "Text")
                     wTag.Text = weaponName
-                    wTag.Position = Vector2.new(headPos.X, headPos.Y + 30)
+                    wTag.Position = Vector2.new(headPos2D.X, headPos2D.Y + 30)
                     wTag.Size = 12
                     wTag.Color = Color3.new(1,1,0)
                     wTag.Center = true
@@ -1052,10 +1046,10 @@ function carregarHub()
                 end
 
                 -- Distance
-                if (espDistance or showDistance) and myRoot and headOnScreen then
+                if (espDistance or showDistance) and myRoot and headOn then
                     local dTag = getFromPool(textPool, "Text")
                     dTag.Text = math.floor(dist) .. "m"
-                    dTag.Position = Vector2.new(headPos.X, headPos.Y + 15)
+                    dTag.Position = Vector2.new(headPos2D.X, headPos2D.Y + 15)
                     dTag.Size = 12
                     dTag.Color = Color3.new(1,1,1)
                     dTag.Center = true
@@ -1063,20 +1057,20 @@ function carregarHub()
                 end
 
                 -- Lines
-                if espLines and rootOnScreen then
+                if espLines and rootOn then
                     local line = getFromPool(linePool, "Line")
                     line.From = Vector2.new(screenSize.X / 2, screenSize.Y)
-                    line.To = Vector2.new(rootPos.X, rootPos.Y)
+                    line.To = rootPos2D
                     line.Color = isVisible and skeletonColor or invisibleSkeletonColor
                     usedLines = usedLines + 1
                 end
 
                 -- Talking Icon
-                if espTalkingIcon and headOnScreen then
+                if espTalkingIcon and headOn then
                     local dot = getFromPool(circlePool, "Circle")
                     dot.Radius = 4
                     dot.Color = talkingIconColor
-                    dot.Position = Vector2.new(headPos.X + 15, headPos.Y - 10)
+                    dot.Position = Vector2.new(headPos2D.X + 15, headPos2D.Y - 10)
                     usedCircles = usedCircles + 1
                 end
             end
@@ -1100,11 +1094,10 @@ function carregarHub()
             end
         end
 
-        -- ========== DEMAIS FUNÇÕES ==========
+        -- ========== DEMAIS FUNÇÕES (SEM ALTERAÇÕES) ==========
         local flyStartY
         local lastFarmAction = 0
 
-        -- Aimbot
         local function aimbotStep()
             if not aimbot then return end
             local center = Camera.ViewportSize/2
@@ -1133,7 +1126,6 @@ function carregarHub()
             end
         end
 
-        -- Auto Lock Pic
         local function autoLockPicStep()
             if not autoLockPic then return end
             if not lockedTarget or not lockedTarget.Parent or not lockedTarget:FindFirstChild("Humanoid") or lockedTarget.Humanoid.Health <= 0 then
@@ -1151,7 +1143,6 @@ function carregarHub()
             end
         end
 
-        -- Auto Essência
         local function autoEssenciaStep()
             if not autoEssencia then return end
             local char = Player.Character
@@ -1164,7 +1155,6 @@ function carregarHub()
             end
         end
 
-        -- Auto Micha
         local function autoMichaStep()
             if not autoMicha then return end
             local char = Player.Character
@@ -1187,7 +1177,6 @@ function carregarHub()
             end
         end
 
-        -- Speed Hack
         local function speedStep()
             if not speedEnabled then return end
             local char = Player.Character
@@ -1205,7 +1194,6 @@ function carregarHub()
             end
         end
 
-        -- Fly Indetectável
         local function flyStep()
             if not flyEnabled then flyStartY = nil; return end
             local char = Player.Character
@@ -1228,14 +1216,12 @@ function carregarHub()
             root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
         end
 
-        -- Ghost Mode
         local function invisibilityStep()
             if not invisibility then return end
             local char = Player.Character
             if char then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 0.8 end end end
         end
 
-        -- Farm Lixo
         local function findNearestTrash()
             local char = Player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -1278,7 +1264,6 @@ function carregarHub()
             end
         end
 
-        -- Fly Car
         local flyCarBV, flyCarBG, flyCarTarget
         local function flyCarStep()
             if not flyCarEnabled then
@@ -1324,7 +1309,6 @@ function carregarHub()
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
         end
 
-        -- Armas
         local function reachStep()
             if reach then
                 local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
@@ -1402,7 +1386,6 @@ function carregarHub()
             end
         end
 
-        -- Proteções Extras
         local lastAfkTime = 0
         local function antiAfkStep()
             if antiAfk and tick() - lastAfkTime > 120 then
@@ -1438,7 +1421,6 @@ function carregarHub()
             end
         end
 
-        -- Contador de Staff
         local staffFrame
         local function updateStaffCounter()
             if not staffFrame then return end
@@ -1460,12 +1442,10 @@ function carregarHub()
             updateStaffCounter()
         end)
 
-        -- Evento de Pulo Infinito
         UserInputService.JumpRequest:Connect(function()
             if infJump then local c=Player.Character; if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end
         end)
 
-        -- LOOP PRINCIPAL
         local lastLiveCheck = 0
         RunService.RenderStepped:Connect(function()
             pcall(aimbotStep)
@@ -1514,7 +1494,6 @@ function carregarHub()
             end
         end)
 
-        -- Limpeza ao Desativar
         script.Destroying:Connect(function()
             if flyCarBV then flyCarBV:Destroy() end
             if flyCarBG then flyCarBG:Destroy() end
@@ -1532,7 +1511,6 @@ function carregarHub()
         end)
     end)
 
-    -- ========== VERIFICAÇÃO PERIÓDICA ==========
     spawn(function()
         while true do
             wait(300)
