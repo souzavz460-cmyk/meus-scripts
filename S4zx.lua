@@ -1,8 +1,15 @@
--- S4ZX HUB - COMPLETO 1700+ LINHAS (Interface Personalizada + 50 Funções + Segurança + ESP Completo + Veículos + TP/Fly Indetectável)
+--[[
+    S4ZX HUB - COMPLETO & OTIMIZADO (1600+ LINHAS)
+    - ESP otimizado (cache de desenhos)
+    - Sliders reais para ajustes numéricos
+    - Keybind personalizável para mostrar/ocultar o menu
+    - Todas as funcionalidades do S4zx mantidas
+    - Segurança com login, HWID, blacklist e verificação periódica
+]]
 
 -- ========== SEGURANÇA ==========
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
-local DONO_KEY = "S4zx-DonoSupreme2026"
+local DONO_KEY = "S4zx-DonoSupreme2027"
 
 local function getHWID()
     local ok, id = pcall(function()
@@ -27,7 +34,7 @@ local function destruirScript(motivo)
     while true do end
 end
 
--- ========== TELA DE LOGIN (ESTILO S4ZX) ==========
+-- ========== TELA DE LOGIN ==========
 local function mostrarLogin()
     task.wait(0.5)
     if not SECURITY_FLAG or SECURITY_FLAG ~= "S4zx_INTEGRO_2026" then
@@ -209,7 +216,7 @@ function carregarHub()
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
-    -- ========== CONSTRUÇÃO DA UI ==========
+    -- ========== INTERFACE PRINCIPAL ==========
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 680, 0, 420)
@@ -260,6 +267,7 @@ function carregarHub()
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = Topbar
 
+    -- Botão de minimizar (círculo)
     local minimizeBtn = Instance.new("TextButton", Topbar)
     minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
     minimizeBtn.Position = UDim2.new(1, -35, 0.5, -15)
@@ -306,6 +314,7 @@ function carregarHub()
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
 
+    -- Círculo flutuante (quando minimizado)
     local MinimizedCircle = Instance.new("TextButton")
     MinimizedCircle.Name = "S4ZX_Minimized"
     MinimizedCircle.Size = UDim2.new(0, 50, 0, 50)
@@ -450,6 +459,84 @@ function carregarHub()
         end)
     end
 
+    -- Slider numérico (campo de texto + botões +/-)
+    local function AddSlider(page, text, min, max, default, callback)
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, 0, 0, 35)
+        Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        Frame.Parent = page
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 5)
+        Corner.Parent = Frame
+
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(0, 120, 1, 0)
+        Label.Position = UDim2.new(0, 12, 0, 0)
+        Label.BackgroundTransparency = 1
+        Label.Text = text .. ": " .. default
+        Label.TextColor3 = Color3.fromRGB(230, 230, 230)
+        Label.TextSize = 13
+        Label.Font = Enum.Font.Gotham
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Parent = Frame
+
+        local minusBtn = Instance.new("TextButton")
+        minusBtn.Size = UDim2.new(0, 24, 0, 24)
+        minusBtn.Position = UDim2.new(0, 130, 0, 5)
+        minusBtn.Text = "-"
+        minusBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        minusBtn.TextColor3 = Color3.new(1,1,1)
+        minusBtn.Font = Enum.Font.SourceSansBold
+        minusBtn.TextSize = 18
+        minusBtn.BorderSizePixel = 0
+        Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0, 4)
+        minusBtn.Parent = Frame
+
+        local valueBox = Instance.new("TextBox")
+        valueBox.Size = UDim2.new(0, 50, 0, 24)
+        valueBox.Position = UDim2.new(0, 158, 0, 5)
+        valueBox.Text = tostring(default)
+        valueBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        valueBox.TextColor3 = Color3.new(1,1,1)
+        valueBox.Font = Enum.Font.SourceSans
+        valueBox.TextSize = 14
+        valueBox.BorderSizePixel = 0
+        Instance.new("UICorner", valueBox).CornerRadius = UDim.new(0, 4)
+        valueBox.Parent = Frame
+
+        local plusBtn = Instance.new("TextButton")
+        plusBtn.Size = UDim2.new(0, 24, 0, 24)
+        plusBtn.Position = UDim2.new(0, 212, 0, 5)
+        plusBtn.Text = "+"
+        plusBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        plusBtn.TextColor3 = Color3.new(1,1,1)
+        plusBtn.Font = Enum.Font.SourceSansBold
+        plusBtn.TextSize = 18
+        plusBtn.BorderSizePixel = 0
+        Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0, 4)
+        plusBtn.Parent = Frame
+
+        local function setValue(val)
+            val = math.clamp(tonumber(val) or default, min, max)
+            valueBox.Text = tostring(val)
+            Label.Text = text .. ": " .. val
+            callback(val)
+        end
+
+        minusBtn.MouseButton1Click:Connect(function()
+            setValue(tonumber(valueBox.Text) - 1)
+        end)
+
+        plusBtn.MouseButton1Click:Connect(function()
+            setValue(tonumber(valueBox.Text) + 1)
+        end)
+
+        valueBox.FocusLost:Connect(function()
+            setValue(tonumber(valueBox.Text))
+        end)
+    end
+
     local function AddButton(page, text, callback)
         local Button = Instance.new("TextButton")
         Button.Size = UDim2.new(1, 0, 0, 35)
@@ -505,6 +592,8 @@ function carregarHub()
     local grabbedVehicle = nil
     local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
     local tracerV7 = false; local tracerColor = Color3.fromRGB(255,255,255)
+    local toggleKey = nil   -- tecla para mostrar/ocultar o menu
+    local waitingForKey = false
 
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
@@ -514,13 +603,13 @@ function carregarHub()
         return nil
     end
 
-    -- ========== PREENCHIMENTO DAS ABAS (TODAS AS FUNÇÕES) ==========
+    -- ========== PREENCHIMENTO DAS ABAS ==========
     local AimbotPage = CreateTab("Aimbot")
     AddToggle(AimbotPage, "AIMBOT", function(v) aimbot = v end)
     AddToggle(AimbotPage, "Auto Lock Pic (CamLock)", function(v) autoLockPic = v; if not v then lockedTarget = nil end end)
-    AddButton(AimbotPage, "Força (1-5): " .. aimForce, function() aimForce = aimForce >= 5 and 1 or aimForce + 1 end)
-    AddButton(AimbotPage, "Bypass (1-10): " .. bypass, function() bypass = bypass >= 10 and 1 or bypass + 1 end)
-    AddButton(AimbotPage, "FOV Raio (50-500): " .. fovRadius, function() fovRadius = fovRadius >= 500 and 50 or fovRadius + 50 end)
+    AddSlider(AimbotPage, "Força", 1, 5, 1, function(v) aimForce = v end)
+    AddSlider(AimbotPage, "Bypass", 1, 10, 1, function(v) bypass = v end)
+    AddSlider(AimbotPage, "FOV Raio", 50, 500, 150, function(v) fovRadius = v end)
     AddToggle(AimbotPage, "WALLCK (Parede)", function(v) wallCheck = v end)
     AddToggle(AimbotPage, "SILENT AIM", function(v) silentAimEnabled = v end)
     AddToggle(AimbotPage, "Magic Bullet", function(v) magicBullet = v end)
@@ -541,7 +630,7 @@ function carregarHub()
     AddToggle(EspPage, "Show Distance", function(v) showDistance = v end)
     AddToggle(EspPage, "Target NPCs", function(v) targetNPCs = v end)
     AddToggle(EspPage, "Visible Check", function(v) visibleCheck = v end)
-    AddButton(EspPage, "Text Size: " .. textSize, function() textSize = textSize >= 20 and 12 or textSize + 1 end)
+    AddSlider(EspPage, "Text Size", 12, 20, 14, function(v) textSize = v end)
     AddButton(EspPage, "Skeleton Color", function() skeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
     AddButton(EspPage, "Invisible Color", function() invisibleSkeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
     AddButton(EspPage, "Friend Color", function() friendSkeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
@@ -605,34 +694,34 @@ function carregarHub()
     local MovPage = CreateTab("Movimento")
     AddToggle(MovPage, "Pulo Infinito", function(v) infJump = v end)
     AddToggle(MovPage, "Fly Avançado (Indetectável)", function(v) flyEnabled = v; if not v then flyStartY = nil end end)
-    AddButton(MovPage, "Velocidade Fly: " .. flySpeed, function() flySpeed = flySpeed >= 200 and 20 or flySpeed + 10 end)
+    AddSlider(MovPage, "Velocidade Fly", 20, 200, 50, function(v) flySpeed = v end)
     AddToggle(MovPage, "Speed Hack", function(v) speedEnabled = v end)
-    AddButton(MovPage, "Velocidade Speed: " .. speedValue, function() speedValue = speedValue >= 200 and 16 or speedValue + 8 end)
+    AddSlider(MovPage, "Velocidade Speed", 16, 200, 24, function(v) speedValue = v end)
     AddToggle(MovPage, "Ghost Mode (Invisível)", function(v) invisibility = v end)
 
     local FarmPage = CreateTab("Farm")
     AddToggle(FarmPage, "Auto Farm Lixo", function(v) s4zxFarm = v end)
-    AddButton(FarmPage, "Velocidade Farm: " .. farmSpeed, function() farmSpeed = farmSpeed >= 100 and 30 or farmSpeed + 10 end)
+    AddSlider(FarmPage, "Velocidade Farm", 30, 100, 50, function(v) farmSpeed = v end)
     AddToggle(FarmPage, "Auto Essência", function(v) autoEssencia = v end)
     AddToggle(FarmPage, "Auto Micha (Sintonia RP)", function(v) autoMicha = v end)
 
     local ArmasPage = CreateTab("Armas")
     AddToggle(ArmasPage, "Reach (Alcance)", function(v) reach = v end)
-    AddButton(ArmasPage, "Distância Reach: " .. reachDistance, function() reachDistance = reachDistance >= 50 and 10 or reachDistance + 5 end)
+    AddSlider(ArmasPage, "Distância Reach", 10, 50, 15, function(v) reachDistance = v end)
     AddToggle(ArmasPage, "Infinite Ammo", function(v) infiniteAmmo = v end)
     AddToggle(ArmasPage, "Auto Reload", function(v) autoReload = v end)
     AddToggle(ArmasPage, "No Recoil", function(v) noRecoil = v end)
     AddToggle(ArmasPage, "Rapid Fire", function(v) rapidFire = v end)
-    AddButton(ArmasPage, "Rapid Fire Delay: " .. string.format("%.2f", rapidFireDelay), function() rapidFireDelay = rapidFireDelay >= 0.5 and 0.05 or rapidFireDelay + 0.05 end)
+    AddSlider(ArmasPage, "Rapid Fire Delay", 0.05, 0.5, 0.1, function(v) rapidFireDelay = v end)
     AddToggle(ArmasPage, "Matar com um Tiro", function(v) matarUmTiro = v end)
     AddButton(ArmasPage, "Cor da Arma", function() local c = parseColor("vermelho") if c then corArma = c end end)
     AddToggle(ArmasPage, "Arma Colorida (RGB)", function(v) armaColorida = v end)
-    AddButton(ArmasPage, "Velocidade do RGB: " .. rgbSpeed, function() rgbSpeed = rgbSpeed >= 5 and 0.5 or rgbSpeed + 0.5 end)
-    AddButton(ArmasPage, "Tamanho da Arma: " .. tamanhoArma, function() tamanhoArma = tamanhoArma >= 5 and 0.5 or tamanhoArma + 0.5 end)
+    AddSlider(ArmasPage, "Velocidade do RGB", 0.5, 5, 1, function(v) rgbSpeed = v end)
+    AddSlider(ArmasPage, "Tamanho da Arma", 0.5, 5, 1, function(v) tamanhoArma = v end)
 
     local CarroPage = CreateTab("Carro")
     AddToggle(CarroPage, "Fly Car", function(v) flyCarEnabled = v end)
-    AddButton(CarroPage, "Velocidade Fly Car: " .. flyCarSpeed, function() flyCarSpeed = flyCarSpeed >= 200 and 20 or flyCarSpeed + 10 end)
+    AddSlider(CarroPage, "Velocidade Fly Car", 20, 200, 50, function(v) flyCarSpeed = v end)
 
     local ExtrasPage = CreateTab("Extras")
     AddToggle(ExtrasPage, "Anti AFK", function(v) antiAfk = v end)
@@ -705,6 +794,49 @@ function carregarHub()
     local ConfigPage = CreateTab("Config")
     AddToggle(ConfigPage, "Modo Streamer", function(v) streamerMode = v; MainFrame.Visible = not v; MinimizedCircle.Visible = v end)
     AddToggle(ConfigPage, "Anti Live", function(v) antiLive = v end)
+    -- Keybind para mostrar/ocultar
+    local keybindLabel = Instance.new("TextLabel")
+    keybindLabel.Size = UDim2.new(1, 0, 0, 20)
+    keybindLabel.BackgroundTransparency = 1
+    keybindLabel.Text = "Tecla Ocultar: Nenhuma"
+    keybindLabel.TextColor3 = Color3.fromRGB(230,230,230)
+    keybindLabel.Font = Enum.Font.Gotham
+    keybindLabel.TextSize = 13
+    keybindLabel.Parent = ConfigPage
+
+    local keybindBtn = Instance.new("TextButton")
+    keybindBtn.Size = UDim2.new(1, 0, 0, 35)
+    keybindBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    keybindBtn.Text = "Definir Tecla (Ocultar/Mostrar)"
+    keybindBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
+    keybindBtn.TextSize = 13
+    keybindBtn.Font = Enum.Font.GothamMedium
+    keybindBtn.Parent = ConfigPage
+    Instance.new("UICorner", keybindBtn).CornerRadius = UDim.new(0, 5)
+
+    keybindBtn.MouseButton1Click:Connect(function()
+        waitingForKey = true
+        keybindBtn.Text = "Pressione uma tecla..."
+    end)
+
+    -- Listener de teclas (para keybind e controles)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if waitingForKey and input.KeyCode ~= Enum.KeyCode.Unknown then
+            waitingForKey = false
+            toggleKey = input.KeyCode
+            keybindBtn.Text = "Definir Tecla (Ocultar/Mostrar)"
+            keybindLabel.Text = "Tecla Ocultar: " .. tostring(toggleKey.Name)
+        elseif toggleKey and input.KeyCode == toggleKey and not gameProcessed then
+            -- Alterna visibilidade do menu
+            if MainFrame.Visible then
+                MainFrame.Visible = false
+                MinimizedCircle.Visible = true
+            else
+                MinimizedCircle.Visible = false
+                MainFrame.Visible = true
+            end
+        end
+    end)
 
     local SegPage = CreateTab("Segurança")
     AddButton(SegPage, "🔑 Key: S4zx-DonoSupreme2026", function() end)
@@ -713,7 +845,7 @@ function carregarHub()
     AddButton(SegPage, "🛡️ Anti-adulteração: Ativo", function() end)
     AddButton(SegPage, "🔄 Checagem remota: 5min", function() end)
 
-    -- ========== SILENT AIM (INTEGRADO) ==========
+    -- ========== SILENT AIM ==========
     local function setupSilentAim()
         Workspace.DescendantAdded:Connect(function(obj)
             if not silentAimEnabled then return end
@@ -758,7 +890,7 @@ function carregarHub()
     end
     setupSilentAim()
 
-    -- ========== LOOP PRINCIPAL (TODAS AS FUNÇÕES INTERNAS) ==========
+    -- ========== LOOP PRINCIPAL (OTIMIZADO) ==========
     task.spawn(function()
         local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
         local fovCircleObj
@@ -769,13 +901,210 @@ function carregarHub()
                 fovCircleObj.Color=Color3.new(1,1,1); fovCircleObj.Filled=false
             end)
         end
-        local boxes2D, skeletons, nameTags, healthBars, distanceTags, tracerLines = {}, {}, {}, {}, {}, {}
-        local itemESP = {}
-        local espDrawings = {}
+
+        -- ====== ESP OTIMIZADO (CACHE DE DESENHOS) ======
+        local boxPool = {}
+        local linePool = {}
+        local textPool = {}
+        local circlePool = {}
+
+        local function getFromPool(pool, class)
+            for _, obj in ipairs(pool) do
+                if not obj.Visible then
+                    obj.Visible = true
+                    return obj
+                end
+            end
+            -- Cria novo se não houver disponível
+            local newObj = Drawing.new(class)
+            newObj.Visible = true
+            table.insert(pool, newObj)
+            return newObj
+        end
+
+        local function updateESP()
+            if not useDrawing or not espEnabled then
+                -- Esconde todos os desenhos
+                for _, pool in ipairs({boxPool, linePool, textPool, circlePool}) do
+                    for _, obj in ipairs(pool) do obj.Visible = false end
+                end
+                if fovCircleObj then fovCircleObj.Visible = false end
+                return
+            end
+
+            local camera = Camera
+            local screenSize = camera.ViewportSize
+            local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+
+            -- Lista de alvos
+            local targets = {}
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= Player then
+                    table.insert(targets, {player = p, char = p.Character, isFriend = false})
+                end
+            end
+            if targetNPCs then
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
+                        table.insert(targets, {player = obj, char = obj, isNPC = true})
+                    end
+                end
+            end
+
+            local usedBoxes = 0
+            local usedLines = 0
+            local usedTexts = 0
+            local usedCircles = 0
+
+            for _, target in ipairs(targets) do
+                local char = target.char
+                if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+                local hum = char:FindFirstChild("Humanoid")
+                local head = char:FindFirstChild("Head")
+                local root = char.HumanoidRootPart
+                if not hum or hum.Health <= 0 then continue end
+
+                local headPos, headOnScreen = camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.8, 0))
+                local rootPos, rootOnScreen = camera:WorldToViewportPoint(root.Position)
+                local feetPos, feetOnScreen = camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+
+                if not headOnScreen and not infiniteDistance then continue end
+
+                local isVisible = true
+                if visibleCheck then
+                    local ray = Ray.new(camera.CFrame.Position, (head.Position - camera.CFrame.Position).Unit * 1000)
+                    local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {Player.Character}, false, true)
+                    isVisible = hit and hit:IsDescendantOf(char)
+                end
+
+                local dist = myRoot and (root.Position - myRoot.Position).Magnitude or 0
+                local weaponName = ""
+                if espWeapons then
+                    local tool = char:FindFirstChildWhichIsA("Tool")
+                    weaponName = tool and tool.Name or ""
+                end
+
+                -- Box 2D
+                if headOnScreen and feetOnScreen then
+                    local bodyHeight = math.abs(headPos.Y - feetPos.Y)
+                    local bodyWidth = bodyHeight * 0.45
+                    local centerX = (headPos.X + feetPos.X) / 2
+                    local box = getFromPool(boxPool, "Square")
+                    box.Thickness = 2
+                    box.Filled = false
+                    box.Color = isVisible and boxColor or invisibleSkeletonColor
+                    box.Position = Vector2.new(centerX - bodyWidth/2, headPos.Y - bodyHeight*0.1)
+                    box.Size = Vector2.new(bodyWidth, bodyHeight)
+                    usedBoxes = usedBoxes + 1
+                end
+
+                -- Skeleton
+                if espSkeleton then
+                    local parts = {"Head","UpperTorso","LowerTorso","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","UpperTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand"}
+                    for i = 1, #parts, 2 do
+                        local a = char:FindFirstChild(parts[i])
+                        local b = char:FindFirstChild(parts[i+1])
+                        if a and b then
+                            local aPos, aOn = camera:WorldToViewportPoint(a.Position)
+                            local bPos, bOn = camera:WorldToViewportPoint(b.Position)
+                            if aOn and bOn then
+                                local line = getFromPool(linePool, "Line")
+                                line.From = Vector2.new(aPos.X, aPos.Y)
+                                line.To = Vector2.new(bPos.X, bPos.Y)
+                                line.Color = isVisible and skeletonColor or invisibleSkeletonColor
+                                usedLines = usedLines + 1
+                            end
+                        end
+                    end
+                end
+
+                -- Head
+                if espHead and headOnScreen then
+                    local circle = getFromPool(circlePool, "Circle")
+                    circle.Radius = 6
+                    circle.Color = isVisible and skeletonColor or invisibleSkeletonColor
+                    circle.Position = Vector2.new(headPos.X, headPos.Y)
+                    usedCircles = usedCircles + 1
+                end
+
+                -- Name
+                if espNames and headOnScreen then
+                    local tag = getFromPool(textPool, "Text")
+                    tag.Text = target.player.Name or "NPC"
+                    tag.Position = Vector2.new(headPos.X, headPos.Y - 22)
+                    tag.Size = textSize
+                    tag.Color = Color3.new(1,1,1)
+                    tag.Center = true
+                    tag.Outline = true
+                    tag.OutlineColor = Color3.new(0,0,0)
+                    usedTexts = usedTexts + 1
+                end
+
+                -- Weapon
+                if espWeapons and weaponName ~= "" and headOnScreen then
+                    local wTag = getFromPool(textPool, "Text")
+                    wTag.Text = weaponName
+                    wTag.Position = Vector2.new(headPos.X, headPos.Y + 30)
+                    wTag.Size = 12
+                    wTag.Color = Color3.new(1,1,0)
+                    wTag.Center = true
+                    usedTexts = usedTexts + 1
+                end
+
+                -- Distance
+                if (espDistance or showDistance) and myRoot and headOnScreen then
+                    local dTag = getFromPool(textPool, "Text")
+                    dTag.Text = math.floor(dist) .. "m"
+                    dTag.Position = Vector2.new(headPos.X, headPos.Y + 15)
+                    dTag.Size = 12
+                    dTag.Color = Color3.new(1,1,1)
+                    dTag.Center = true
+                    usedTexts = usedTexts + 1
+                end
+
+                -- Lines
+                if espLines and rootOnScreen then
+                    local line = getFromPool(linePool, "Line")
+                    line.From = Vector2.new(screenSize.X / 2, screenSize.Y)
+                    line.To = Vector2.new(rootPos.X, rootPos.Y)
+                    line.Color = isVisible and skeletonColor or invisibleSkeletonColor
+                    usedLines = usedLines + 1
+                end
+
+                -- Talking Icon
+                if espTalkingIcon and headOnScreen then
+                    local dot = getFromPool(circlePool, "Circle")
+                    dot.Radius = 4
+                    dot.Color = talkingIconColor
+                    dot.Position = Vector2.new(headPos.X + 15, headPos.Y - 10)
+                    usedCircles = usedCircles + 1
+                end
+            end
+
+            -- Oculta desenhos excedentes
+            for i = usedBoxes + 1, #boxPool do boxPool[i].Visible = false end
+            for i = usedLines + 1, #linePool do linePool[i].Visible = false end
+            for i = usedTexts + 1, #textPool do textPool[i].Visible = false end
+            for i = usedCircles + 1, #circlePool do circlePool[i].Visible = false end
+
+            -- FOV Circle
+            if fovCircleObj then
+                fovCircleObj.Position = screenSize / 2
+                fovCircleObj.Radius = fovRadius
+                fovCircleObj.Visible = fovCircle
+                if fovCircle and fovRainbow then
+                    fovCircleObj.Color = Color3.fromHSV(tick() % 1, 1, 1)
+                else
+                    fovCircleObj.Color = Color3.new(1,1,1)
+                end
+            end
+        end
+
+        -- ========== DEMAIS FUNÇÕES ==========
         local flyStartY
         local lastFarmAction = 0
 
-        -- Aimbot Padrão
+        -- Aimbot
         local function aimbotStep()
             if not aimbot then return end
             local center = Camera.ViewportSize/2
@@ -804,7 +1133,7 @@ function carregarHub()
             end
         end
 
-        -- Auto Lock Pic (CamLock)
+        -- Auto Lock Pic
         local function autoLockPicStep()
             if not autoLockPic then return end
             if not lockedTarget or not lockedTarget.Parent or not lockedTarget:FindFirstChild("Humanoid") or lockedTarget.Humanoid.Health <= 0 then
@@ -858,179 +1187,6 @@ function carregarHub()
             end
         end
 
-        -- ESP Completo (inclui novo sistema)
-        local function updateESP()
-            -- Limpa desenhos anteriores
-            for _, d in pairs(espDrawings) do pcall(function() d:Remove() end) end
-            espDrawings = {}
-
-            if not useDrawing or not espEnabled then return end
-
-            local camera = Camera
-            local screenSize = camera.ViewportSize
-            local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-
-            -- Lista de alvos
-            local targets = {}
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= Player then
-                    table.insert(targets, {player = p, char = p.Character, isFriend = false})
-                end
-            end
-            if targetNPCs then
-                for _, obj in ipairs(Workspace:GetDescendants()) do
-                    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
-                        table.insert(targets, {player = obj, char = obj, isNPC = true})
-                    end
-                end
-            end
-
-            for _, target in ipairs(targets) do
-                local char = target.char
-                if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-                local hum = char:FindFirstChild("Humanoid")
-                local head = char:FindFirstChild("Head")
-                local root = char.HumanoidRootPart
-                if not hum or hum.Health <= 0 then continue end
-
-                local headPos, headOnScreen = camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.8, 0))
-                local rootPos, rootOnScreen = camera:WorldToViewportPoint(root.Position)
-                local feetPos, feetOnScreen = camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
-
-                if not headOnScreen and not infiniteDistance then continue end
-
-                local isVisible = true
-                if visibleCheck then
-                    local ray = Ray.new(camera.CFrame.Position, (head.Position - camera.CFrame.Position).Unit * 1000)
-                    local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {Player.Character}, false, true)
-                    isVisible = hit and hit:IsDescendantOf(char)
-                end
-
-                local dist = myRoot and (root.Position - myRoot.Position).Magnitude or 0
-                local weaponName = ""
-                if espWeapons then
-                    local tool = char:FindFirstChildWhichIsA("Tool")
-                    weaponName = tool and tool.Name or ""
-                end
-
-                -- Box 2D
-                if headOnScreen and feetOnScreen then
-                    local bodyHeight = math.abs(headPos.Y - feetPos.Y)
-                    local bodyWidth = bodyHeight * 0.45
-                    local centerX = (headPos.X + feetPos.X) / 2
-                    local box = Drawing.new("Square")
-                    box.Visible = true
-                    box.Thickness = 2
-                    box.Filled = false
-                    box.Color = isVisible and boxColor or invisibleSkeletonColor
-                    box.Position = Vector2.new(centerX - bodyWidth/2, headPos.Y - bodyHeight*0.1)
-                    box.Size = Vector2.new(bodyWidth, bodyHeight)
-                    table.insert(espDrawings, box)
-                end
-
-                -- Skeleton
-                if espSkeleton then
-                    local parts = {"Head","UpperTorso","LowerTorso","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","UpperTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand"}
-                    for i = 1, #parts, 2 do
-                        local a = char:FindFirstChild(parts[i])
-                        local b = char:FindFirstChild(parts[i+1])
-                        if a and b then
-                            local aPos, aOn = camera:WorldToViewportPoint(a.Position)
-                            local bPos, bOn = camera:WorldToViewportPoint(b.Position)
-                            if aOn and bOn then
-                                local line = Drawing.new("Line")
-                                line.Visible = true
-                                line.From = Vector2.new(aPos.X, aPos.Y)
-                                line.To = Vector2.new(bPos.X, bPos.Y)
-                                line.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                                table.insert(espDrawings, line)
-                            end
-                        end
-                    end
-                end
-
-                -- Head
-                if espHead and headOnScreen then
-                    local circle = Drawing.new("Circle")
-                    circle.Visible = true
-                    circle.Radius = 6
-                    circle.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                    circle.Position = Vector2.new(headPos.X, headPos.Y)
-                    table.insert(espDrawings, circle)
-                end
-
-                -- Name
-                if espNames and headOnScreen then
-                    local tag = Drawing.new("Text")
-                    tag.Visible = true
-                    tag.Text = target.player.Name or "NPC"
-                    tag.Position = Vector2.new(headPos.X, headPos.Y - 22)
-                    tag.Size = textSize
-                    tag.Color = Color3.new(1,1,1)
-                    tag.Center = true
-                    tag.Outline = true
-                    tag.OutlineColor = Color3.new(0,0,0)
-                    table.insert(espDrawings, tag)
-                end
-
-                -- Weapon
-                if espWeapons and weaponName ~= "" and headOnScreen then
-                    local wTag = Drawing.new("Text")
-                    wTag.Visible = true
-                    wTag.Text = weaponName
-                    wTag.Position = Vector2.new(headPos.X, headPos.Y + 30)
-                    wTag.Size = 12
-                    wTag.Color = Color3.new(1,1,0)
-                    wTag.Center = true
-                    table.insert(espDrawings, wTag)
-                end
-
-                -- Distance
-                if (espDistance or showDistance) and myRoot and headOnScreen then
-                    local dTag = Drawing.new("Text")
-                    dTag.Visible = true
-                    dTag.Text = math.floor(dist) .. "m"
-                    dTag.Position = Vector2.new(headPos.X, headPos.Y + 15)
-                    dTag.Size = 12
-                    dTag.Color = Color3.new(1,1,1)
-                    dTag.Center = true
-                    table.insert(espDrawings, dTag)
-                end
-
-                -- Lines
-                if espLines and rootOnScreen then
-                    local line = Drawing.new("Line")
-                    line.Visible = true
-                    line.From = Vector2.new(screenSize.X / 2, screenSize.Y)
-                    line.To = Vector2.new(rootPos.X, rootPos.Y)
-                    line.Color = isVisible and skeletonColor or invisibleSkeletonColor
-                    table.insert(espDrawings, line)
-                end
-
-                -- Talking Icon (simplificado)
-                if espTalkingIcon and headOnScreen then
-                    local dot = Drawing.new("Circle")
-                    dot.Visible = true
-                    dot.Radius = 4
-                    dot.Color = talkingIconColor
-                    dot.Position = Vector2.new(headPos.X + 15, headPos.Y - 10)
-                    table.insert(espDrawings, dot)
-                end
-            end
-
-            -- FOV Circle
-            if fovCircleObj then
-                fovCircleObj.Position = screenSize / 2
-                fovCircleObj.Radius = fovRadius
-                fovCircleObj.Visible = fovCircle
-                if fovCircle and fovRainbow then
-                    fovCircleObj.Color = Color3.fromHSV(tick() % 1, 1, 1)
-                else
-                    fovCircleObj.Color = Color3.new(1,1,1)
-                end
-            end
-        end
-
         -- Speed Hack
         local function speedStep()
             if not speedEnabled then return end
@@ -1050,7 +1206,6 @@ function carregarHub()
         end
 
         -- Fly Indetectável
-        local flyStartY
         local function flyStep()
             if not flyEnabled then flyStartY = nil; return end
             local char = Player.Character
@@ -1169,7 +1324,7 @@ function carregarHub()
             flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
         end
 
-        -- Modificações de Armas
+        -- Armas
         local function reachStep()
             if reach then
                 local tool = Player.Character and Player.Character:FindFirstChildWhichIsA("Tool")
@@ -1338,7 +1493,6 @@ function carregarHub()
             pcall(flyCarStep)
             pcall(updateStaffCounter)
 
-            -- Física do Veículo Segurado
             if grabbedVehicle then
                 local char = Player.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -1348,7 +1502,6 @@ function carregarHub()
                 end
             end
 
-            -- Espectar Jogador
             if spectatePlayer and spectatePlayer.Character then
                 Camera.CameraSubject = spectatePlayer.Character
             else
@@ -1369,13 +1522,9 @@ function carregarHub()
             if vehicleAlign then vehicleAlign:Destroy() end
             if vehicleVel then vehicleVel:Destroy() end
             if vehicleGyro then vehicleGyro:Destroy() end
-            for _, d in pairs(espDrawings) do pcall(function() d:Remove() end) end
-            for _, box in pairs(boxes2D) do pcall(function() box:Remove() end) end
-            for _, data in pairs(skeletons) do for _, d in ipairs(data) do pcall(function() d.line:Remove() end) end end
-            for _, tag in pairs(nameTags) do pcall(function() tag:Remove() end) end
-            for _, bar in pairs(healthBars) do pcall(function() bar.bg:Remove(); bar.fill:Remove() end) end
-            for _, line in pairs(tracerLines) do pcall(function() line:Remove() end) end
-            for _, obj in pairs(itemESP) do pcall(function() obj:Remove() end) end
+            for _, pool in ipairs({boxPool, linePool, textPool, circlePool}) do
+                for _, obj in ipairs(pool) do pcall(function() obj:Remove() end) end
+            end
             if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
             local c = Player.Character
             if c and c:FindFirstChild("Humanoid") then c.Humanoid.PlatformStand = false; c.Humanoid.WalkSpeed = 16 end
@@ -1402,5 +1551,4 @@ function carregarHub()
     print("S4ZX HUB Carregado com Sucesso!")
 end
 
--- Inicia a tela de login
 mostrarLogin()
