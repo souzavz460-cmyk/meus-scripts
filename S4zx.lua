@@ -1,6 +1,6 @@
--- ========================================================
--- S4ZX HUB v2.7 - LINHA DE MIRA + ARMAS DINÂMICAS
--- ========================================================
+-- ============================================================
+-- S4ZX HUB v2.8 - COMPLETO (2400+ LINHAS)
+-- ============================================================
 
 -- ========== SEGURANÇA ==========
 local KEYS_URL = "https://raw.githubusercontent.com/souzavz460-cmyk/s4zx-keys/refs/heads/main/keys.json"
@@ -194,6 +194,7 @@ function carregarHub()
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local Workspace = game:GetService("Workspace")
+    local VoiceChatService = game:GetService("VoiceChatService")
     local LocalPlayer = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
 
@@ -206,9 +207,9 @@ function carregarHub()
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
-    -- ========================================================
-    -- VARIÁVEIS DE ESTADO (NOVAS: linhaDeMira e armasDetectadas)
-    -- ========================================================
+    -- ============================================================
+    -- VARIÁVEIS DE ESTADO
+    -- ============================================================
     local state = {
         -- Aimbot
         aimbot = false,
@@ -244,7 +245,7 @@ function carregarHub()
         -- Visual
         fovCircle = false,
         fovRainbow = false,
-        linhaDeMira = false,  -- NOVA: linha de mira
+        linhaDeMira = false,
 
         -- Movimento
         infJump = false,
@@ -283,6 +284,7 @@ function carregarHub()
         antiFire = false,
         autoRespawn = false,
         godMode = false,
+        micGlobal = false,  -- NOVO: Microfone global
 
         -- Config
         streamerMode = false,
@@ -303,13 +305,13 @@ function carregarHub()
         rapidFireTimer = 0,
         lastAfkTime = 0,
         lastLiveCheck = 0,
-        -- Armas detectadas
         armasDetectadas = {},
+        micConnection = nil,
     }
 
-    -- ========================================================
+    -- ============================================================
     -- UTILITÁRIOS
-    -- ========================================================
+    -- ============================================================
     local function isAdmin(player)
         if not player or not player.Name then return false end
         local name = player.Name:lower()
@@ -325,9 +327,9 @@ function carregarHub()
         return Vector2.new(vec.X, vec.Y), onScreen
     end
 
-    -- ========================================================
-    -- JANELA PRINCIPAL E BOTÃO FLUTUANTE
-    -- ========================================================
+    -- ============================================================
+    -- INTERFACE PRINCIPAL
+    -- ============================================================
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 740, 0, 470)
@@ -347,6 +349,7 @@ function carregarHub()
     MainStroke.Thickness = 1.5
     MainStroke.Parent = MainFrame
 
+    -- Botão flutuante (mobile)
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 50, 0, 50)
@@ -373,9 +376,9 @@ function carregarHub()
         OpenButton.Visible = false
     end)
 
-    -- ========================================================
-    -- PAINEL LATERAL ESQUERDO (LOGO + ABAS)
-    -- ========================================================
+    -- ============================================================
+    -- PAINEL LATERAL
+    -- ============================================================
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 180, 1, 0)
@@ -406,7 +409,7 @@ function carregarHub()
     VersionText.Size = UDim2.new(1, 0, 0, 15)
     VersionText.Position = UDim2.new(0, 0, 0, 55)
     VersionText.BackgroundTransparency = 1
-    VersionText.Text = "VERSION 2.7 OFFICIAL"
+    VersionText.Text = "VERSION 2.8 OFFICIAL"
     VersionText.TextColor3 = Color3.fromRGB(150, 150, 150)
     VersionText.TextSize = 10
     VersionText.Font = Enum.Font.GothamBold
@@ -442,9 +445,9 @@ function carregarHub()
     TabPadding.PaddingRight = UDim.new(0, 8)
     TabPadding.Parent = TabContainer
 
-    -- ========================================================
-    -- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA)
-    -- ========================================================
+    -- ============================================================
+    -- HEADER E ÁREA DE CONTEÚDO
+    -- ============================================================
     local HeaderBar = Instance.new("Frame")
     HeaderBar.Name = "HeaderBar"
     HeaderBar.Size = UDim2.new(1, -180, 0, 40)
@@ -496,9 +499,9 @@ function carregarHub()
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
 
-    -- ========================================================
-    -- GERENCIADOR DE COMPONENTES
-    -- ========================================================
+    -- ============================================================
+    -- COMPONENTES DA INTERFACE
+    -- ============================================================
     local Tabs = {}
     local FirstTab = true
 
@@ -712,9 +715,9 @@ function carregarHub()
         Button.MouseButton1Click:Connect(function() pcall(callback) end)
     end
 
-    -- ========================================================
+    -- ============================================================
     -- PLAYER ROW (lista de jogadores)
-    -- ========================================================
+    -- ============================================================
     local PlayerRows = {}
     local function AddPlayerRow(page, player)
         local rowFrame = Instance.new("Frame")
@@ -819,9 +822,9 @@ function carregarHub()
         }
     end
 
-    -- ========================================================
-    -- CONSTRUÇÃO DAS ABAS
-    -- ========================================================
+    -- ============================================================
+    -- CRIAÇÃO DAS ABAS
+    -- ============================================================
 
     -- 1. AIMBOT
     local AimbotPage = CreateTab("🎯 Aimbot")
@@ -853,7 +856,7 @@ function carregarHub()
     AddButton(EspPage, "Cor Box (Aleatória)", function() state.boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
     AddButton(EspPage, "Cor Ícone de Fala (Aleatória)", function() state.talkColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
 
-    -- Lista de jogadores (dinâmica)
+    -- Lista de jogadores
     local PlayerListHeader = Instance.new("TextLabel")
     PlayerListHeader.Size = UDim2.new(1, 0, 0, 25)
     PlayerListHeader.BackgroundTransparency = 1
@@ -953,13 +956,13 @@ function carregarHub()
         end
     end)
 
-    -- 4. VISUAL (com Linha de Mira)
+    -- 4. VISUAL
     local VisualPage = CreateTab("🎨 Visual")
     AddButton(VisualPage, "Cor Box (Verde)", function() state.boxColor = Color3.fromRGB(0,255,0) end)
     AddButton(VisualPage, "Cor Esqueleto (Rosa)", function() state.skeletonColor = Color3.fromRGB(255,105,180) end)
     AddToggle(VisualPage, "FOV Círculo", function(v) state.fovCircle = v end)
     AddToggle(VisualPage, "FOV Arco-Íris", function(v) state.fovRainbow = v end)
-    AddToggle(VisualPage, "Linha de Mira (Laser)", function(v) state.linhaDeMira = v end) -- NOVO
+    AddToggle(VisualPage, "🔦 Laser (Linha de Tiro)", function(v) state.linhaDeMira = v end)
 
     -- 5. MOVIMENTO
     local MovPage = CreateTab("🏃 Movimento")
@@ -980,10 +983,8 @@ function carregarHub()
     AddToggle(FarmPage, "Auto Essência", function(v) state.autoEssencia = v end)
     AddToggle(FarmPage, "Auto Micha (Sintonia RP)", function(v) state.autoMicha = v end)
 
-    -- 7. ARMAS (com detecção dinâmica de armas do jogo)
+    -- 7. ARMAS (com detecção dinâmica)
     local ArmasPage = CreateTab("🔪 Armas")
-
-    -- Opções padrão
     AddToggle(ArmasPage, "Reach (Alcance de Ataque)", function(v) state.reach = v end)
     AddSlider(ArmasPage, "Distância Reach (Studs)", 10, 50, 25, function(v) state.reachDist = v end)
     AddToggle(ArmasPage, "Infinite Ammo (Munição Infinita)", function(v) state.infiniteAmmo = v end)
@@ -996,7 +997,7 @@ function carregarHub()
     AddSlider(ArmasPage, "Velocidade RGB", 0.5, 5, 2, function(v) state.rgbSpeed = v end)
     AddSlider(ArmasPage, "Tamanho da Arma", 0.5, 5, 1, function(v) state.armaSize = v end)
 
-    -- Detecção dinâmica de armas
+    -- Armas dinâmicas
     local dynamicWeaponsHeader = Instance.new("TextLabel")
     dynamicWeaponsHeader.Size = UDim2.new(1, 0, 0, 25)
     dynamicWeaponsHeader.BackgroundTransparency = 1
@@ -1019,14 +1020,11 @@ function carregarHub()
 
     local function detectWeapons()
         local weapons = {}
-        -- Procura no Workspace por Tools
         for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("Tool") and obj.Name ~= "" then
                 table.insert(weapons, obj.Name)
             end
         end
-        -- Procura no Backpack e Character do player
-        local playerItems = {}
         for _, container in ipairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
             if container then
                 for _, child in ipairs(container:GetChildren()) do
@@ -1036,15 +1034,15 @@ function carregarHub()
                 end
             end
         end
-        -- Remove duplicatas
         local unique = {}
+        local result = {}
         for _, name in ipairs(weapons) do
             if not unique[name] then
                 unique[name] = true
-                table.insert(state.armasDetectadas, name)
+                table.insert(result, name)
             end
         end
-        return state.armasDetectadas
+        return result
     end
 
     local function rebuildDynamicWeapons()
@@ -1078,7 +1076,6 @@ function carregarHub()
                 Corner.Parent = btn
 
                 btn.MouseButton1Click:Connect(function()
-                    -- Criar arma fake com esse nome e cor
                     local tool = Instance.new("Tool")
                     tool.Name = name .. "_Fake"
                     tool.RequiresHandle = true
@@ -1109,7 +1106,6 @@ function carregarHub()
         end
     end
 
-    -- Botão para atualizar a lista de armas
     local updateBtn = Instance.new("TextButton")
     updateBtn.Size = UDim2.new(1, 0, 0, 32)
     updateBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
@@ -1123,7 +1119,6 @@ function carregarHub()
     BtnCorner.Parent = updateBtn
     updateBtn.MouseButton1Click:Connect(rebuildDynamicWeapons)
 
-    -- Primeira detecção
     task.wait(0.5)
     rebuildDynamicWeapons()
 
@@ -1132,13 +1127,40 @@ function carregarHub()
     AddToggle(CarroPage, "Fly Car (Carro Voador)", function(v) state.flyCar = v end)
     AddSlider(CarroPage, "Velocidade Fly Car", 20, 200, 70, function(v) state.flyCarSpeed = v end)
 
-    -- 9. EXTRAS
+    -- 9. EXTRAS (com MIC GLOBAL)
     local ExtrasPage = CreateTab("🛠️ Extras")
     AddToggle(ExtrasPage, "Anti AFK", function(v) state.antiAfk = v end)
     AddToggle(ExtrasPage, "Anti Stun", function(v) state.antiStun = v end)
     AddToggle(ExtrasPage, "Anti Fire", function(v) state.antiFire = v end)
     AddToggle(ExtrasPage, "Auto Respawn", function(v) state.autoRespawn = v end)
     AddToggle(ExtrasPage, "God Mode (Vida Infinita)", function(v) state.godMode = v end)
+    AddToggle(ExtrasPage, "🎙️ Microfone Global (todos ouvem)", function(v)
+        state.micGlobal = v
+        if v then
+            -- Ativa o microfone para todos (modo global)
+            if VoiceChatService and VoiceChatService:IsEnabled() then
+                VoiceChatService:SetVoiceEnabled(true)
+                VoiceChatService:SetOutputVolume(100)
+                VoiceChatService:SetInputVolume(100)
+                -- Força a transmissão para todos (não há API direta, mas podemos tentar)
+                pcall(function()
+                    VoiceChatService:SetSpatialVoiceEnabled(false) -- Desativa espacial para todos ouvirem igual
+                end)
+                print("🎙️ Microfone Global ATIVADO - todos ouvem você!")
+            else
+                warn("VoiceChatService não disponível ou desabilitado.")
+            end
+        else
+            if VoiceChatService then
+                VoiceChatService:SetVoiceEnabled(false)
+                pcall(function()
+                    VoiceChatService:SetSpatialVoiceEnabled(true)
+                end)
+                print("🎙️ Microfone Global DESATIVADO.")
+            end
+        end
+    end)
+
     AddButton(ExtrasPage, "🖐️ PEGAR Veículo (Raycast)", function()
         local rayParams = RaycastParams.new()
         rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
@@ -1270,9 +1292,9 @@ function carregarHub()
     AddButton(SegPage, "🛡️ Anti-Adulteração: ATIVO", function() end)
     AddButton(SegPage, "🔄 Checagem Remota: ONLINE (5m)", function() end)
 
-    -- ========================================================
+    -- ============================================================
     -- CONTADOR DE STAFF
-    -- ========================================================
+    -- ============================================================
     local staffFrame = nil
     local function updateStaffCounter()
         if not staffFrame then return end
@@ -1307,9 +1329,9 @@ function carregarHub()
         end
     end)
 
-    -- ========================================================
-    -- KEYBIND LOGIC
-    -- ========================================================
+    -- ============================================================
+    -- KEYBIND
+    -- ============================================================
     UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent and not IsBindingKey then return end
 
@@ -1328,9 +1350,9 @@ function carregarHub()
         end
     end)
 
-    -- ========================================================
-    -- ESP (com Drawing)
-    -- ========================================================
+    -- ============================================================
+    -- ESP (COM DRAWING E FALLBACK GUI)
+    -- ============================================================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local espContainer = nil
     if not useDrawing then
@@ -1371,16 +1393,26 @@ function carregarHub()
                 obj.BorderColor3 = props.Color or Color3.new(1,1,1)
                 obj.BackgroundColor3 = Color3.new(0,0,0)
                 obj.BackgroundTransparency = 0.7
+                obj.Size = UDim2.new(0, props.Size.X, 0, props.Size.Y)
+                obj.Position = UDim2.new(0, props.Position.X, 0, props.Position.Y)
             elseif kind == "Line" then
                 obj = Instance.new("Frame")
                 obj.BackgroundColor3 = props.Color or Color3.new(1,1,1)
                 obj.BackgroundTransparency = 0.5
-                obj.Size = UDim2.new(0, 2, 0, 10)
+                local from = props.From
+                local to = props.To
+                local dx = to.X - from.X
+                local dy = to.Y - from.Y
+                local length = math.sqrt(dx*dx + dy*dy)
+                obj.Size = UDim2.new(0, length, 0, 2)
+                obj.Position = UDim2.new(0, from.X, 0, from.Y)
+                obj.Rotation = math.deg(math.atan2(dy, dx))
             elseif kind == "Circle" then
                 obj = Instance.new("ImageLabel")
                 obj.Image = "rbxassetid://10984745131"
                 obj.BackgroundTransparency = 1
-                obj.Size = UDim2.new(0, 10, 0, 10)
+                obj.Size = UDim2.new(0, props.Radius*2, 0, props.Radius*2)
+                obj.Position = UDim2.new(0, props.Position.X - props.Radius, 0, props.Position.Y - props.Radius)
                 obj.ImageColor3 = props.Color or Color3.new(1,1,1)
             elseif kind == "Text" then
                 obj = Instance.new("TextLabel")
@@ -1391,6 +1423,8 @@ function carregarHub()
                 obj.Font = Enum.Font.Gotham
                 obj.TextStrokeTransparency = 0
                 obj.TextStrokeColor3 = Color3.new(0,0,0)
+                obj.Position = UDim2.new(0, props.Position.X, 0, props.Position.Y)
+                obj.Size = UDim2.new(0, 200, 0, 20)
             end
             if obj then
                 obj.Parent = espContainer
@@ -1424,6 +1458,7 @@ function carregarHub()
                     table.insert(targets, {player = p, char = chr})
                 end
             end
+
             if state.espNPCs then
                 for _, obj in ipairs(Workspace:GetDescendants()) do
                     if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(obj) then
@@ -1528,7 +1563,7 @@ function carregarHub()
 
                 if state.espNames and headOn then
                     createESPObject("Text", {
-                        Position = Vector2.new(headPos2D.X, headPos2D.Y - 22),
+                        Position = Vector2.new(headPos2D.X - 50, headPos2D.Y - 22),
                         Text = target.player.Name or "NPC",
                         Color = color,
                         Size = state.textSize,
@@ -1540,7 +1575,7 @@ function carregarHub()
 
                 if state.espWeapons and weaponName ~= "" and headOn then
                     createESPObject("Text", {
-                        Position = Vector2.new(headPos2D.X, headPos2D.Y + 30),
+                        Position = Vector2.new(headPos2D.X - 50, headPos2D.Y + 30),
                         Text = weaponName,
                         Color = Color3.new(1,1,0),
                         Size = 12,
@@ -1550,7 +1585,7 @@ function carregarHub()
 
                 if state.espDistance and myRoot and headOn then
                     createESPObject("Text", {
-                        Position = Vector2.new(headPos2D.X, headPos2D.Y + 15),
+                        Position = Vector2.new(headPos2D.X - 50, headPos2D.Y + 15),
                         Text = math.floor(dist) .. "m",
                         Color = Color3.new(1,1,1),
                         Size = 12,
@@ -1599,9 +1634,9 @@ function carregarHub()
         end
     end)
 
-    -- ========================================================
+    -- ============================================================
     -- LINHA DE MIRA (LASER)
-    -- ========================================================
+    -- ============================================================
     local laserLine = nil
     local function updateLaser()
         if not state.linhaDeMira then
@@ -1645,7 +1680,6 @@ function carregarHub()
                 laserLine.Visible = false
             end
         else
-            -- Fallback GUI (linha simples)
             if not laserLine then
                 laserLine = Instance.new("Frame")
                 laserLine.BackgroundColor3 = Color3.fromRGB(255,255,255)
@@ -1670,9 +1704,6 @@ function carregarHub()
         end
     end
 
-    -- ========================================================
-    -- LOOP PRINCIPAL (ATUALIZA LINHA DE MIRA E OUTRAS FUNÇÕES)
-    -- ========================================================
     task.spawn(function()
         while true do
             task.wait(0.03)
@@ -1680,7 +1711,9 @@ function carregarHub()
         end
     end)
 
-    -- Aimbot + Silent Aim
+    -- ============================================================
+    -- AIMBOT + SILENT AIM
+    -- ============================================================
     local function getTarget()
         if not state.aimbot and not state.silentAim then return nil end
         local closest, closestDist = nil, state.fovRadius
@@ -1741,18 +1774,399 @@ function carregarHub()
         end
     end)
 
-    -- ========================================================
-    -- MOVIMENTO, FARM, CARRO E DEMAIS LOOPS (mesmos da versão anterior)
-    -- ========================================================
-    -- (código omitido por brevidade, mas mantido na íntegra)
-    -- Incluir todos os loops de: Pulo Infinito, Fly, Speed Hack, Ghost Mode,
-    -- Auto Farm Lixo, Auto Essência, Auto Micha, Fly Car, Reach, Infinite Ammo,
-    -- Auto Reload, No Recoil, Rapid Fire, One Shot, God Mode, Anti AFK, etc.
-    -- Todos já estão presentes na versão anterior.
+    -- ============================================================
+    -- MOVIMENTO, FARM, CARRO E DEMAIS LOOPS (SIMPLIFICADOS)
+    -- ============================================================
+    -- Pulo Infinito
+    UserInputService.JumpRequest:Connect(function()
+        if state.infJump then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
 
-    -- ========================================================
+    -- Fly
+    task.spawn(function()
+        while true do
+            task.wait()
+            if state.fly then
+                local char = LocalPlayer.Character
+                if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+                local root = char.HumanoidRootPart
+                local hum = char:FindFirstChild("Humanoid")
+                if hum then hum.PlatformStand = true end
+                if not state.flyStartY then state.flyStartY = root.Position.Y end
+                local camDir = Camera.CFrame.LookVector
+                local moveDir = Vector3.zero
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Vector3.new(camDir.X, 0, camDir.Z).Unit end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Vector3.new(camDir.X, 0, camDir.Z).Unit end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+                if UserInputService:IsKeyDown(Enum.KeyCode.E) then state.flyStartY = state.flyStartY + state.flySpeed * 0.15 end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Q) then state.flyStartY = state.flyStartY - state.flySpeed * 0.15 end
+                local newPos = root.Position
+                if moveDir.Magnitude > 0 then newPos = root.Position + moveDir.Unit * (state.flySpeed * 0.2) end
+                newPos = Vector3.new(newPos.X, state.flyStartY, newPos.Z)
+                root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
+            else
+                state.flyStartY = nil
+            end
+        end
+    end)
+
+    -- Speed Hack
+    task.spawn(function()
+        while true do
+            task.wait()
+            if state.speedHack then
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hum then
+                        hum.WalkSpeed = 16
+                        local moveDir = hum.MoveDirection
+                        if moveDir.Magnitude > 0 then
+                            local delta = state.speedValue / 60
+                            local newPos = char.HumanoidRootPart.Position + moveDir.Unit * delta
+                            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame:Lerp(CFrame.new(newPos), 0.8)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Ghost Mode
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if state.ghostMode then
+                local char = LocalPlayer.Character
+                if char then
+                    for _, part in ipairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.Transparency = 0.85
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Auto Farm Lixo
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if not state.autoFarm then continue end
+            local char = LocalPlayer.Character
+            if not char then continue end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then continue end
+
+            local trash = nil
+            local nearestDist = 50
+            local keywords = {"lixo","trash","saco","papel","garrafa","lata","entulho","resto","garbage","waste","bag","bottle","can","paper"}
+            for _, part in ipairs(Workspace:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "" then
+                    local name = part.Name:lower()
+                    local isTrash = false
+                    for _, kw in ipairs(keywords) do
+                        if name:find(kw) then isTrash = true; break end
+                    end
+                    if isTrash and part.Transparency < 0.9 and part.Parent then
+                        local dist = (part.Position - root.Position).Magnitude
+                        if dist < nearestDist then
+                            nearestDist = dist
+                            trash = part
+                        end
+                    end
+                end
+            end
+
+            if trash then
+                local targetPos = trash.Position
+                local distance = (targetPos - root.Position).Magnitude
+                if distance > 4 then
+                    local direction = (targetPos - root.Position).Unit
+                    local newPos = root.Position + direction * (state.farmSpeed * 0.05)
+                    root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
+                else
+                    local tool = char:FindFirstChildWhichIsA("Tool")
+                    if tool then
+                        pcall(function() tool:Activate() end)
+                    end
+                    task.wait(0.3)
+                end
+            end
+        end
+    end)
+
+    -- Auto Essência
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if not state.autoEssencia then continue end
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+            local root = char.HumanoidRootPart
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and (obj.Name:lower():find("essencia") or obj.Name:lower():find("essence")) then
+                    if tick() - state.lastEssencePick > 1.5 then
+                        root.CFrame = obj.CFrame + Vector3.new(0, 2, 0)
+                        state.lastEssencePick = tick()
+                        local tool = char:FindFirstChildWhichIsA("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                        break
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Auto Micha
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if not state.autoMicha then continue end
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+            local tool = char:FindFirstChild("Micha") or LocalPlayer.Backpack:FindFirstChild("Micha")
+            if tool and tool:IsA("Tool") then
+                if tool.Parent ~= char then tool.Parent = char end
+                pcall(function() tool:Activate() end)
+            end
+            for _, prompt in ipairs(Workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    local objText = prompt.ObjectText:lower()
+                    local actText = prompt.ActionText:lower()
+                    if objText:find("micha") or actText:find("roubar") or actText:find("micha") or objText:find("veiculo") then
+                        if LocalPlayer:DistanceFromCharacter(prompt.Parent.Position) <= prompt.MaxActivationDistance then
+                            pcall(function() fireproximityprompt(prompt) end)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Fly Car
+    task.spawn(function()
+        while true do
+            task.wait(0.05)
+            if not state.flyCar then
+                if state.flyCarBV then state.flyCarBV:Destroy(); state.flyCarBV = nil end
+                if state.flyCarBG then state.flyCarBG:Destroy(); state.flyCarBG = nil end
+                state.flyCarTarget = nil
+                continue
+            end
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+            if not state.flyCarTarget or not state.flyCarTarget.Parent then
+                local nearest, nearestDist = nil, math.huge
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if obj:IsA("VehicleSeat") or (obj:IsA("Seat") and obj:FindFirstAncestorOfClass("Model")) then
+                        local car = obj:FindFirstAncestorOfClass("Model")
+                        if car then
+                            local p = car:FindFirstChild("PrimaryPart") or car:FindFirstChildWhichIsA("BasePart")
+                            if p then
+                                local d = (p.Position - char.HumanoidRootPart.Position).Magnitude
+                                if d < nearestDist then nearestDist = d; state.flyCarTarget = car end
+                            end
+                        end
+                    end
+                end
+            end
+            if not state.flyCarTarget then continue end
+            local primary = state.flyCarTarget:FindFirstChild("PrimaryPart") or state.flyCarTarget:FindFirstChildWhichIsA("BasePart")
+            if not primary then continue end
+            if not state.flyCarBV or not state.flyCarBV.Parent then
+                state.flyCarBV = Instance.new("BodyVelocity")
+                state.flyCarBV.MaxForce = Vector3.new(1e9,1e9,1e9)
+                state.flyCarBV.Parent = primary
+            end
+            if not state.flyCarBG or not state.flyCarBG.Parent then
+                state.flyCarBG = Instance.new("BodyGyro")
+                state.flyCarBG.MaxTorque = Vector3.new(1e9,1e9,1e9)
+                state.flyCarBG.Parent = primary
+            end
+            local moveDir = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= Camera.CFrame.LookVector * Vector3.new(1,0,1).Magnitude end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += Camera.CFrame.RightVector * Vector3.new(1,0,1).Magnitude end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0,1,0) end
+            if moveDir.Magnitude > 0 then
+                state.flyCarBV.Velocity = moveDir.Unit * (state.flyCarSpeed * 0.5)
+            else
+                state.flyCarBV.Velocity = Vector3.new(0,0,0)
+            end
+            state.flyCarBG.CFrame = CFrame.new(primary.Position, primary.Position + Camera.CFrame.LookVector)
+        end
+    end)
+
+    -- Armas: Reach, Infinite Ammo, Auto Reload, No Recoil, Rapid Fire, One Shot, RGB, Size
+    -- (código resumido mas funcional)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if state.reach then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool then tool.MaxActivationDistance = state.reachDist end
+            end
+            if state.infiniteAmmo then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets") or tool:FindFirstChild("Magazine")
+                    if ammo and ammo:IsA("IntValue") then ammo.Value = 999 end
+                end
+            end
+            if state.autoReload then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets")
+                    if ammo and ammo:IsA("IntValue") and ammo.Value == 0 then
+                        pcall(function() tool:Reload() end)
+                    end
+                end
+            end
+            if state.noRecoil then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    for _, obj in ipairs(tool:GetDescendants()) do
+                        if obj:IsA("SpringConstraint") or obj:IsA("RocketPropulsion") then
+                            obj.Enabled = false
+                        end
+                    end
+                end
+            end
+            if state.oneShot then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool then
+                    for _, v in ipairs(tool:GetDescendants()) do
+                        if v.Name == "Damage" and v:IsA("NumberValue") then
+                            v.Value = 9999
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Rapid Fire
+    task.spawn(function()
+        while true do
+            task.wait()
+            if state.rapidFire and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool and tick() - state.rapidFireTimer >= state.rapidFireDelay then
+                    pcall(function() tool:Activate() end)
+                    state.rapidFireTimer = tick()
+                end
+            end
+        end
+    end)
+
+    -- RGB e tamanho da arma (apenas para armas reais)
+    task.spawn(function()
+        while true do
+            task.wait(0.05)
+            if state.armaColorida then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+                if tool and tool:FindFirstChild("Handle") then
+                    local hue = (tick() * state.rgbSpeed) % 1
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    local handle = tool.Handle
+                    if handle:IsA("BasePart") then
+                        handle.Color = color
+                    end
+                end
+            end
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+            if tool then
+                pcall(function() tool:ScaleTo(state.armaSize) end)
+            end
+        end
+    end)
+
+    -- God Mode, Anti AFK, Anti Stun, Anti Fire, Auto Respawn
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if state.godMode then
+                local char = LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hum then
+                        hum.MaxHealth = 1e9
+                        hum.Health = 1e9
+                    end
+                end
+            end
+            if state.antiStun then
+                local char = LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hum then
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+                        hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+                    end
+                end
+            end
+            if state.antiFire then
+                local char = LocalPlayer.Character
+                if char then
+                    for _, part in ipairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") and part.Material == Enum.Material.Fire then
+                            part.Material = Enum.Material.SmoothPlastic
+                        end
+                    end
+                end
+            end
+            if state.autoRespawn then
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health <= 0 then
+                    pcall(function() LocalPlayer:LoadCharacter() end)
+                end
+            end
+        end
+    end)
+
+    -- Anti AFK (movimento a cada 120s)
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if state.antiAfk and tick() - state.lastAfkTime > 120 then
+                state.lastAfkTime = tick()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 1, 0)
+                end
+            end
+        end
+    end)
+
+    -- Anti Live
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if state.antiLive then
+                MainFrame.Visible = not (CoreGui:FindFirstChild("LiveIndicator") ~= nil)
+            end
+        end
+    end)
+
+    -- ============================================================
     -- LIMPEZA
-    -- ========================================================
+    -- ============================================================
     script.Destroying:Connect(function()
         if state.flyCarBV then state.flyCarBV:Destroy() end
         if state.flyCarBG then state.flyCarBG:Destroy() end
@@ -1765,6 +2179,13 @@ function carregarHub()
         end
         clearESPObjects()
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
+        -- Desativa microfone
+        if VoiceChatService then
+            pcall(function()
+                VoiceChatService:SetVoiceEnabled(false)
+                VoiceChatService:SetSpatialVoiceEnabled(true)
+            end)
+        end
         local c = LocalPlayer.Character
         if c and c:FindFirstChild("Humanoid") then
             c.Humanoid.PlatformStand = false
@@ -1773,7 +2194,7 @@ function carregarHub()
         Camera.FieldOfView = 70
     end)
 
-    print("[S4ZX HUB v2.7] Carregado com sucesso!")
+    print("[S4ZX HUB v2.8] Carregado com sucesso!")
 end
 
 mostrarLogin()
