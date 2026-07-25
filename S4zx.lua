@@ -1,5 +1,5 @@
 -- ============================================================
--- S4ZX HUB v2.8 - COMPLETO (2400+ LINHAS)
+-- S4ZX HUB v2.8 - CORREÇÃO DEFINITIVA DO ESP
 -- ============================================================
 
 -- ========== SEGURANÇA ==========
@@ -284,7 +284,7 @@ function carregarHub()
         antiFire = false,
         autoRespawn = false,
         godMode = false,
-        micGlobal = false,  -- NOVO: Microfone global
+        micGlobal = false,
 
         -- Config
         streamerMode = false,
@@ -349,7 +349,6 @@ function carregarHub()
     MainStroke.Thickness = 1.5
     MainStroke.Parent = MainFrame
 
-    -- Botão flutuante (mobile)
     local OpenButton = Instance.new("ImageButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 50, 0, 50)
@@ -409,7 +408,7 @@ function carregarHub()
     VersionText.Size = UDim2.new(1, 0, 0, 15)
     VersionText.Position = UDim2.new(0, 0, 0, 55)
     VersionText.BackgroundTransparency = 1
-    VersionText.Text = "VERSION 2.8 OFFICIAL"
+    VersionText.Text = "VERSION 2.8 FIX"
     VersionText.TextColor3 = Color3.fromRGB(150, 150, 150)
     VersionText.TextSize = 10
     VersionText.Font = Enum.Font.GothamBold
@@ -716,7 +715,7 @@ function carregarHub()
     end
 
     -- ============================================================
-    -- PLAYER ROW (lista de jogadores)
+    -- PLAYER ROW
     -- ============================================================
     local PlayerRows = {}
     local function AddPlayerRow(page, player)
@@ -823,10 +822,8 @@ function carregarHub()
     end
 
     -- ============================================================
-    -- CRIAÇÃO DAS ABAS
+    -- CONSTRUÇÃO DAS ABAS
     -- ============================================================
-
-    -- 1. AIMBOT
     local AimbotPage = CreateTab("🎯 Aimbot")
     AddToggle(AimbotPage, "AIMBOT (Mira Automática)", function(v) state.aimbot = v end)
     AddSlider(AimbotPage, "Força da Mira", 1, 5, 3, function(v) state.aimForce = v end)
@@ -836,7 +833,6 @@ function carregarHub()
     AddToggle(AimbotPage, "SILENT AIM", function(v) state.silentAim = v end)
     AddToggle(AimbotPage, "Magic Bullet", function(v) state.magicBullet = v end)
 
-    -- 2. ESP
     local EspPage = CreateTab("👁️ ESP")
     AddToggle(EspPage, "Ativar ESP (Geral)", function(v) state.espEnabled = v end)
     AddToggle(EspPage, "Box (Caixas)", function(v) state.espBox = v end)
@@ -856,7 +852,6 @@ function carregarHub()
     AddButton(EspPage, "Cor Box (Aleatória)", function() state.boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
     AddButton(EspPage, "Cor Ícone de Fala (Aleatória)", function() state.talkColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
 
-    -- Lista de jogadores
     local PlayerListHeader = Instance.new("TextLabel")
     PlayerListHeader.Size = UDim2.new(1, 0, 0, 25)
     PlayerListHeader.BackgroundTransparency = 1
@@ -904,7 +899,6 @@ function carregarHub()
     Players.PlayerAdded:Connect(rebuildPlayerList)
     Players.PlayerRemoving:Connect(rebuildPlayerList)
 
-    -- 3. VEÍCULOS
     local VeiculosPage = CreateTab("🚗 Veículos")
     AddButton(VeiculosPage, "Teleportar no Veículo Próximo", function()
         local char = LocalPlayer.Character
@@ -956,7 +950,6 @@ function carregarHub()
         end
     end)
 
-    -- 4. VISUAL
     local VisualPage = CreateTab("🎨 Visual")
     AddButton(VisualPage, "Cor Box (Verde)", function() state.boxColor = Color3.fromRGB(0,255,0) end)
     AddButton(VisualPage, "Cor Esqueleto (Rosa)", function() state.skeletonColor = Color3.fromRGB(255,105,180) end)
@@ -964,7 +957,6 @@ function carregarHub()
     AddToggle(VisualPage, "FOV Arco-Íris", function(v) state.fovRainbow = v end)
     AddToggle(VisualPage, "🔦 Laser (Linha de Tiro)", function(v) state.linhaDeMira = v end)
 
-    -- 5. MOVIMENTO
     local MovPage = CreateTab("🏃 Movimento")
     AddToggle(MovPage, "Pulo Infinito", function(v) state.infJump = v end)
     AddToggle(MovPage, "Fly Avançado (WASD/E/Q)", function(v)
@@ -976,14 +968,12 @@ function carregarHub()
     AddSlider(MovPage, "Velocidade Speed", 16, 200, 60, function(v) state.speedValue = v end)
     AddToggle(MovPage, "Ghost Mode (Invisível)", function(v) state.ghostMode = v end)
 
-    -- 6. FARM
     local FarmPage = CreateTab("🌾 Farm")
     AddToggle(FarmPage, "Auto Farm Lixo", function(v) state.autoFarm = v end)
     AddSlider(FarmPage, "Velocidade Farm", 30, 100, 50, function(v) state.farmSpeed = v end)
     AddToggle(FarmPage, "Auto Essência", function(v) state.autoEssencia = v end)
     AddToggle(FarmPage, "Auto Micha (Sintonia RP)", function(v) state.autoMicha = v end)
 
-    -- 7. ARMAS (com detecção dinâmica)
     local ArmasPage = CreateTab("🔪 Armas")
     AddToggle(ArmasPage, "Reach (Alcance de Ataque)", function(v) state.reach = v end)
     AddSlider(ArmasPage, "Distância Reach (Studs)", 10, 50, 25, function(v) state.reachDist = v end)
@@ -997,7 +987,6 @@ function carregarHub()
     AddSlider(ArmasPage, "Velocidade RGB", 0.5, 5, 2, function(v) state.rgbSpeed = v end)
     AddSlider(ArmasPage, "Tamanho da Arma", 0.5, 5, 1, function(v) state.armaSize = v end)
 
-    -- Armas dinâmicas
     local dynamicWeaponsHeader = Instance.new("TextLabel")
     dynamicWeaponsHeader.Size = UDim2.new(1, 0, 0, 25)
     dynamicWeaponsHeader.BackgroundTransparency = 1
@@ -1122,12 +1111,10 @@ function carregarHub()
     task.wait(0.5)
     rebuildDynamicWeapons()
 
-    -- 8. CARRO
     local CarroPage = CreateTab("🏎️ Carro")
     AddToggle(CarroPage, "Fly Car (Carro Voador)", function(v) state.flyCar = v end)
     AddSlider(CarroPage, "Velocidade Fly Car", 20, 200, 70, function(v) state.flyCarSpeed = v end)
 
-    -- 9. EXTRAS (com MIC GLOBAL)
     local ExtrasPage = CreateTab("🛠️ Extras")
     AddToggle(ExtrasPage, "Anti AFK", function(v) state.antiAfk = v end)
     AddToggle(ExtrasPage, "Anti Stun", function(v) state.antiStun = v end)
@@ -1137,14 +1124,12 @@ function carregarHub()
     AddToggle(ExtrasPage, "🎙️ Microfone Global (todos ouvem)", function(v)
         state.micGlobal = v
         if v then
-            -- Ativa o microfone para todos (modo global)
             if VoiceChatService and VoiceChatService:IsEnabled() then
                 VoiceChatService:SetVoiceEnabled(true)
                 VoiceChatService:SetOutputVolume(100)
                 VoiceChatService:SetInputVolume(100)
-                -- Força a transmissão para todos (não há API direta, mas podemos tentar)
                 pcall(function()
-                    VoiceChatService:SetSpatialVoiceEnabled(false) -- Desativa espacial para todos ouvirem igual
+                    VoiceChatService:SetSpatialVoiceEnabled(false)
                 end)
                 print("🎙️ Microfone Global ATIVADO - todos ouvem você!")
             else
@@ -1226,7 +1211,6 @@ function carregarHub()
         state.grabbedVehicle = nil
     end)
 
-    -- 10. CONFIG
     local ConfigPage = CreateTab("⚙️ Config")
     AddToggle(ConfigPage, "Modo Streamer", function(v)
         state.streamerMode = v
@@ -1235,7 +1219,6 @@ function carregarHub()
     end)
     AddToggle(ConfigPage, "Anti Live", function(v) state.antiLive = v end)
 
-    -- Keybind
     local MenuKeybind = Enum.KeyCode.RightShift
     local IsBindingKey = false
     local BindButtonUI = nil
@@ -1284,7 +1267,6 @@ function carregarHub()
     end
     AddKeybind(ConfigPage, "Atalho de Ocultar Menu (PC):")
 
-    -- 11. SEGURANÇA
     local SegPage = CreateTab("🔒 Segurança")
     AddButton(SegPage, "🔑 Status Key: AUTENTICADO", function() end)
     AddButton(SegPage, "🚫 Blacklist: LIMPO", function() end)
@@ -1351,7 +1333,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- ESP (COM DRAWING E FALLBACK GUI)
+    -- ESP (COM CORREÇÃO DEFINITIVA)
     -- ============================================================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local espContainer = nil
@@ -1378,14 +1360,22 @@ function carregarHub()
         espObjects = {}
     end
 
+    -- ============================================================
+    -- FUNÇÃO createESPObject CORRIGIDA (FIX)
+    -- ============================================================
     local function createESPObject(kind, props)
         local obj
         if useDrawing then
+            -- Usa a API Drawing (PC / executores modernos)
             obj = Drawing.new(kind)
+            obj.Visible = true          -- CORREÇÃO 1: força a visibilidade
             for k, v in pairs(props) do
                 obj[k] = v
             end
+            table.insert(espObjects, obj)
+            return obj                   -- CORREÇÃO 2: retorna cedo, sem tentar setar Parent
         else
+            -- Fallback GUI (mobile / sem Drawing)
             if kind == "Square" then
                 obj = Instance.new("Frame")
                 obj.BackgroundTransparency = 0.5
@@ -1426,20 +1416,21 @@ function carregarHub()
                 obj.Position = UDim2.new(0, props.Position.X, 0, props.Position.Y)
                 obj.Size = UDim2.new(0, 200, 0, 20)
             end
+
             if obj then
                 obj.Parent = espContainer
                 obj.ZIndex = 999
+                table.insert(espObjects, obj)
             end
+            return obj
         end
-        if obj then
-            table.insert(espObjects, obj)
-        end
-        return obj
     end
 
+    -- Loop principal do ESP (mantido)
     task.spawn(function()
         while true do
             task.wait(0.05)
+
             if not state.espEnabled then
                 clearESPObjects()
                 if fovCircleObj then fovCircleObj.Visible = false end
@@ -1669,6 +1660,7 @@ function carregarHub()
                 laserLine.Thickness = 2
                 laserLine.Color = Color3.fromRGB(255,255,255)
                 laserLine.Transparency = 0.8
+                laserLine.Visible = true
             end
             local originScreen, originOn = worldToScreen(origin)
             local targetScreen, targetOn = worldToScreen(targetPos)
@@ -1775,7 +1767,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- MOVIMENTO, FARM, CARRO E DEMAIS LOOPS (SIMPLIFICADOS)
+    -- MOVIMENTO, FARM, CARRO, ETC (mantidos resumidos)
     -- ============================================================
     -- Pulo Infinito
     UserInputService.JumpRequest:Connect(function()
@@ -2007,8 +1999,7 @@ function carregarHub()
         end
     end)
 
-    -- Armas: Reach, Infinite Ammo, Auto Reload, No Recoil, Rapid Fire, One Shot, RGB, Size
-    -- (código resumido mas funcional)
+    -- Armas (Reach, Infinite Ammo, Auto Reload, No Recoil, One Shot)
     task.spawn(function()
         while true do
             task.wait(0.5)
@@ -2069,7 +2060,7 @@ function carregarHub()
         end
     end)
 
-    -- RGB e tamanho da arma (apenas para armas reais)
+    -- RGB e tamanho da arma
     task.spawn(function()
         while true do
             task.wait(0.05)
@@ -2097,7 +2088,7 @@ function carregarHub()
         end
     end)
 
-    -- God Mode, Anti AFK, Anti Stun, Anti Fire, Auto Respawn
+    -- God Mode, Anti Stun, Anti Fire, Auto Respawn
     task.spawn(function()
         while true do
             task.wait(0.5)
@@ -2140,7 +2131,7 @@ function carregarHub()
         end
     end)
 
-    -- Anti AFK (movimento a cada 120s)
+    -- Anti AFK
     task.spawn(function()
         while true do
             task.wait(1)
@@ -2165,7 +2156,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- LIMPEZA
+    -- LIMPEZA FINAL
     -- ============================================================
     script.Destroying:Connect(function()
         if state.flyCarBV then state.flyCarBV:Destroy() end
@@ -2179,7 +2170,6 @@ function carregarHub()
         end
         clearESPObjects()
         if staffFrame and staffFrame.Parent then staffFrame.Parent:Destroy() end
-        -- Desativa microfone
         if VoiceChatService then
             pcall(function()
                 VoiceChatService:SetVoiceEnabled(false)
@@ -2194,7 +2184,7 @@ function carregarHub()
         Camera.FieldOfView = 70
     end)
 
-    print("[S4ZX HUB v2.8] Carregado com sucesso!")
+    print("[S4ZX HUB v2.8 FIX] Carregado com sucesso - ESP corrigido!")
 end
 
 mostrarLogin()
