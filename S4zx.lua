@@ -1,10 +1,9 @@
 --[[
-    S4ZX HUB - v2.4 (ESTÁVEL E COMPLETO)
-    - ESP com lista de players, Admin ESP, Admin List
-    - Farm Lixo e Essência otimizados
-    - Aba Veículos com TP Waypoint
-    - FOV Circle apenas contorno
-    - Funções de Espectate, Teleportar, Puxar
+    S4ZX HUB - v2.5 (CORREÇÕES FINAIS)
+    - Lista de players funcionando
+    - Waypoint com marcação e TP
+    - FOV Circle visível
+    - Silent Aim com ajuste visual
 ]]
 
 -- ========== SEGURANÇA ==========
@@ -214,7 +213,7 @@ function carregarHub()
     -- ========== INTERFACE PRINCIPAL ==========
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 800, 0, 500) -- aumentado para acomodar lista de players
+    MainFrame.Size = UDim2.new(0, 800, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
     MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
     MainFrame.BorderSizePixel = 0
@@ -255,7 +254,7 @@ function carregarHub()
     Title.Size = UDim2.new(0, 200, 1, 0)
     Title.Position = UDim2.new(0, 140, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "S4ZX HUB v2.4"
+    Title.Text = "S4ZX HUB v2.5"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextSize = 18
     Title.Font = Enum.Font.GothamBold
@@ -557,7 +556,6 @@ function carregarHub()
     local espDistance = false; local infiniteDistance = false
     local targetNPCs = false; local visibleCheck = false
     local textSize = 14; local skeletonColor = Color3.fromRGB(255,105,180)
-    local invisibleSkeletonColor = Color3.fromRGB(150,150,150)
     local boxColor = Color3.fromRGB(0,255,0)
     local talkingIconColor = Color3.fromRGB(255,255,255)
     local spectatePlayer = nil
@@ -573,7 +571,6 @@ function carregarHub()
     local streamerMode = false; local antiLive = false
     local autoEssencia = false; local autoMicha = false
     local godMode = false
-    local corArma = Color3.fromRGB(255,255,255)
     local armaColorida = false; local rgbSpeed = 1
     local tamanhoArma = 1
     local matarUmTiro = false
@@ -581,7 +578,7 @@ function carregarHub()
     local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
     local toggleKey = nil
     local waitingForKey = false
-    local waypointPosition = nil -- para TP Waypoint
+    local waypointPosition = nil
 
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
@@ -603,7 +600,6 @@ function carregarHub()
 
     -- Aba ESP com lista de players
     local EspPage = CreateTab("ESP")
-    -- Dividir a página em duas colunas: esquerda (opções) e direita (lista de players)
     local leftPanel = Instance.new("Frame")
     leftPanel.Size = UDim2.new(0.5, -10, 1, 0)
     leftPanel.BackgroundTransparency = 1
@@ -707,13 +703,14 @@ function carregarHub()
 
     -- Função para atualizar a lista de players
     local function updatePlayerList()
-        -- Limpar a lista atual (manter apenas o layout)
+        -- Limpar a lista
         for _, child in ipairs(playerListFrame:GetChildren()) do
             if child:IsA("Frame") then child:Destroy() end
         end
 
         local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-        for _, p in ipairs(Players:GetPlayers()) do
+        local players = Players:GetPlayers()
+        for _, p in ipairs(players) do
             if p == Player then continue end
             local chr = p.Character
             local distance = "??"
@@ -788,7 +785,7 @@ function carregarHub()
                 end
             end)
 
-            -- Botão Puxar (suave)
+            -- Botão Puxar
             local pullBtn = Instance.new("TextButton")
             pullBtn.Size = UDim2.new(0.1, 0, 1, -4)
             pullBtn.Position = UDim2.new(0.92, 0, 0, 2)
@@ -806,21 +803,16 @@ function carregarHub()
                     if myChar and myChar:FindFirstChild("HumanoidRootPart") then
                         local targetRoot = p.Character.HumanoidRootPart
                         local myRoot = myChar.HumanoidRootPart
-                        -- Aplicar uma força suave para puxar o alvo para perto de mim
                         local bv = Instance.new("BodyVelocity")
                         bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
                         bv.Velocity = (myRoot.Position - targetRoot.Position).Unit * 50
                         bv.Parent = targetRoot
-                        game:GetService("Debris"):AddItem(bv, 1) -- remove após 1 segundo
-                        -- Também podemos tentar teleportar se a força não funcionar
+                        game:GetService("Debris"):AddItem(bv, 1)
                         task.wait(0.5)
                         if (targetRoot.Position - myRoot.Position).Magnitude > 10 then
                             targetRoot.CFrame = myRoot.CFrame + Vector3.new(0, 2, 0)
                         end
                     end
-                else
-                    -- Se não tiver personagem, avisar (opcional)
-                    print("Player sem personagem ou sem HumanoidRootPart")
                 end
             end)
         end
@@ -829,8 +821,8 @@ function carregarHub()
     -- Atualizar a lista periodicamente
     task.spawn(function()
         while true do
-            task.wait(0.5)
-            updatePlayerList()
+            task.wait(1) -- atualiza a cada 1 segundo
+            pcall(updatePlayerList)
         end
     end)
 
@@ -868,11 +860,11 @@ function carregarHub()
             end
         end
     end)
-    AddButton(VeicPage, "Definir Waypoint (posição atual)", function()
+    AddButton(VeicPage, "Marcar Waypoint (posição atual)", function()
         local char = Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
             waypointPosition = char.HumanoidRootPart.Position
-            print("Waypoint definido em: " .. tostring(waypointPosition))
+            print("Waypoint marcado em: " .. tostring(waypointPosition))
         end
     end)
     AddButton(VeicPage, "TP Waypoint", function()
@@ -880,6 +872,7 @@ function carregarHub()
             local char = Player.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 char.HumanoidRootPart.CFrame = CFrame.new(waypointPosition + Vector3.new(0, 2, 0))
+                print("Teleportado para waypoint")
             end
         else
             print("Nenhum waypoint definido.")
@@ -915,7 +908,6 @@ function carregarHub()
     AddToggle(ArmasPage, "Rapid Fire", function(v) rapidFire = v end)
     AddSlider(ArmasPage, "Rapid Fire Delay", 0.05, 0.5, 0.1, function(v) rapidFireDelay = v end)
     AddToggle(ArmasPage, "Matar com um Tiro", function(v) matarUmTiro = v end)
-    AddButton(ArmasPage, "Cor da Arma", function() local c = parseColor("vermelho") if c then corArma = c end end)
     AddToggle(ArmasPage, "Arma Colorida (RGB)", function(v) armaColorida = v end)
     AddSlider(ArmasPage, "Velocidade do RGB", 0.5, 5, 1, function(v) rgbSpeed = v end)
     AddSlider(ArmasPage, "Tamanho da Arma", 0.5, 5, 1, function(v) tamanhoArma = v end)
@@ -1043,7 +1035,7 @@ function carregarHub()
     AddButton(SegPage, "🛡️ Anti-adulteração: Ativo", function() end)
     AddButton(SegPage, "🔄 Checagem remota: 5min", function() end)
 
-    -- ========== ESP REESCRITO (SEM HEAD CIRCLE) ==========
+    -- ========== ESP REESCRITO ==========
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local espContainer = nil
     if not useDrawing then
@@ -1162,7 +1154,7 @@ function carregarHub()
                 end
             end
 
-            -- Admin List (se ativado)
+            -- Admin List
             if adminsList then
                 local adminNames = {}
                 for _, t in ipairs(targets) do
@@ -1171,10 +1163,9 @@ function carregarHub()
                     end
                 end
                 if #adminNames > 0 then
-                    local listText = "Admins: " .. table.concat(adminNames, ", ")
                     createESPObject("Text", {
                         Position = Vector2.new(10, 10),
-                        Text = listText,
+                        Text = "Admins: " .. table.concat(adminNames, ", "),
                         Color = Color3.new(1,0,0),
                         Size = 16,
                         Center = false
@@ -1218,7 +1209,7 @@ function carregarHub()
 
                 local color = isVisible and boxColor or Color3.fromRGB(150,150,150)
                 if isAdminTarget and adminsESP then
-                    color = Color3.fromRGB(255,0,0) -- vermelho para admins
+                    color = Color3.fromRGB(255,0,0)
                 end
 
                 -- Box
@@ -1235,7 +1226,7 @@ function carregarHub()
                     })
                 end
 
-                -- Skeleton (sem cabeça, removido círculo)
+                -- Skeleton
                 if espSkeleton then
                     local boneConnections = {
                         {"Head","UpperTorso"}, {"UpperTorso","LowerTorso"},
@@ -1307,9 +1298,8 @@ function carregarHub()
                     })
                 end
 
-                -- Talking Icon (simulado, sem círculo, apenas texto?)
+                -- Talking Icon
                 if espTalkingIcon and headOn then
-                    -- Em vez de círculo, um pequeno ponto ou texto "🗣️"
                     createESPObject("Text", {
                         Position = Vector2.new(headPos2D.X + 15, headPos2D.Y - 10),
                         Text = "🗣️",
@@ -1320,13 +1310,14 @@ function carregarHub()
                 end
             end
 
-            -- FOV Circle (apenas contorno)
+            -- FOV Circle (certificar-se de que é criado e visível)
             if fovCircle then
                 if not fovCircleObj then
                     fovCircleObj = Drawing.new("Circle")
                     fovCircleObj.Visible = true
                     fovCircleObj.Thickness = 2
-                    fovCircleObj.Filled = false -- sem preenchimento
+                    fovCircleObj.Filled = false
+                    fovCircleObj.Color = Color3.new(1,1,1)
                 end
                 fovCircleObj.Position = screenSize / 2
                 fovCircleObj.Radius = fovRadius
@@ -1382,13 +1373,14 @@ function carregarHub()
             if magicBullet then
                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, headPos)
             else
+                -- Ajuste suave na mira para dar feedback visual
                 local newCF = CFrame.new(Camera.CFrame.Position, headPos)
-                Camera.CFrame = Camera.CFrame:Lerp(newCF, 0.15)
+                Camera.CFrame = Camera.CFrame:Lerp(newCF, 0.2)
             end
         end
     end
 
-    -- ========== AUTO FARM LIXO (OTIMIZADO) ==========
+    -- ========== AUTO FARM LIXO ==========
     local farmThread = nil
     task.spawn(function()
         while true do
@@ -1433,12 +1425,10 @@ function carregarHub()
                     local newPos = root.Position + direction * (farmSpeed * 0.05)
                     root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
                 else
-                    -- Coletar o lixo (ativar ferramenta)
                     local tool = char:FindFirstChildWhichIsA("Tool")
                     if tool then
                         pcall(function() tool:Activate() end)
                     end
-                    -- Aguardar um pouco antes de procurar outro lixo
                     task.wait(0.3)
                 end
             end
@@ -1447,7 +1437,7 @@ function carregarHub()
         end
     end)
 
-    -- ========== AUTO ESSÊNCIA (com timing) ==========
+    -- ========== AUTO ESSÊNCIA ==========
     task.spawn(function()
         local lastEssencePick = 0
         while true do
@@ -1458,10 +1448,9 @@ function carregarHub()
             local root = char.HumanoidRootPart
             for _, obj in ipairs(Workspace:GetDescendants()) do
                 if obj:IsA("BasePart") and (obj.Name:lower():find("essencia") or obj.Name:lower():find("essence")) then
-                    if tick() - lastEssencePick > 1.5 then -- delay entre coletas
+                    if tick() - lastEssencePick > 1.5 then
                         root.CFrame = obj.CFrame + Vector3.new(0, 2, 0)
                         lastEssencePick = tick()
-                        -- Simular coleta (ativar ferramenta?)
                         local tool = char:FindFirstChildWhichIsA("Tool")
                         if tool then pcall(function() tool:Activate() end) end
                         break
