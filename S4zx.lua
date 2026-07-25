@@ -1,9 +1,10 @@
 --[[
-    S4ZX HUB - v2.3 (ESTÁVEL E CORRIGIDO)
-    - ESP com opções individuais
-    - Farm e funções de sobrevivência otimizadas
-    - Silent Aim e Magic Bullet reescritos
-    - Aba Veículos e Armas totalmente funcionais
+    S4ZX HUB - v2.4 (ESTÁVEL E COMPLETO)
+    - ESP com lista de players, Admin ESP, Admin List
+    - Farm Lixo e Essência otimizados
+    - Aba Veículos com TP Waypoint
+    - FOV Circle apenas contorno
+    - Funções de Espectate, Teleportar, Puxar
 ]]
 
 -- ========== SEGURANÇA ==========
@@ -213,8 +214,8 @@ function carregarHub()
     -- ========== INTERFACE PRINCIPAL ==========
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 680, 0, 420)
-    MainFrame.Position = UDim2.new(0.5, -340, 0.5, -210)
+    MainFrame.Size = UDim2.new(0, 800, 0, 500) -- aumentado para acomodar lista de players
+    MainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
     MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
@@ -254,7 +255,7 @@ function carregarHub()
     Title.Size = UDim2.new(0, 200, 1, 0)
     Title.Position = UDim2.new(0, 140, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "S4ZX HUB v2.3"
+    Title.Text = "S4ZX HUB v2.4"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextSize = 18
     Title.Font = Enum.Font.GothamBold
@@ -551,10 +552,10 @@ function carregarHub()
     local fovCircle = false; local fovRainbow = false
     local espEnabled = false
     local espBox = false; local espNames = false; local espWeapons = false
-    local espTalkingIcon = false; local espHead = false; local espSkeleton = false
+    local espTalkingIcon = false; local espSkeleton = false
     local adminsESP = false; local adminsList = false; local espLines = false
     local espDistance = false; local infiniteDistance = false
-    local showDistance = false; local targetNPCs = false; local visibleCheck = false
+    local targetNPCs = false; local visibleCheck = false
     local textSize = 14; local skeletonColor = Color3.fromRGB(255,105,180)
     local invisibleSkeletonColor = Color3.fromRGB(150,150,150)
     local boxColor = Color3.fromRGB(0,255,0)
@@ -580,6 +581,7 @@ function carregarHub()
     local vehicleAlign = nil; local vehicleVel = nil; local vehicleGyro = nil
     local toggleKey = nil
     local waitingForKey = false
+    local waypointPosition = nil -- para TP Waypoint
 
     function parseColor(input)
         local s = tostring(input):lower():gsub("%s","")
@@ -599,35 +601,240 @@ function carregarHub()
     AddToggle(AimbotPage, "SILENT AIM", function(v) silentAimEnabled = v end)
     AddToggle(AimbotPage, "Magic Bullet", function(v) magicBullet = v end)
 
+    -- Aba ESP com lista de players
     local EspPage = CreateTab("ESP")
-    AddToggle(EspPage, "Enable ESP", function(v) espEnabled = v end)
-    AddToggle(EspPage, "Box", function(v) espBox = v end)
-    AddToggle(EspPage, "Names", function(v) espNames = v end)
-    AddToggle(EspPage, "Weapons", function(v) espWeapons = v end)
-    AddToggle(EspPage, "Talking Icon", function(v) espTalkingIcon = v end)
-    AddToggle(EspPage, "Head", function(v) espHead = v end)
-    AddToggle(EspPage, "Skeleton", function(v) espSkeleton = v end)
-    AddToggle(EspPage, "Admin ESP", function(v) adminsESP = v end)
-    AddToggle(EspPage, "Admin List", function(v) adminsList = v end)
-    AddToggle(EspPage, "Lines", function(v) espLines = v end)
-    AddToggle(EspPage, "Distance", function(v) espDistance = v end)
-    AddToggle(EspPage, "Infinite Distance", function(v) infiniteDistance = v end)
-    AddToggle(EspPage, "Target NPCs", function(v) targetNPCs = v end)
-    AddToggle(EspPage, "Visible Check", function(v) visibleCheck = v end)
-    AddSlider(EspPage, "Text Size", 12, 20, 14, function(v) textSize = v end)
-    AddButton(EspPage, "Skeleton Color", function() skeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
-    AddButton(EspPage, "Box Color", function() boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
-    AddButton(EspPage, "Talking Icon Color", function() talkingIconColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
-    AddButton(EspPage, "Spectate Player", function()
-        local list = {}
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= Player then table.insert(list, p.Name) end
+    -- Dividir a página em duas colunas: esquerda (opções) e direita (lista de players)
+    local leftPanel = Instance.new("Frame")
+    leftPanel.Size = UDim2.new(0.5, -10, 1, 0)
+    leftPanel.BackgroundTransparency = 1
+    leftPanel.Parent = EspPage
+
+    local rightPanel = Instance.new("Frame")
+    rightPanel.Size = UDim2.new(0.5, -10, 1, 0)
+    rightPanel.Position = UDim2.new(0.5, 10, 0, 0)
+    rightPanel.BackgroundTransparency = 1
+    rightPanel.Parent = EspPage
+
+    -- Opções do lado esquerdo
+    local function AddToggleLeft(text, callback)
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, 0, 0, 35)
+        Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        Frame.Parent = leftPanel
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 5)
+        Corner.Parent = Frame
+
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(1, -50, 1, 0)
+        Label.Position = UDim2.new(0, 12, 0, 0)
+        Label.BackgroundTransparency = 1
+        Label.Text = text
+        Label.TextColor3 = Color3.fromRGB(230, 230, 230)
+        Label.TextSize = 13
+        Label.Font = Enum.Font.Gotham
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Parent = Frame
+
+        local Switch = Instance.new("TextButton")
+        Switch.Size = UDim2.new(0, 40, 0, 20)
+        Switch.Position = UDim2.new(1, -48, 0.5, -10)
+        Switch.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Switch.Text = ""
+        Switch.Parent = Frame
+
+        local SwitchCorner = Instance.new("UICorner")
+        SwitchCorner.CornerRadius = UDim.new(1, 0)
+        SwitchCorner.Parent = Switch
+
+        local Indicator = Instance.new("Frame")
+        Indicator.Size = UDim2.new(0, 16, 0, 16)
+        Indicator.Position = UDim2.new(0, 2, 0.5, -8)
+        Indicator.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        Indicator.Parent = Switch
+
+        local IndCorner = Instance.new("UICorner")
+        IndCorner.CornerRadius = UDim.new(1, 0)
+        IndCorner.Parent = Indicator
+
+        local enabled = false
+        Switch.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            if enabled then
+                TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220, 30, 30)}):Play()
+                TweenService:Create(Indicator, TweenInfo.new(0.2), {Position = UDim2.new(1, -18, 0.5, -8)}):Play()
+            else
+                TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+                TweenService:Create(Indicator, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
+            end
+            pcall(callback, enabled)
+        end)
+    end
+
+    AddToggleLeft("Enable ESP", function(v) espEnabled = v end)
+    AddToggleLeft("Box", function(v) espBox = v end)
+    AddToggleLeft("Names", function(v) espNames = v end)
+    AddToggleLeft("Weapons", function(v) espWeapons = v end)
+    AddToggleLeft("Talking Icon", function(v) espTalkingIcon = v end)
+    AddToggleLeft("Skeleton", function(v) espSkeleton = v end)
+    AddToggleLeft("Admin ESP", function(v) adminsESP = v end)
+    AddToggleLeft("Admin List", function(v) adminsList = v end)
+    AddToggleLeft("Lines", function(v) espLines = v end)
+    AddToggleLeft("Distance", function(v) espDistance = v end)
+    AddToggleLeft("Infinite Distance", function(v) infiniteDistance = v end)
+    AddToggleLeft("Target NPCs", function(v) targetNPCs = v end)
+    AddToggleLeft("Visible Check", function(v) visibleCheck = v end)
+    AddSlider(leftPanel, "Text Size", 12, 20, 14, function(v) textSize = v end)
+    AddButton(leftPanel, "Skeleton Color", function() skeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
+    AddButton(leftPanel, "Box Color", function() boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
+    AddButton(leftPanel, "Talking Icon Color", function() talkingIconColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
+
+    -- Lista de players (lado direito)
+    local playerListFrame = Instance.new("ScrollingFrame")
+    playerListFrame.Size = UDim2.new(1, 0, 1, 0)
+    playerListFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    playerListFrame.BorderSizePixel = 0
+    playerListFrame.ScrollBarThickness = 3
+    playerListFrame.ScrollBarImageColor3 = Color3.fromRGB(220, 30, 30)
+    playerListFrame.Parent = rightPanel
+    Instance.new("UICorner", playerListFrame).CornerRadius = UDim.new(0, 5)
+
+    local playerListLayout = Instance.new("UIListLayout")
+    playerListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    playerListLayout.Padding = UDim.new(0, 2)
+    playerListLayout.Parent = playerListFrame
+
+    -- Função para atualizar a lista de players
+    local function updatePlayerList()
+        -- Limpar a lista atual (manter apenas o layout)
+        for _, child in ipairs(playerListFrame:GetChildren()) do
+            if child:IsA("Frame") then child:Destroy() end
         end
-        if #list > 0 then
-            spectatePlayer = Players[list[math.random(#list)]]
+
+        local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p == Player then continue end
+            local chr = p.Character
+            local distance = "??"
+            if myRoot and chr and chr:FindFirstChild("HumanoidRootPart") then
+                distance = string.format("%.1fm", (chr.HumanoidRootPart.Position - myRoot.Position).Magnitude)
+            end
+
+            local row = Instance.new("Frame")
+            row.Size = UDim2.new(1, 0, 0, 30)
+            row.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            row.Parent = playerListFrame
+            Instance.new("UICorner", row).CornerRadius = UDim.new(0, 3)
+
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Size = UDim2.new(0.4, 0, 1, 0)
+            nameLabel.Position = UDim2.new(0, 5, 0, 0)
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Text = p.Name
+            nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
+            nameLabel.TextSize = 12
+            nameLabel.Font = Enum.Font.Gotham
+            nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            nameLabel.Parent = row
+
+            local distLabel = Instance.new("TextLabel")
+            distLabel.Size = UDim2.new(0.2, 0, 1, 0)
+            distLabel.Position = UDim2.new(0.4, 0, 0, 0)
+            distLabel.BackgroundTransparency = 1
+            distLabel.Text = distance
+            distLabel.TextColor3 = Color3.fromRGB(200,200,200)
+            distLabel.TextSize = 11
+            distLabel.Font = Enum.Font.Gotham
+            distLabel.TextXAlignment = Enum.TextXAlignment.Center
+            distLabel.Parent = row
+
+            -- Botão Espectate
+            local specBtn = Instance.new("TextButton")
+            specBtn.Size = UDim2.new(0.15, 0, 1, -4)
+            specBtn.Position = UDim2.new(0.6, 0, 0, 2)
+            specBtn.Text = "👁️"
+            specBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            specBtn.TextColor3 = Color3.new(1,1,1)
+            specBtn.Font = Enum.Font.Gotham
+            specBtn.TextSize = 14
+            specBtn.BorderSizePixel = 0
+            Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0, 3)
+            specBtn.Parent = row
+            specBtn.MouseButton1Click:Connect(function()
+                if p.Character then
+                    spectatePlayer = p
+                end
+            end)
+
+            -- Botão Teleportar
+            local tpBtn = Instance.new("TextButton")
+            tpBtn.Size = UDim2.new(0.15, 0, 1, -4)
+            tpBtn.Position = UDim2.new(0.76, 0, 0, 2)
+            tpBtn.Text = "🚀"
+            tpBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            tpBtn.TextColor3 = Color3.new(1,1,1)
+            tpBtn.Font = Enum.Font.Gotham
+            tpBtn.TextSize = 14
+            tpBtn.BorderSizePixel = 0
+            Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 3)
+            tpBtn.Parent = row
+            tpBtn.MouseButton1Click:Connect(function()
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local myChar = Player.Character
+                    if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                        myChar.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+                    end
+                end
+            end)
+
+            -- Botão Puxar (suave)
+            local pullBtn = Instance.new("TextButton")
+            pullBtn.Size = UDim2.new(0.1, 0, 1, -4)
+            pullBtn.Position = UDim2.new(0.92, 0, 0, 2)
+            pullBtn.Text = "🔄"
+            pullBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            pullBtn.TextColor3 = Color3.new(1,1,1)
+            pullBtn.Font = Enum.Font.Gotham
+            pullBtn.TextSize = 14
+            pullBtn.BorderSizePixel = 0
+            Instance.new("UICorner", pullBtn).CornerRadius = UDim.new(0, 3)
+            pullBtn.Parent = row
+            pullBtn.MouseButton1Click:Connect(function()
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local myChar = Player.Character
+                    if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                        local targetRoot = p.Character.HumanoidRootPart
+                        local myRoot = myChar.HumanoidRootPart
+                        -- Aplicar uma força suave para puxar o alvo para perto de mim
+                        local bv = Instance.new("BodyVelocity")
+                        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+                        bv.Velocity = (myRoot.Position - targetRoot.Position).Unit * 50
+                        bv.Parent = targetRoot
+                        game:GetService("Debris"):AddItem(bv, 1) -- remove após 1 segundo
+                        -- Também podemos tentar teleportar se a força não funcionar
+                        task.wait(0.5)
+                        if (targetRoot.Position - myRoot.Position).Magnitude > 10 then
+                            targetRoot.CFrame = myRoot.CFrame + Vector3.new(0, 2, 0)
+                        end
+                    end
+                else
+                    -- Se não tiver personagem, avisar (opcional)
+                    print("Player sem personagem ou sem HumanoidRootPart")
+                end
+            end)
+        end
+    end
+
+    -- Atualizar a lista periodicamente
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            updatePlayerList()
         end
     end)
 
+    -- ========== DEMAIS ABAS ==========
     local VeicPage = CreateTab("Veículos")
     AddButton(VeicPage, "Teleportar no Veículo Próximo", function()
         local char = Player.Character
@@ -659,6 +866,23 @@ function carregarHub()
                 v:SetAttribute("Locked", true)
                 v.Locked = true
             end
+        end
+    end)
+    AddButton(VeicPage, "Definir Waypoint (posição atual)", function()
+        local char = Player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            waypointPosition = char.HumanoidRootPart.Position
+            print("Waypoint definido em: " .. tostring(waypointPosition))
+        end
+    end)
+    AddButton(VeicPage, "TP Waypoint", function()
+        if waypointPosition then
+            local char = Player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(waypointPosition + Vector3.new(0, 2, 0))
+            end
+        else
+            print("Nenhum waypoint definido.")
         end
     end)
 
@@ -819,7 +1043,7 @@ function carregarHub()
     AddButton(SegPage, "🛡️ Anti-adulteração: Ativo", function() end)
     AddButton(SegPage, "🔄 Checagem remota: 5min", function() end)
 
-    -- ========== ESP REESCRITO ==========
+    -- ========== ESP REESCRITO (SEM HEAD CIRCLE) ==========
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local espContainer = nil
     if not useDrawing then
@@ -892,16 +1116,6 @@ function carregarHub()
         return obj
     end
 
-    local function updateESPObject(obj, kind, props)
-        if useDrawing then
-            for k, v in pairs(props) do
-                obj[k] = v
-            end
-        else
-            -- Para GUI, apenas recriamos (mais simples)
-        end
-    end
-
     local function worldToScreen(pos)
         local vec, onScreen = Camera:WorldToViewportPoint(pos)
         return Vector2.new(vec.X, vec.Y), onScreen
@@ -916,8 +1130,6 @@ function carregarHub()
         end
         return false
     end
-
-    local adminListCache = {}
 
     task.spawn(function()
         while true do
@@ -950,23 +1162,24 @@ function carregarHub()
                 end
             end
 
-            local adminPlayers = {}
-            for _, t in ipairs(targets) do
-                if not t.isNPC and isAdmin(t.player) then
-                    table.insert(adminPlayers, t.player.Name)
+            -- Admin List (se ativado)
+            if adminsList then
+                local adminNames = {}
+                for _, t in ipairs(targets) do
+                    if not t.isNPC and isAdmin(t.player) then
+                        table.insert(adminNames, t.player.Name)
+                    end
                 end
-            end
-
-            -- Admin List
-            if adminsList and #adminPlayers > 0 then
-                local listText = "Admins: " .. table.concat(adminPlayers, ", ")
-                local label = createESPObject("Text", {
-                    Position = Vector2.new(10, 10),
-                    Text = listText,
-                    Color = Color3.new(1,0,0),
-                    Size = 16,
-                    Center = false
-                })
+                if #adminNames > 0 then
+                    local listText = "Admins: " .. table.concat(adminNames, ", ")
+                    createESPObject("Text", {
+                        Position = Vector2.new(10, 10),
+                        Text = listText,
+                        Color = Color3.new(1,0,0),
+                        Size = 16,
+                        Center = false
+                    })
+                end
             end
 
             for _, target in ipairs(targets) do
@@ -1004,7 +1217,7 @@ function carregarHub()
                 end
 
                 local color = isVisible and boxColor or Color3.fromRGB(150,150,150)
-                if isAdminTarget then
+                if isAdminTarget and adminsESP then
                     color = Color3.fromRGB(255,0,0) -- vermelho para admins
                 end
 
@@ -1022,7 +1235,7 @@ function carregarHub()
                     })
                 end
 
-                -- Skeleton
+                -- Skeleton (sem cabeça, removido círculo)
                 if espSkeleton then
                     local boneConnections = {
                         {"Head","UpperTorso"}, {"UpperTorso","LowerTorso"},
@@ -1047,16 +1260,6 @@ function carregarHub()
                             end
                         end
                     end
-                end
-
-                -- Head
-                if espHead and headOn then
-                    createESPObject("Circle", {
-                        Position = headPos2D,
-                        Radius = 6,
-                        Color = color,
-                        Thickness = 2
-                    })
                 end
 
                 -- Name
@@ -1094,7 +1297,7 @@ function carregarHub()
                     })
                 end
 
-                -- Lines
+                -- Lines (do centro inferior da tela ao alvo)
                 if espLines and rootOn then
                     createESPObject("Line", {
                         From = Vector2.new(screenSize.X / 2, screenSize.Y),
@@ -1104,23 +1307,26 @@ function carregarHub()
                     })
                 end
 
-                -- Talking Icon (simulado)
+                -- Talking Icon (simulado, sem círculo, apenas texto?)
                 if espTalkingIcon and headOn then
-                    createESPObject("Circle", {
+                    -- Em vez de círculo, um pequeno ponto ou texto "🗣️"
+                    createESPObject("Text", {
                         Position = Vector2.new(headPos2D.X + 15, headPos2D.Y - 10),
-                        Radius = 4,
+                        Text = "🗣️",
                         Color = talkingIconColor,
-                        Thickness = 2
+                        Size = 12,
+                        Center = true
                     })
                 end
             end
 
-            -- FOV Circle
+            -- FOV Circle (apenas contorno)
             if fovCircle then
                 if not fovCircleObj then
                     fovCircleObj = Drawing.new("Circle")
                     fovCircleObj.Visible = true
                     fovCircleObj.Thickness = 2
+                    fovCircleObj.Filled = false -- sem preenchimento
                 end
                 fovCircleObj.Position = screenSize / 2
                 fovCircleObj.Radius = fovRadius
@@ -1136,7 +1342,7 @@ function carregarHub()
         end
     end)
 
-    -- ========== SILENT AIM REESCRITO ==========
+    -- ========== SILENT AIM ==========
     local function getSilentTarget()
         if not silentAimEnabled then return nil end
         local closest, closestDist = nil, fovRadius
@@ -1174,10 +1380,8 @@ function carregarHub()
         if target then
             local headPos = target.Head.Position
             if magicBullet then
-                -- Força a mira diretamente (pode ser detectável)
                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, headPos)
             else
-                -- Ajuste suave
                 local newCF = CFrame.new(Camera.CFrame.Position, headPos)
                 Camera.CFrame = Camera.CFrame:Lerp(newCF, 0.15)
             end
@@ -1229,10 +1433,13 @@ function carregarHub()
                     local newPos = root.Position + direction * (farmSpeed * 0.05)
                     root.CFrame = root.CFrame:Lerp(CFrame.new(newPos), 0.5)
                 else
+                    -- Coletar o lixo (ativar ferramenta)
                     local tool = char:FindFirstChildWhichIsA("Tool")
                     if tool then
                         pcall(function() tool:Activate() end)
                     end
+                    -- Aguardar um pouco antes de procurar outro lixo
+                    task.wait(0.3)
                 end
             end
             task.wait(0.05)
@@ -1240,8 +1447,9 @@ function carregarHub()
         end
     end)
 
-    -- ========== AUTO ESSÊNCIA ==========
+    -- ========== AUTO ESSÊNCIA (com timing) ==========
     task.spawn(function()
+        local lastEssencePick = 0
         while true do
             task.wait(0.5)
             if not autoEssencia then continue end
@@ -1250,8 +1458,14 @@ function carregarHub()
             local root = char.HumanoidRootPart
             for _, obj in ipairs(Workspace:GetDescendants()) do
                 if obj:IsA("BasePart") and (obj.Name:lower():find("essencia") or obj.Name:lower():find("essence")) then
-                    root.CFrame = obj.CFrame + Vector3.new(0, 2, 0)
-                    break
+                    if tick() - lastEssencePick > 1.5 then -- delay entre coletas
+                        root.CFrame = obj.CFrame + Vector3.new(0, 2, 0)
+                        lastEssencePick = tick()
+                        -- Simular coleta (ativar ferramenta?)
+                        local tool = char:FindFirstChildWhichIsA("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                        break
+                    end
                 end
             end
         end
