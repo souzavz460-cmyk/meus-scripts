@@ -1,5 +1,5 @@
 -- ============================================================
--- S4ZX HUB v2.9 - COMPLETO COM TODAS AS FUNÇÕES
+-- S4ZX HUB v2.9 COMPLETO - CORRIGIDO E PRONTO PARA USO
 -- ============================================================
 
 -- ========== SEGURANÇA ==========
@@ -219,17 +219,16 @@ function carregarHub()
         wallCheck = false,
         silentAim = false,
         magicBullet = false,
-        -- Novos: Lead, partes, prioridade
         aimbotLead = false,
         leadMultiplier = 1,
-        aimPart = "Head", -- "Head","Torso","Leg","Arm"
-        aimPriority = "Distance", -- "Distance","Health","Visibility","SpecificName"
+        aimPart = "Head",
+        aimPriority = "Distance",
         priorityName = "",
 
-        -- Silent Aim Universal (mantido do v2.8 com todos controles)
+        -- Silent Aim Universal
         saTeamCheck = false,
         saVisibleCheck = false,
-        saTargetPart = "HumanoidRootPart", -- "Head", "HumanoidRootPart", "Random"
+        saTargetPart = "HumanoidRootPart",
         saMethod = "Raycast",
         saHitChance = 100,
         saMousePrediction = false,
@@ -254,7 +253,7 @@ function carregarHub()
         espInfiniteDist = false,
         espNPCs = false,
         espVisible = false,
-        espEnemyAim = false,  -- NOVO
+        espEnemyAim = false,
         textSize = 14,
         skeletonColor = Color3.fromRGB(255,105,180),
         boxColor = Color3.fromRGB(0,255,0),
@@ -262,9 +261,9 @@ function carregarHub()
 
         -- Veículos
         waypoint = nil,
-        superCarSpeed = false,    -- NOVO
-        superCarSpeedValue = 100, -- NOVO
-        cloneCar = false,         -- NOVO
+        superCarSpeed = false,
+        superCarSpeedValue = 100,
+        cloneCar = false,
 
         -- Visual
         fovCircle = false,
@@ -278,7 +277,7 @@ function carregarHub()
         speedHack = false,
         speedValue = 60,
         ghostMode = false,
-        derrubarPlayer = false,   -- NOVO
+        derrubarPlayer = false,
 
         -- Farm
         autoFarm = false,
@@ -298,8 +297,8 @@ function carregarHub()
         armaColorida = false,
         rgbSpeed = 2,
         armaSize = 1,
-        roubarP1 = false,         -- NOVO
-        roubarP2 = false,         -- NOVO
+        roubarP1 = false,
+        roubarP2 = false,
 
         -- Carro
         flyCar = false,
@@ -312,15 +311,15 @@ function carregarHub()
         autoRespawn = false,
         godMode = false,
         micGlobal = false,
-        moneyHack = false,        -- NOVO
-        moneyValue = 100000,      -- NOVO
-        autoJob = false,          -- NOVO
-        selectedJob = nil,        -- NOVO
+        moneyHack = false,
+        moneyValue = 100000,
+        autoJob = false,
+        selectedJob = nil,
 
         -- Config
         streamerMode = false,
         antiLive = false,
-        shortcutsEnabled = true,  -- NOVO
+        shortcutsEnabled = true,
 
         -- Internos
         grabbedVehicle = nil,
@@ -363,7 +362,7 @@ function carregarHub()
     end
 
     -- ============================================================
-    -- INTERFACE PRINCIPAL (ampliada para caber tudo)
+    -- INTERFACE PRINCIPAL
     -- ============================================================
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
@@ -534,7 +533,7 @@ function carregarHub()
     ContentArea.Parent = MainFrame
 
     -- ============================================================
-    -- COMPONENTES DA INTERFACE (com Dropdown, Input, etc.)
+    -- COMPONENTES DA INTERFACE
     -- ============================================================
     local Tabs = {}
     local FirstTab = true
@@ -602,7 +601,6 @@ function carregarHub()
         return Page
     end
 
-    -- Toggle
     local function AddToggle(page, text, callback)
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 36)
@@ -659,7 +657,6 @@ function carregarHub()
         end)
     end
 
-    -- Slider
     local function AddSlider(page, text, min, max, default, callback)
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 45)
@@ -734,7 +731,6 @@ function carregarHub()
         end)
     end
 
-    -- Button
     local function AddButton(page, text, callback)
         local Button = Instance.new("TextButton")
         Button.Size = UDim2.new(1, 0, 0, 35)
@@ -752,7 +748,6 @@ function carregarHub()
         Button.MouseButton1Click:Connect(function() pcall(callback) end)
     end
 
-    -- Dropdown cíclico (Cycle)
     local function AddCycle(page, text, options, defaultIndex, callback)
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 36)
@@ -797,7 +792,6 @@ function carregarHub()
         return Btn
     end
 
-    -- Input de texto
     local function AddInput(page, text, placeholder, callback)
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 36)
@@ -843,7 +837,7 @@ function carregarHub()
     end
 
     -- ============================================================
-    -- PLAYER ROW (mantida)
+    -- PLAYER ROW
     -- ============================================================
     local PlayerRows = {}
     local function AddPlayerRow(page, player)
@@ -950,29 +944,24 @@ function carregarHub()
     end
 
     -- ============================================================
-    -- CONSTRUÇÃO DAS ABAS (TODAS AS FUNÇÕES ORIGINAIS + NOVAS)
+    -- CONSTRUÇÃO DAS ABAS
     -- ============================================================
     local AimbotPage = CreateTab("🎯 Aimbot")
 
-    -- AIMBOT tradicional
     AddToggle(AimbotPage, "AIMBOT", function(v) state.aimbot = v end)
     AddSlider(AimbotPage, "Força da Mira", 1, 5, 3, function(v) state.aimForce = v end)
     AddSlider(AimbotPage, "Bypass", 1, 10, 5, function(v) state.bypass = v end)
     AddSlider(AimbotPage, "FOV Raio", 50, 500, 150, function(v) state.fovRadius = v end)
     AddToggle(AimbotPage, "WALLCK", function(v) state.wallCheck = v end)
 
-    -- Lead
     AddToggle(AimbotPage, "Aimbot com Lead", function(v) state.aimbotLead = v end)
     AddSlider(AimbotPage, "Multiplicador de Lead", 1, 5, 1, function(v) state.leadMultiplier = v end)
 
-    -- Partes do corpo
     AddCycle(AimbotPage, "Parte do Corpo", {"Cabeça", "Peito", "Perna", "Braço"}, 1, function(v) state.aimPart = v end)
-
-    -- Prioridade
     AddCycle(AimbotPage, "Prioridade", {"Distância", "Saúde", "Visibilidade", "Nome Específico"}, 1, function(v) state.aimPriority = v end)
     AddInput(AimbotPage, "Nome Alvo Prioritário", "Digite o nome", function(v) state.priorityName = v end)
 
-    -- SILENT AIM (Universal)
+    -- SILENT AIM
     AddToggle(AimbotPage, "SILENT AIM", function(v) state.silentAim = v end)
     AddToggle(AimbotPage, "Magic Bullet", function(v) state.magicBullet = v end)
     AddToggle(AimbotPage, "Team Check (Silent)", function(v) state.saTeamCheck = v end)
@@ -1001,13 +990,12 @@ function carregarHub()
     AddToggle(EspPage, "Infinite Distance", function(v) state.espInfiniteDist = v end)
     AddToggle(EspPage, "Target NPCs", function(v) state.espNPCs = v end)
     AddToggle(EspPage, "Visible Check", function(v) state.espVisible = v end)
-    AddToggle(EspPage, "ESP de Mira do Inimigo", function(v) state.espEnemyAim = v end) -- NOVO
+    AddToggle(EspPage, "ESP de Mira do Inimigo", function(v) state.espEnemyAim = v end)
     AddSlider(EspPage, "Tamanho do Texto", 12, 20, 14, function(v) state.textSize = v end)
     AddButton(EspPage, "Cor Esqueleto (Aleatória)", function() state.skeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
     AddButton(EspPage, "Cor Box (Aleatória)", function() state.boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
     AddButton(EspPage, "Cor Ícone de Fala (Aleatória)", function() state.talkColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
 
-    -- Lista de jogadores
     local PlayerListHeader = Instance.new("TextLabel")
     PlayerListHeader.Size = UDim2.new(1, 0, 0, 25)
     PlayerListHeader.BackgroundTransparency = 1
@@ -1104,7 +1092,6 @@ function carregarHub()
             print("Nenhum waypoint definido.")
         end
     end)
-    -- NOVO: Super Velocidade
     AddToggle(VeiculosPage, "Super Velocidade no Carro", function(v) state.superCarSpeed = v end)
     AddSlider(VeiculosPage, "Velocidade Super Carro", 50, 500, 100, function(v) state.superCarSpeedValue = v end)
     AddToggle(VeiculosPage, "Clonar Carro", function(v)
@@ -1113,9 +1100,9 @@ function carregarHub()
             local char = LocalPlayer.Character
             if not char then return end
             local seat = nil
-            for _, v in ipairs(Workspace:GetDescendants()) do
-                if v:IsA("VehicleSeat") and v.Occupant == char.Humanoid then
-                    seat = v
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("VehicleSeat") and obj.Occupant == char.Humanoid then
+                    seat = obj
                     break
                 end
             end
@@ -1149,7 +1136,7 @@ function carregarHub()
     AddToggle(MovPage, "Speed Hack", function(v) state.speedHack = v end)
     AddSlider(MovPage, "Velocidade Speed", 16, 200, 60, function(v) state.speedValue = v end)
     AddToggle(MovPage, "Ghost Mode", function(v) state.ghostMode = v end)
-    AddToggle(MovPage, "Derrubar Player", function(v) state.derrubarPlayer = v end) -- NOVO
+    AddToggle(MovPage, "Derrubar Player", function(v) state.derrubarPlayer = v end)
 
     -- =================== Farm ===================
     local FarmPage = CreateTab("🌾 Farm")
@@ -1171,10 +1158,10 @@ function carregarHub()
     AddToggle(ArmasPage, "Arma Colorida (RGB)", function(v) state.armaColorida = v end)
     AddSlider(ArmasPage, "Velocidade RGB", 0.5, 5, 2, function(v) state.rgbSpeed = v end)
     AddSlider(ArmasPage, "Tamanho da Arma", 0.5, 5, 1, function(v) state.armaSize = v end)
-    AddToggle(ArmasPage, "Roubar P1", function(v) state.roubarP1 = v end)  -- NOVO
-    AddToggle(ArmasPage, "Roubar P2", function(v) state.roubarP2 = v end)  -- NOVO
+    AddToggle(ArmasPage, "Roubar P1", function(v) state.roubarP1 = v end)
+    AddToggle(ArmasPage, "Roubar P2", function(v) state.roubarP2 = v end)
 
-    -- Detecção dinâmica de armas e criação de fakes (já existente)
+    -- Detecção dinâmica de armas
     local dynamicWeaponsHeader = Instance.new("TextLabel")
     dynamicWeaponsHeader.Size = UDim2.new(1, 0, 0, 25)
     dynamicWeaponsHeader.BackgroundTransparency = 1
@@ -1350,7 +1337,7 @@ function carregarHub()
     end)
     AddSlider(ExtrasPage, "Valor do Dinheiro", 1000, 9999999, 100000, function(v) state.moneyValue = v end)
 
-    -- Pegar Emprego (dinâmico)
+    -- Pegar Emprego
     local jobsHeader = Instance.new("TextLabel")
     jobsHeader.Size = UDim2.new(1, 0, 0, 25)
     jobsHeader.BackgroundTransparency = 1
@@ -1533,7 +1520,6 @@ function carregarHub()
     AddToggle(ConfigPage, "Anti Live", function(v) state.antiLive = v end)
     AddToggle(ConfigPage, "Atalhos Rápidos (CTRL+1 a 0)", function(v) state.shortcutsEnabled = v end)
 
-    -- Keybind do menu (já existente)
     local MenuKeybind = Enum.KeyCode.RightShift
     local IsBindingKey = false
     local BindButtonUI = nil
@@ -1589,7 +1575,7 @@ function carregarHub()
     AddButton(SegPage, "🔄 Checagem Remota: ONLINE (5m)", function() end)
 
     -- ============================================================
-    -- CONTADOR DE STAFF (mantido)
+    -- CONTADOR DE STAFF
     -- ============================================================
     local staffFrame = nil
     local function updateStaffCounter()
@@ -1626,7 +1612,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- KEYBIND E ATALHOS (CTRL+1 a 0)
+    -- KEYBIND E ATALHOS
     -- ============================================================
     UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent and not IsBindingKey then return end
@@ -1661,7 +1647,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- ESP COMPLETO (COM NOVA FUNÇÃO "MIRA DO INIMIGO")
+    -- ESP COMPLETO (COM "MIRA DO INIMIGO")
     -- ============================================================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local espContainer = nil
@@ -1749,7 +1735,7 @@ function carregarHub()
         end
     end
 
-    -- Loop principal do ESP (inclui "ESP de Mira do Inimigo")
+    -- Loop principal do ESP
     task.spawn(function()
         while true do
             task.wait(0.05)
@@ -1926,7 +1912,7 @@ function carregarHub()
                     })
                 end
 
-                -- NOVO: ESP de Mira do Inimigo (linha da cabeça ao centro da tela se estiver olhando)
+                -- ESP de Mira do Inimigo
                 if state.espEnemyAim and not target.isNPC then
                     local playerHead = char:FindFirstChild("Head")
                     if playerHead then
@@ -1968,7 +1954,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- LASER (linha de mira) mantido
+    -- LASER
     -- ============================================================
     local laserLine = nil
     local function updateLaser()
@@ -2085,7 +2071,6 @@ function carregarHub()
             local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
             if not onScreen then continue end
 
-            -- Critério de prioridade
             local score = 0
             if state.aimPriority == "Distance" then
                 score = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
@@ -2145,7 +2130,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- SILENT AIM UNIVERSAL (integrado)
+    -- SILENT AIM UNIVERSAL
     -- ============================================================
     local function calculateChance(percentage)
         return math.random(1, 100) <= percentage
@@ -2196,7 +2181,6 @@ function carregarHub()
 
     local ValidTargetParts = {"Head", "HumanoidRootPart"}
 
-    -- Criação dos objetos Drawing para visual do SA
     local mouse_box = Drawing.new("Square")
     mouse_box.Visible = false
     mouse_box.ZIndex = 999
@@ -2215,7 +2199,6 @@ function carregarHub()
     sa_fov_circle.Transparency = 1
     sa_fov_circle.Color = state.saFovColor
 
-    -- Loop de renderização dos visuais do SA
     task.spawn(function()
         while true do
             task.wait()
@@ -2255,7 +2238,6 @@ function carregarHub()
         end
     end)
 
-    -- Hook do Silent Aim Universal
     local ExpectedArguments = {
         FindPartOnRayWithIgnoreList = {
             ArgCountRequired = 3,
@@ -2363,7 +2345,7 @@ function carregarHub()
     end))
 
     -- ============================================================
-    -- MOVIMENTO, FARM, CARRO, ETC (mantidos da versão original)
+    -- MOVIMENTO, FARM, CARRO, ETC (CORRIGIDOS E COMPLETOS)
     -- ============================================================
     -- Pulo Infinito
     UserInputService.JumpRequest:Connect(function()
@@ -2443,7 +2425,7 @@ function carregarHub()
         end
     end)
 
-    -- Derrubar Player (simples aplicação de força)
+    -- Derrubar Player
     task.spawn(function()
         while true do
             task.wait(0.1)
@@ -2640,7 +2622,7 @@ function carregarHub()
         end
     end)
 
-    -- Armas (Reach, Infinite Ammo, etc.) e novas funções Roubar P1/P2
+    -- Armas (Reach, Infinite Ammo, etc.)
     task.spawn(function()
         while true do
             task.wait(0.5)
@@ -2652,7 +2634,7 @@ function carregarHub()
                 local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
                 if tool then
                     local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("Bullets") or tool:FindFirstChild("Magazine")
-                    if ammo and ammo:IsA("IntValue") then ammo.Value = 999 end
+                    if ammo and ammo:IsA("IntValue") then ammo.Value = 99 end
                 end
             end
             if state.autoReload then
@@ -2684,7 +2666,6 @@ function carregarHub()
                     end
                 end
             end
-            -- Roubar P1
             if state.roubarP1 then
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= LocalPlayer and p.Character then
@@ -2695,7 +2676,6 @@ function carregarHub()
                     end
                 end
             end
-            -- Roubar P2
             if state.roubarP2 then
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p ~= LocalPlayer and p.Character then
@@ -2851,4 +2831,7 @@ function carregarHub()
     print("[S4ZX HUB v2.9 COMPLETA] Carregado com todas as funções!")
 end
 
+-- ============================================================
+-- INICIALIZAÇÃO DO HUB (CHAMADA CORRIGIDA)
+-- ============================================================
 mostrarLogin()
