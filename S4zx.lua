@@ -1,5 +1,5 @@
 -- ============================================================
--- S4ZX HUB v2.9 COMPLETO - CORRIGIDO E PRONTO PARA USO
+-- S4ZX HUB v2.9 COMPLETO - INTERFACE CORRIGIDA
 -- ============================================================
 
 -- ========== SEGURANÇA ==========
