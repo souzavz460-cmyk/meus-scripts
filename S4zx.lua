@@ -1,5 +1,5 @@
 -- ============================================================
--- S4ZX HUB v2.9 - KAVO UI COMPLETA
+-- S4ZX HUB v2.9 - KAVO UI COMPLETA E CORRIGIDA
 -- ============================================================
 print("[S4ZX] Iniciando script...")
 
@@ -189,20 +189,14 @@ function carregarHub()
         return
     end
 
-    -- Serviços
     local Players = game:GetService("Players")
     local UserInputService = game:GetService("UserInputService")
-    local TweenService = game:GetService("TweenService")
     local RunService = game:GetService("RunService")
     local Workspace = game:GetService("Workspace")
     local VoiceChatService = game:GetService("VoiceChatService")
     local LocalPlayer = Players.LocalPlayer
     local Camera = Workspace.CurrentCamera
     local Mouse = LocalPlayer:GetMouse()
-    local CoreGui = game:GetService("CoreGui")
-
-    -- Remove instâncias anteriores
-    if CoreGui:FindFirstChild("S4zxModUI") then CoreGui.S4zxModUI:Destroy() end
 
     -- ============================================================
     -- VARIÁVEIS DE ESTADO
@@ -218,8 +212,8 @@ function carregarHub()
         magicBullet = false,
         aimbotLead = false,
         leadMultiplier = 1,
-        aimPart = "Head",
-        aimPriority = "Distance",
+        aimPart = "Cabeça",
+        aimPriority = "Distância",
         priorityName = "",
 
         -- Silent Aim Universal
@@ -336,6 +330,9 @@ function carregarHub()
         jobLoop = nil,
     }
 
+    -- ============================================================
+    -- UTILITÁRIOS
+    -- ============================================================
     local function isAdmin(player)
         if not player or not player.Name then return false end
         local name = player.Name:lower()
@@ -352,644 +349,144 @@ function carregarHub()
     end
 
     -- ============================================================
-    -- INTERFACE KAVO UI (mesma estrutura fornecida)
+    -- INICIALIZAÇÃO DA INTERFACE KAVO
     -- ============================================================
-    local THEME = {
+    local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+    local PurpleTheme = {
+        SchemeColor = Color3.fromRGB(145, 70, 255),
         Background = Color3.fromRGB(16, 13, 22),
-        Panel = Color3.fromRGB(24, 19, 33),
-        Panel2 = Color3.fromRGB(31, 24, 43),
-        Accent = Color3.fromRGB(145, 70, 255),
-        AccentDark = Color3.fromRGB(92, 38, 168),
-        Text = Color3.fromRGB(245, 242, 255),
-        Muted = Color3.fromRGB(170, 160, 190),
-        Stroke = Color3.fromRGB(62, 49, 82),
-        Success = Color3.fromRGB(80, 220, 130),
-        Danger = Color3.fromRGB(235, 80, 105),
+        Header = Color3.fromRGB(23, 18, 31),
+        TextColor = Color3.fromRGB(245, 242, 255),
+        ElementColor = Color3.fromRGB(31, 24, 43)
     }
-
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "S4zxModUI"
-    gui.ResetOnSpawn = false
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    gui.Parent = CoreGui
-
-    local function corner(parent, radius)
-        local c = Instance.new("UICorner")
-        c.CornerRadius = UDim.new(0, radius or 6)
-        c.Parent = parent
-        return c
-    end
-
-    local function stroke(parent, color, thickness, transparency)
-        local s = Instance.new("UIStroke")
-        s.Color = color or THEME.Stroke
-        s.Thickness = thickness or 1
-        s.Transparency = transparency or 0
-        s.Parent = parent
-        return s
-    end
-
-    local function padding(parent, l, r, t, b)
-        local p = Instance.new("UIPadding")
-        p.PaddingLeft = UDim.new(0, l or 0)
-        p.PaddingRight = UDim.new(0, r or 0)
-        p.PaddingTop = UDim.new(0, t or 0)
-        p.PaddingBottom = UDim.new(0, b or 0)
-        p.Parent = parent
-        return p
-    end
-
-    local function text(parent, value, size, color, bold)
-        local label = Instance.new("TextLabel")
-        label.BackgroundTransparency = 1
-        label.Text = value
-        label.TextSize = size or 14
-        label.TextColor3 = color or THEME.Text
-        label.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = parent
-        return label
-    end
-
-    local main = Instance.new("Frame")
-    main.Name = "Main"
-    main.Size = UDim2.fromOffset(720, 455)
-    main.Position = UDim2.new(0.5, -360, 0.5, -227)
-    main.BackgroundColor3 = THEME.Background
-    main.ClipsDescendants = true
-    main.Parent = gui
-    corner(main, 8)
-    stroke(main, THEME.Stroke, 1)
-
-    local topbar = Instance.new("Frame")
-    topbar.Size = UDim2.new(1, 0, 0, 42)
-    topbar.BackgroundColor3 = THEME.Panel
-    topbar.BorderSizePixel = 0
-    topbar.Parent = main
-
-    local title = text(topbar, "S4zx Mod", 15, THEME.Text, true)
-    title.Size = UDim2.new(1, -90, 1, 0)
-    title.Position = UDim2.fromOffset(14, 0)
-
-    local subtitle = text(topbar, "UI", 11, THEME.Muted, false)
-    subtitle.Size = UDim2.fromOffset(30, 42)
-    subtitle.Position = UDim2.new(1, -80, 0, 0)
-    subtitle.TextXAlignment = Enum.TextXAlignment.Center
-
-    local close = Instance.new("TextButton")
-    close.Size = UDim2.fromOffset(42, 42)
-    close.Position = UDim2.new(1, -42, 0, 0)
-    close.BackgroundTransparency = 1
-    close.Text = "×"
-    close.TextSize = 22
-    close.TextColor3 = THEME.Muted
-    close.Font = Enum.Font.GothamBold
-    close.Parent = topbar
-    close.MouseButton1Click:Connect(function()
-        gui.Enabled = false
-    end)
-
-    local sidebar = Instance.new("Frame")
-    sidebar.Size = UDim2.new(0, 185, 1, -42)
-    sidebar.Position = UDim2.fromOffset(0, 42)
-    sidebar.BackgroundColor3 = THEME.Panel
-    sidebar.BorderSizePixel = 0
-    sidebar.Parent = main
-
-    local sideScroll = Instance.new("ScrollingFrame")
-    sideScroll.Size = UDim2.new(1, 0, 1, 0)
-    sideScroll.BackgroundTransparency = 1
-    sideScroll.BorderSizePixel = 0
-    sideScroll.ScrollBarThickness = 3
-    sideScroll.ScrollBarImageColor3 = THEME.Accent
-    sideScroll.CanvasSize = UDim2.fromOffset(0, 0)
-    sideScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    sideScroll.Parent = sidebar
-    padding(sideScroll, 8, 8, 8, 8)
-
-    local sideLayout = Instance.new("UIListLayout")
-    sideLayout.Padding = UDim.new(0, 5)
-    sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    sideLayout.Parent = sideScroll
-
-    local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, -185, 1, -42)
-    content.Position = UDim2.fromOffset(185, 42)
-    content.BackgroundColor3 = THEME.Background
-    content.BorderSizePixel = 0
-    content.Parent = main
-
-    local pages = {}
-    local activeTabButton = nil
-
-    local function makePage(name)
-        local page = Instance.new("ScrollingFrame")
-        page.Name = name
-        page.Size = UDim2.new(1, 0, 1, 0)
-        page.BackgroundTransparency = 1
-        page.BorderSizePixel = 0
-        page.ScrollBarThickness = 4
-        page.ScrollBarImageColor3 = THEME.Accent
-        page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        page.CanvasSize = UDim2.fromOffset(0, 0)
-        page.Visible = false
-        page.Parent = content
-        padding(page, 12, 12, 12, 12)
-
-        local layout = Instance.new("UIListLayout")
-        layout.Padding = UDim.new(0, 8)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-        layout.Parent = page
-
-        pages[name] = page
-        return page
-    end
-
-    local function selectTab(name, button)
-        for _, page in pairs(pages) do
-            page.Visible = false
-        end
-        pages[name].Visible = true
-
-        if activeTabButton then
-            activeTabButton.BackgroundColor3 = THEME.Panel
-            activeTabButton.TextColor3 = THEME.Muted
-        end
-
-        activeTabButton = button
-        button.BackgroundColor3 = THEME.Accent
-        button.TextColor3 = THEME.Text
-    end
-
-    local function makeTab(name)
-        local page = makePage(name)
-
-        local button = Instance.new("TextButton")
-        button.Name = name .. "Tab"
-        button.Size = UDim2.new(1, 0, 0, 34)
-        button.BackgroundColor3 = THEME.Panel
-        button.AutoButtonColor = false
-        button.Text = name
-        button.TextSize = 13
-        button.TextColor3 = THEME.Muted
-        button.Font = Enum.Font.GothamMedium
-        button.TextXAlignment = Enum.TextXAlignment.Left
-        button.Parent = sideScroll
-        padding(button, 10, 8, 0, 0)
-        corner(button, 5)
-
-        button.MouseButton1Click:Connect(function()
-            selectTab(name, button)
-        end)
-
-        return page, button
-    end
-
-    local function section(page, name)
-        local box = Instance.new("Frame")
-        box.Name = name
-        box.Size = UDim2.new(1, 0, 0, 40)
-        box.AutomaticSize = Enum.AutomaticSize.Y
-        box.BackgroundColor3 = THEME.Panel
-        box.BorderSizePixel = 0
-        box.Parent = page
-        corner(box, 7)
-        stroke(box, THEME.Stroke, 1)
-        padding(box, 10, 10, 10, 10)
-
-        local layout = Instance.new("UIListLayout")
-        layout.Padding = UDim.new(0, 7)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-        layout.Parent = box
-
-        local heading = text(box, name, 13, THEME.Text, true)
-        heading.Size = UDim2.new(1, 0, 0, 22)
-
-        return box
-    end
-
-    local function row(parent, height)
-        local f = Instance.new("Frame")
-        f.Size = UDim2.new(1, 0, 0, height or 34)
-        f.BackgroundColor3 = THEME.Panel2
-        f.BorderSizePixel = 0
-        f.Parent = parent
-        corner(f, 5)
-        return f
-    end
-
-    local function addLabel(parent, name, color)
-        local f = row(parent, 32)
-        local l = text(f, name, 13, color or THEME.Muted, false)
-        l.Size = UDim2.new(1, -18, 1, 0)
-        l.Position = UDim2.fromOffset(9, 0)
-        return l
-    end
-
-    local function addButton(parent, name, callback)
-        local b = Instance.new("TextButton")
-        b.Size = UDim2.new(1, 0, 0, 34)
-        b.BackgroundColor3 = THEME.Panel2
-        b.AutoButtonColor = false
-        b.Text = name
-        b.TextSize = 13
-        b.TextColor3 = THEME.Text
-        b.Font = Enum.Font.GothamMedium
-        b.Parent = parent
-        corner(b, 5)
-        stroke(b, THEME.Stroke, 1)
-
-        b.MouseEnter:Connect(function()
-            TweenService:Create(b, TweenInfo.new(0.12), {BackgroundColor3 = THEME.AccentDark}):Play()
-        end)
-        b.MouseLeave:Connect(function()
-            TweenService:Create(b, TweenInfo.new(0.12), {BackgroundColor3 = THEME.Panel2}):Play()
-        end)
-        b.MouseButton1Click:Connect(function()
-            if callback then callback() end
-        end)
-        return b
-    end
-
-    local function addToggle(parent, name, default, callback)
-        local enabled = default == true
-        local f = row(parent, 36)
-
-        local l = text(f, name, 13, THEME.Text, false)
-        l.Size = UDim2.new(1, -65, 1, 0)
-        l.Position = UDim2.fromOffset(9, 0)
-
-        local track = Instance.new("TextButton")
-        track.Size = UDim2.fromOffset(42, 22)
-        track.Position = UDim2.new(1, -51, 0.5, -11)
-        track.BackgroundColor3 = enabled and THEME.Accent or Color3.fromRGB(62, 56, 72)
-        track.Text = ""
-        track.AutoButtonColor = false
-        track.Parent = f
-        corner(track, 11)
-
-        local knob = Instance.new("Frame")
-        knob.Size = UDim2.fromOffset(16, 16)
-        knob.Position = enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.fromOffset(3, 3)
-        knob.BackgroundColor3 = THEME.Text
-        knob.Parent = track
-        corner(knob, 8)
-
-        local function render()
-            TweenService:Create(track, TweenInfo.new(0.14), {
-                BackgroundColor3 = enabled and THEME.Accent or Color3.fromRGB(62, 56, 72)
-            }):Play()
-            TweenService:Create(knob, TweenInfo.new(0.14), {
-                Position = enabled and UDim2.new(1, -19, 0.5, -8) or UDim2.fromOffset(3, 3)
-            }):Play()
-        end
-
-        track.MouseButton1Click:Connect(function()
-            enabled = not enabled
-            render()
-            if callback then callback(enabled) end
-        end)
-
-        return {
-            Get = function() return enabled end,
-            Set = function(v)
-                enabled = v == true
-                render()
-            end
-        }
-    end
-
-    local function addSlider(parent, name, minValue, maxValue, defaultValue, callback, decimals)
-        local value = math.clamp(defaultValue or minValue, minValue, maxValue)
-        decimals = decimals or 0
-
-        local f = row(parent, 54)
-        local l = text(f, name, 13, THEME.Text, false)
-        l.Size = UDim2.new(1, -85, 0, 28)
-        l.Position = UDim2.fromOffset(9, 0)
-
-        local valueLabel = text(f, tostring(value), 12, THEME.Accent, true)
-        valueLabel.Size = UDim2.fromOffset(70, 28)
-        valueLabel.Position = UDim2.new(1, -78, 0, 0)
-        valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-
-        local bar = Instance.new("TextButton")
-        bar.Size = UDim2.new(1, -18, 0, 7)
-        bar.Position = UDim2.fromOffset(9, 37)
-        bar.BackgroundColor3 = Color3.fromRGB(58, 50, 69)
-        bar.Text = ""
-        bar.AutoButtonColor = false
-        bar.Parent = f
-        corner(bar, 4)
-
-        local fill = Instance.new("Frame")
-        fill.Size = UDim2.new((value - minValue) / (maxValue - minValue), 0, 1, 0)
-        fill.BackgroundColor3 = THEME.Accent
-        fill.Parent = bar
-        corner(fill, 4)
-
-        local dragging = false
-
-        local function update(inputX)
-            local alpha = math.clamp((inputX - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-            local raw = minValue + (maxValue - minValue) * alpha
-            local multiplier = 10 ^ decimals
-            value = math.floor(raw * multiplier + 0.5) / multiplier
-            fill.Size = UDim2.new(alpha, 0, 1, 0)
-            valueLabel.Text = tostring(value)
-            if callback then callback(value) end
-        end
-
-        bar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                update(input.Position.X)
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                update(input.Position.X)
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
-        end)
-
-        return {
-            Get = function() return value end,
-            Set = function(v)
-                value = math.clamp(v, minValue, maxValue)
-                local alpha = (value - minValue) / (maxValue - minValue)
-                fill.Size = UDim2.new(alpha, 0, 1, 0)
-                valueLabel.Text = tostring(value)
-            end
-        }
-    end
-
-    local function addInput(parent, name, placeholder, callback)
-        local f = row(parent, 42)
-
-        local box = Instance.new("TextBox")
-        box.Size = UDim2.new(1, -18, 0, 28)
-        box.Position = UDim2.fromOffset(9, 7)
-        box.BackgroundColor3 = Color3.fromRGB(18, 15, 24)
-        box.PlaceholderText = placeholder or name
-        box.Text = ""
-        box.ClearTextOnFocus = false
-        box.TextSize = 13
-        box.TextColor3 = THEME.Text
-        box.PlaceholderColor3 = THEME.Muted
-        box.Font = Enum.Font.Gotham
-        box.Parent = f
-        padding(box, 8, 8, 0, 0)
-        corner(box, 4)
-        stroke(box, THEME.Stroke, 1)
-
-        box.FocusLost:Connect(function(enterPressed)
-            if callback then callback(box.Text, enterPressed) end
-        end)
-
-        return box
-    end
-
-    local function addDropdown(parent, name, options, default, callback)
-        local selected = default or options[1]
-        local expanded = false
-
-        local container = Instance.new("Frame")
-        container.Size = UDim2.new(1, 0, 0, 36)
-        container.AutomaticSize = Enum.AutomaticSize.Y
-        container.BackgroundTransparency = 1
-        container.Parent = parent
-
-        local layout = Instance.new("UIListLayout")
-        layout.Padding = UDim.new(0, 4)
-        layout.Parent = container
-
-        local button = addButton(container, name .. ": " .. tostring(selected), nil)
-        button.Size = UDim2.new(1, 0, 0, 34)
-
-        local list = Instance.new("Frame")
-        list.Size = UDim2.new(1, 0, 0, 0)
-        list.AutomaticSize = Enum.AutomaticSize.Y
-        list.BackgroundTransparency = 1
-        list.Visible = false
-        list.Parent = container
-
-        local listLayout = Instance.new("UIListLayout")
-        listLayout.Padding = UDim.new(0, 3)
-        listLayout.Parent = list
-
-        button.MouseButton1Click:Connect(function()
-            expanded = not expanded
-            list.Visible = expanded
-        end)
-
-        for _, option in ipairs(options) do
-            local optionButton = addButton(list, "  " .. tostring(option), function()
-                selected = option
-                button.Text = name .. ": " .. tostring(selected)
-                expanded = false
-                list.Visible = false
-                if callback then callback(selected) end
-            end)
-            optionButton.TextXAlignment = Enum.TextXAlignment.Left
-            optionButton.BackgroundColor3 = Color3.fromRGB(22, 18, 30)
-        end
-
-        return {
-            Get = function() return selected end,
-            Set = function(v)
-                selected = v
-                button.Text = name .. ": " .. tostring(selected)
-            end
-        }
-    end
-
-    local function addKeybind(parent, name, defaultKey, callback)
-        local selectedKey = defaultKey or Enum.KeyCode.RightShift
-        local waiting = false
-
-        local button = addButton(parent, name .. ": " .. selectedKey.Name, nil)
-        button.MouseButton1Click:Connect(function()
-            waiting = true
-            button.Text = name .. ": pressione uma tecla..."
-        end)
-
-        UserInputService.InputBegan:Connect(function(input, processed)
-            if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
-                selectedKey = input.KeyCode
-                waiting = false
-                button.Text = name .. ": " .. selectedKey.Name
-                if callback then callback(selectedKey) end
-            elseif not processed and input.KeyCode == state.menuKey then
-                gui.Enabled = not gui.Enabled
-            end
-        end)
-
-        return button
-    end
-
-    -- Arrastar janela
-    do
-        local dragging = false
-        local dragStart
-        local startPosition
-
-        topbar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = input.Position
-                startPosition = main.Position
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                local delta = input.Position - dragStart
-                main.Position = UDim2.new(
-                    startPosition.X.Scale,
-                    startPosition.X.Offset + delta.X,
-                    startPosition.Y.Scale,
-                    startPosition.Y.Offset + delta.Y
-                )
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
-        end)
-    end
+    local Window = Library.CreateLib("S4zx Mod", PurpleTheme)
 
     -- ============================================================
-    -- PREENCHIMENTO DAS ABAS COM CALLBACKS REAIS
+    -- CRIAÇÃO DAS ABAS E PREENCHIMENTO DOS CALLBACKS
     -- ============================================================
-    local firstButton
 
-    -- ==================== ABA AIMBOT ====================
+    -- 🎯 AIMBOT
     do
-        local page, tab = makeTab("🎯 Aimbot")
-        firstButton = tab
+        local Tab = Window:NewTab("🎯 Aimbot")
+        local Aim = Tab:NewSection("Aimbot")
+        Aim:NewToggle("AIMBOT", "Callback vazio", function(v) state.aimbot = v end):AddToolTip("Ativar mira automática")
+        Aim:NewSlider("Força da Mira", "Callback vazio", 5, 1, 3, function(v) state.aimForce = v end)
+        Aim:NewSlider("Bypass", "Callback vazio", 10, 1, 5, function(v) state.bypass = v end)
+        Aim:NewSlider("FOV Raio", "Callback vazio", 500, 50, 150, function(v) state.fovRadius = v end)
+        Aim:NewToggle("WALLCK", "Callback vazio", function(v) state.wallCheck = v end)
+        Aim:NewToggle("Aimbot com Lead", "Callback vazio", function(v) state.aimbotLead = v end)
+        Aim:NewSlider("Multiplicador de Lead", "Callback vazio", 5, 1, 1, function(v) state.leadMultiplier = v end)
+        local aimPartDd = Aim:NewDropdown("Parte do Corpo", "Callback vazio", {"Cabeça", "Peito", "Perna", "Braço"}, function(v) state.aimPart = v end)
+        aimPartDd:Set("Cabeça")
+        local aimPriorityDd = Aim:NewDropdown("Prioridade", "Callback vazio", {"Distância", "Saúde", "Visibilidade", "Nome Específico"}, function(v) state.aimPriority = v end)
+        aimPriorityDd:Set("Distância")
+        Aim:NewTextBox("Nome Alvo Prioritário", "Digite o nome", function(text) state.priorityName = text end)
 
-        local s1 = section(page, "Aimbot")
-        addToggle(s1, "AIMBOT", false, function(v) state.aimbot = v end)
-        addSlider(s1, "Força da Mira", 1, 5, 3, function(v) state.aimForce = v end)
-        addSlider(s1, "Bypass", 1, 10, 5, function(v) state.bypass = v end)
-        addSlider(s1, "FOV Raio", 50, 500, 150, function(v) state.fovRadius = v end)
-        addToggle(s1, "WALLCK", false, function(v) state.wallCheck = v end)
-        addToggle(s1, "Aimbot com Lead", false, function(v) state.aimbotLead = v end)
-        addSlider(s1, "Multiplicador de Lead", 1, 5, 1, function(v) state.leadMultiplier = v end)
-        addDropdown(s1, "Parte do Corpo", {"Cabeça", "Peito", "Perna", "Braço"}, "Cabeça", function(v) state.aimPart = v end)
-        addDropdown(s1, "Prioridade", {"Distância", "Saúde", "Visibilidade", "Nome Específico"}, "Distância", function(v) state.aimPriority = v end)
-        addInput(s1, "Nome Alvo Prioritário", "Digite um nome...", function(textValue) state.priorityName = textValue end)
-
-        local s2 = section(page, "Silent Aim Universal")
-        addToggle(s2, "SILENT AIM", false, function(v) state.silentAim = v end)
-        addToggle(s2, "Magic Bullet", false, function(v) state.magicBullet = v end)
-        addToggle(s2, "Team Check (Silent)", false, function(v) state.saTeamCheck = v end)
-        addToggle(s2, "Visible Check (Silent)", false, function(v) state.saVisibleCheck = v end)
-        addSlider(s2, "Hit Chance (%)", 0, 100, 100, function(v) state.saHitChance = v end)
-        addToggle(s2, "Predição (Silent)", false, function(v) state.saMousePrediction = v end)
-        addSlider(s2, "Predição Amount", 0.165, 1, 0.165, function(v) state.saPredictionAmount = v end, 3)
-        addDropdown(s2, "Método Silent", {
+        local Silent = Tab:NewSection("Silent Aim")
+        Silent:NewToggle("SILENT AIM", "Callback vazio", function(v) state.silentAim = v end)
+        Silent:NewToggle("Magic Bullet", "Callback vazio", function(v) state.magicBullet = v end)
+        Silent:NewToggle("Team Check (Silent)", "Callback vazio", function(v) state.saTeamCheck = v end)
+        Silent:NewToggle("Visible Check (Silent)", "Callback vazio", function(v) state.saVisibleCheck = v end)
+        Silent:NewSlider("Hit Chance (%)", "Callback vazio", 100, 0, 100, function(v) state.saHitChance = v end)
+        Silent:NewToggle("Predição (Silent)", "Callback vazio", function(v) state.saMousePrediction = v end)
+        Silent:NewSlider("Predição Amount x0.001", "Callback vazio", 1000, 165, 165, function(v) state.saPredictionAmount = v/1000 end)
+        Silent:NewDropdown("Método Silent", "Callback vazio", {
             "Raycast", "FindPartOnRay", "FindPartOnRayWithWhitelist",
             "FindPartOnRayWithIgnoreList", "Mouse.Hit/Target"
-        }, "Raycast", function(v) state.saMethod = v end)
-        addDropdown(s2, "Parte Alvo (Silent)", {"Head", "HumanoidRootPart", "Random"}, "HumanoidRootPart", function(v) state.saTargetPart = v end)
-        addToggle(s2, "Mostrar FOV Circle (Silent)", false, function(v) state.saFovVisible = v end)
-        addSlider(s2, "FOV Radius (Silent)", 50, 360, 130, function(v) state.saFovRadius = v end)
-        addToggle(s2, "Mostrar Alvo (Silent)", false, function(v) state.saShowTarget = v end)
+        }, function(v) state.saMethod = v end)
+        Silent:NewDropdown("Parte Alvo (Silent)", "Callback vazio", {
+            "Head", "HumanoidRootPart", "Random"
+        }, function(v) state.saTargetPart = v end)
+        Silent:NewToggle("Mostrar FOV Circle (Silent)", "Callback vazio", function(v) state.saFovVisible = v end)
+        Silent:NewSlider("FOV Radius (Silent)", "Callback vazio", 360, 50, 130, function(v) state.saFovRadius = v end)
+        Silent:NewToggle("Mostrar Alvo (Silent)", "Callback vazio", function(v) state.saShowTarget = v end)
     end
 
-    -- ==================== ABA ESP ====================
+    -- 👁️ ESP
     do
-        local page = makeTab("👁️ ESP")
-        local s = section(page, "ESP")
-        addToggle(s, "Ativar ESP (Geral)", false, function(v) state.espEnabled = v end)
-        addToggle(s, "Box", false, function(v) state.espBox = v end)
-        addToggle(s, "Names", false, function(v) state.espNames = v end)
-        addToggle(s, "Weapons", false, function(v) state.espWeapons = v end)
-        addToggle(s, "Talking Icon", false, function(v) state.espTalking = v end)
-        addToggle(s, "Skeleton", false, function(v) state.espSkeleton = v end)
-        addToggle(s, "Admin ESP", false, function(v) state.espAdmin = v end)
-        addToggle(s, "Admin List", false, function(v) state.espAdminList = v end)
-        addToggle(s, "Lines", false, function(v) state.espLines = v end)
-        addToggle(s, "Distance", false, function(v) state.espDistance = v end)
-        addToggle(s, "Infinite Distance", false, function(v) state.espInfiniteDist = v end)
-        addToggle(s, "Target NPCs", false, function(v) state.espNPCs = v end)
-        addToggle(s, "Visible Check", false, function(v) state.espVisible = v end)
-        addToggle(s, "ESP de Mira do Inimigo", false, function(v) state.espEnemyAim = v end)
-        addSlider(s, "Tamanho do Texto", 12, 20, 14, function(v) state.textSize = v end)
-        addButton(s, "Cor Esqueleto (Aleatória)", function() state.skeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
-        addButton(s, "Cor Box (Aleatória)", function() state.boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
-        addButton(s, "Cor Ícone de Fala (Aleatória)", function() state.talkColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
+        local Tab = Window:NewTab("👁️ ESP")
+        local ESP = Tab:NewSection("ESP")
+        ESP:NewToggle("Ativar ESP (Geral)", "Callback vazio", function(v) state.espEnabled = v end)
+        ESP:NewToggle("Box", "Callback vazio", function(v) state.espBox = v end)
+        ESP:NewToggle("Names", "Callback vazio", function(v) state.espNames = v end)
+        ESP:NewToggle("Weapons", "Callback vazio", function(v) state.espWeapons = v end)
+        ESP:NewToggle("Talking Icon", "Callback vazio", function(v) state.espTalking = v end)
+        ESP:NewToggle("Skeleton", "Callback vazio", function(v) state.espSkeleton = v end)
+        ESP:NewToggle("Admin ESP", "Callback vazio", function(v) state.espAdmin = v end)
+        ESP:NewToggle("Admin List", "Callback vazio", function(v) state.espAdminList = v end)
+        ESP:NewToggle("Lines", "Callback vazio", function(v) state.espLines = v end)
+        ESP:NewToggle("Distance", "Callback vazio", function(v) state.espDistance = v end)
+        ESP:NewToggle("Infinite Distance", "Callback vazio", function(v) state.espInfiniteDist = v end)
+        ESP:NewToggle("Target NPCs", "Callback vazio", function(v) state.espNPCs = v end)
+        ESP:NewToggle("Visible Check", "Callback vazio", function(v) state.espVisible = v end)
+        ESP:NewToggle("ESP de Mira do Inimigo", "Callback vazio", function(v) state.espEnemyAim = v end)
+        ESP:NewSlider("Tamanho do Texto", "Callback vazio", 20, 12, 14, function(v) state.textSize = v end)
+        ESP:NewButton("Cor Esqueleto (Aleatória)", "Callback vazio", function() state.skeletonColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
+        ESP:NewButton("Cor Box (Aleatória)", "Callback vazio", function() state.boxColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
+        ESP:NewButton("Cor Ícone de Fala (Aleatória)", "Callback vazio", function() state.talkColor = Color3.fromRGB(math.random(255), math.random(255), math.random(255)) end)
 
-        -- Lista de jogadores dinâmica
-        local list = section(page, "Jogadores no Servidor")
-        local playersContainer = Instance.new("Frame")
-        playersContainer.Size = UDim2.new(1, 0, 0, 0)
-        playersContainer.BackgroundTransparency = 1
-        playersContainer.AutomaticSize = Enum.AutomaticSize.Y
-        playersContainer.Parent = list
-        local playersLayout = Instance.new("UIListLayout", playersContainer)
-        playersLayout.Padding = UDim.new(0, 3)
-
-        local function rebuildPlayerList()
-            for _, child in ipairs(playersContainer:GetChildren()) do
-                if child:IsA("TextButton") or child:IsA("Frame") then child:Destroy() end
+        -- Jogadores: dropdown + ações
+        local PlayersList = Tab:NewSection("Jogadores no Servidor")
+        local playerDd = PlayersList:NewDropdown("Jogador", "Callback vazio", {}, function() end)
+        local function updatePlayerDropdown()
+            local names = {}
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer then table.insert(names, p.Name) end
             end
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= LocalPlayer then
-                    local btnPuxar = addButton(playersContainer, "🔄 Puxar " .. plr.Name, function()
-                        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                            local myChar = LocalPlayer.Character
-                            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                                local targetRoot = plr.Character.HumanoidRootPart
-                                local myRoot = myChar.HumanoidRootPart
-                                local bv = Instance.new("BodyVelocity")
-                                bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                                bv.Velocity = (myRoot.Position - targetRoot.Position).Unit * 50
-                                bv.Parent = targetRoot
-                                game:GetService("Debris"):AddItem(bv, 1)
-                                task.wait(0.5)
-                                if (targetRoot.Position - myRoot.Position).Magnitude > 10 then
-                                    targetRoot.CFrame = myRoot.CFrame + Vector3.new(0, 2, 0)
-                                end
-                            end
-                        end
-                    end)
-                    local btnTP = addButton(playersContainer, "🚀 TP " .. plr.Name, function()
-                        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                            local myChar = LocalPlayer.Character
-                            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                                myChar.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-                            end
-                        end
-                    end)
-                    local btnSpectate = addButton(playersContainer, "👁️ Spectate " .. plr.Name, function()
-                        state.spectateTarget = plr
-                        if plr.Character then Camera.CameraSubject = plr.Character end
-                    end)
+            playerDd:Refresh(names)
+            if #names > 0 then playerDd:Set(names[1]) end
+        end
+        updatePlayerDropdown()
+        Players.PlayerAdded:Connect(updatePlayerDropdown)
+        Players.PlayerRemoving:Connect(updatePlayerDropdown)
+
+        PlayersList:NewButton("🔄 Puxar", "Callback vazio", function()
+            local name = playerDd:Get()
+            if not name then return end
+            local target = Players:FindFirstChild(name)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local myChar = LocalPlayer.Character
+                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    local targetRoot = target.Character.HumanoidRootPart
+                    local myRoot = myChar.HumanoidRootPart
+                    local bv = Instance.new("BodyVelocity")
+                    bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+                    bv.Velocity = (myRoot.Position - targetRoot.Position).Unit * 50
+                    bv.Parent = targetRoot
+                    game:GetService("Debris"):AddItem(bv, 1)
+                    task.wait(0.5)
+                    if (targetRoot.Position - myRoot.Position).Magnitude > 10 then
+                        targetRoot.CFrame = myRoot.CFrame + Vector3.new(0, 2, 0)
+                    end
                 end
             end
-        end
-
-        rebuildPlayerList()
-        Players.PlayerAdded:Connect(rebuildPlayerList)
-        Players.PlayerRemoving:Connect(rebuildPlayerList)
+        end)
+        PlayersList:NewButton("🚀 TP", "Callback vazio", function()
+            local name = playerDd:Get()
+            if not name then return end
+            local target = Players:FindFirstChild(name)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local myChar = LocalPlayer.Character
+                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    myChar.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+                end
+            end
+        end)
+        PlayersList:NewButton("👁️ Spectate", "Callback vazio", function()
+            local name = playerDd:Get()
+            if not name then return end
+            local target = Players:FindFirstChild(name)
+            if target and target.Character then
+                Camera.CameraSubject = target.Character
+            end
+        end)
     end
 
-    -- ==================== ABA VEÍCULOS ====================
+    -- 🚗 VEÍCULOS
     do
-        local page = makeTab("🚗 Veículos")
-        local s = section(page, "Veículos")
-        addButton(s, "Teleportar no Veículo Próximo", function()
+        local Tab = Window:NewTab("🚗 Veículos")
+        local Vehicles = Tab:NewSection("Veículos")
+        Vehicles:NewButton("Teleportar no Veículo Próximo", "Callback vazio", function()
             local char = LocalPlayer.Character
             if not char then return end
             local root = char:FindFirstChild("HumanoidRootPart")
@@ -1003,21 +500,21 @@ function carregarHub()
             end
             if nearest then root.CFrame = root.CFrame:Lerp(CFrame.new(nearest.Position + Vector3.new(0, 3, 0)), 0.5) end
         end)
-        addButton(s, "Destrancar Veículo", function()
+        Vehicles:NewButton("Destrancar Veículo", "Callback vazio", function()
             for _, v in ipairs(Workspace:GetDescendants()) do
                 if v:IsA("VehicleSeat") then v:SetAttribute("Locked", false); v.Locked = false end
             end
         end)
-        addButton(s, "Trancar Veículo", function()
+        Vehicles:NewButton("Trancar Veículo", "Callback vazio", function()
             for _, v in ipairs(Workspace:GetDescendants()) do
                 if v:IsA("VehicleSeat") then v:SetAttribute("Locked", true); v.Locked = true end
             end
         end)
-        addButton(s, "Marcar Waypoint", function()
+        Vehicles:NewButton("Marcar Waypoint", "Callback vazio", function()
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then state.waypoint = char.HumanoidRootPart.Position end
         end)
-        addButton(s, "Teleportar Waypoint", function()
+        Vehicles:NewButton("Teleportar Waypoint", "Callback vazio", function()
             if state.waypoint then
                 local char = LocalPlayer.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -1025,9 +522,9 @@ function carregarHub()
                 end
             end
         end)
-        addToggle(s, "Super Velocidade no Carro", false, function(v) state.superCarSpeed = v end)
-        addSlider(s, "Velocidade Super Carro", 50, 500, 100, function(v) state.superCarSpeedValue = v end)
-        addToggle(s, "Clonar Carro", false, function(v)
+        Vehicles:NewToggle("Super Velocidade no Carro", "Callback vazio", function(v) state.superCarSpeed = v end)
+        Vehicles:NewSlider("Velocidade Super Carro", "Callback vazio", 500, 50, 100, function(v) state.superCarSpeedValue = v end)
+        Vehicles:NewToggle("Clonar Carro", "Callback vazio", function(v)
             state.cloneCar = v
             if v then
                 local char = LocalPlayer.Character
@@ -1048,151 +545,129 @@ function carregarHub()
         end)
     end
 
-    -- ==================== ABA VISUAL ====================
+    -- 🎨 VISUAL
     do
-        local page = makeTab("🎨 Visual")
-        local s = section(page, "Visual")
-        addButton(s, "Cor Box (Verde)", function() state.boxColor = Color3.fromRGB(0,255,0) end)
-        addButton(s, "Cor Esqueleto (Rosa)", function() state.skeletonColor = Color3.fromRGB(255,105,180) end)
-        addToggle(s, "FOV Círculo", false, function(v) state.fovCircle = v end)
-        addToggle(s, "FOV Arco-Íris", false, function(v) state.fovRainbow = v end)
-        addToggle(s, "🔦 Laser (Linha de Tiro)", false, function(v) state.linhaDeMira = v end)
+        local Tab = Window:NewTab("🎨 Visual")
+        local Visual = Tab:NewSection("Visual")
+        Visual:NewButton("Cor Box (Verde)", "Callback vazio", function() state.boxColor = Color3.fromRGB(0,255,0) end)
+        Visual:NewButton("Cor Esqueleto (Rosa)", "Callback vazio", function() state.skeletonColor = Color3.fromRGB(255,105,180) end)
+        Visual:NewToggle("FOV Círculo", "Callback vazio", function(v) state.fovCircle = v end)
+        Visual:NewToggle("FOV Arco-Íris", "Callback vazio", function(v) state.fovRainbow = v end)
+        Visual:NewToggle("Rastro Bala (Linha de Tiro)", "Callback vazio", function(v) state.linhaDeMira = v end)
     end
 
-    -- ==================== ABA MOVIMENTO ====================
+    -- 🏃 MOVIMENTO
     do
-        local page = makeTab("🏃 Movimento")
-        local s = section(page, "Movimento")
-        addToggle(s, "Pulo Infinito", false, function(v) state.infJump = v end)
-        addToggle(s, "Fly Avançado (WASD/E/Q)", false, function(v)
+        local Tab = Window:NewTab("🏃 Movimento")
+        local Movement = Tab:NewSection("Movimento")
+        Movement:NewToggle("Pulo Infinito", "Callback vazio", function(v) state.infJump = v end)
+        Movement:NewToggle("Fly Avançado (WASD/E/Q)", "Callback vazio", function(v)
             state.fly = v
             if not v then state.flyStartY = nil end
         end)
-        addSlider(s, "Velocidade Fly", 20, 200, 50, function(v) state.flySpeed = v end)
-        addToggle(s, "Speed Hack", false, function(v) state.speedHack = v end)
-        addSlider(s, "Velocidade Speed", 16, 200, 60, function(v) state.speedValue = v end)
-        addToggle(s, "Ghost Mode", false, function(v) state.ghostMode = v end)
-        addToggle(s, "Derrubar Player", false, function(v) state.derrubarPlayer = v end)
+        Movement:NewSlider("Velocidade Fly", "Callback vazio", 200, 20, 50, function(v) state.flySpeed = v end)
+        Movement:NewToggle("Speed Hack", "Callback vazio", function(v) state.speedHack = v end)
+        Movement:NewSlider("Velocidade Speed", "Callback vazio", 200, 16, 60, function(v) state.speedValue = v end)
+        Movement:NewToggle("Ghost Mode", "Callback vazio", function(v) state.ghostMode = v end)
+        Movement:NewToggle("Derrubar Player", "Callback vazio", function(v) state.derrubarPlayer = v end)
     end
 
-    -- ==================== ABA FARM ====================
+    -- 🌾 FARM
     do
-        local page = makeTab("🌾 Farm")
-        local s = section(page, "Farm")
-        addToggle(s, "Auto Farm Lixo", false, function(v) state.autoFarm = v end)
-        addSlider(s, "Velocidade Farm", 30, 100, 50, function(v) state.farmSpeed = v end)
-        addToggle(s, "Auto Essência", false, function(v) state.autoEssencia = v end)
-        addToggle(s, "Auto Micha", false, function(v) state.autoMicha = v end)
+        local Tab = Window:NewTab("🌾 Farm")
+        local Farm = Tab:NewSection("Farm")
+        Farm:NewToggle("Auto Farm Lixo", "Callback vazio", function(v) state.autoFarm = v end)
+        Farm:NewSlider("Velocidade Farm", "Callback vazio", 100, 30, 50, function(v) state.farmSpeed = v end)
+        Farm:NewToggle("Auto Essência", "Callback vazio", function(v) state.autoEssencia = v end)
+        Farm:NewToggle("Auto Micha", "Callback vazio", function(v) state.autoMicha = v end)
     end
 
-    -- ==================== ABA ARMAS ====================
+    -- 🔪 ARMAS
     do
-        local page = makeTab("🔪 Armas")
-        local s = section(page, "Armas")
-        addToggle(s, "Reach", false, function(v) state.reach = v end)
-        addSlider(s, "Distância Reach", 10, 50, 25, function(v) state.reachDist = v end)
-        addToggle(s, "Infinite Ammo", false, function(v) state.infiniteAmmo = v end)
-        addToggle(s, "Auto Reload", false, function(v) state.autoReload = v end)
-        addToggle(s, "No Recoil", false, function(v) state.noRecoil = v end)
-        addToggle(s, "Rapid Fire", false, function(v) state.rapidFire = v end)
-        addSlider(s, "Rapid Fire Delay", 0.05, 0.5, 0.1, function(v) state.rapidFireDelay = v end, 2)
-        addToggle(s, "Matar com 1 Tiro", false, function(v) state.oneShot = v end)
-        addToggle(s, "Arma Colorida (RGB)", false, function(v) state.armaColorida = v end)
-        addSlider(s, "Velocidade RGB", 0.5, 5, 2, function(v) state.rgbSpeed = v end, 1)
-        addSlider(s, "Tamanho da Arma", 0.5, 5, 1, function(v) state.armaSize = v end, 1)
-        addToggle(s, "Roubar P1", false, function(v) state.roubarP1 = v end)
-        addToggle(s, "Roubar P2", false, function(v) state.roubarP2 = v end)
+        local Tab = Window:NewTab("🔪 Armas")
+        local Weapons = Tab:NewSection("Armas")
+        Weapons:NewToggle("Reach", "Callback vazio", function(v) state.reach = v end)
+        Weapons:NewSlider("Distância Reach", "Callback vazio", 50, 10, 25, function(v) state.reachDist = v end)
+        Weapons:NewToggle("Infinite Ammo", "Callback vazio", function(v) state.infiniteAmmo = v end)
+        Weapons:NewToggle("Auto Reload", "Callback vazio", function(v) state.autoReload = v end)
+        Weapons:NewToggle("No Recoil", "Callback vazio", function(v) state.noRecoil = v end)
+        Weapons:NewToggle("Rapid Fire", "Callback vazio", function(v) state.rapidFire = v end)
+        Weapons:NewSlider("Rapid Fire Delay x0.01", "Callback vazio", 50, 5, 10, function(v) state.rapidFireDelay = v/100 end)
+        Weapons:NewToggle("Matar com 1 Tiro", "Callback vazio", function(v) state.oneShot = v end)
+        Weapons:NewToggle("Arma Colorida (RGB)", "Callback vazio", function(v) state.armaColorida = v end)
+        Weapons:NewSlider("Velocidade RGB x0.1", "Callback vazio", 50, 5, 20, function(v) state.rgbSpeed = v/10 end)
+        Weapons:NewSlider("Tamanho da Arma x0.1", "Callback vazio", 50, 5, 10, function(v) state.armaSize = v/10 end)
+        Weapons:NewToggle("Roubar P1", "Callback vazio", function(v) state.roubarP1 = v end)
+        Weapons:NewToggle("Roubar P2", "Callback vazio", function(v) state.roubarP2 = v end)
+        Weapons:NewButton("🔄 Atualizar Armas Detectadas", "Callback vazio", function() updateFakeWeapons() end)
 
-        -- Detecção dinâmica de armas
-        local fakeSection = section(page, "Armas Falsas")
-        local fakeContainer = Instance.new("Frame")
-        fakeContainer.Size = UDim2.new(1, 0, 0, 0)
-        fakeContainer.BackgroundTransparency = 1
-        fakeContainer.AutomaticSize = Enum.AutomaticSize.Y
-        fakeContainer.Parent = fakeSection
-        local fakeLayout = Instance.new("UIListLayout", fakeContainer)
-        fakeLayout.Padding = UDim.new(0, 3)
-
+        local FakeWeapons = Tab:NewSection("Armas Falsas")
+        local fakeWeaponDd = FakeWeapons:NewDropdown("Arma Falsa", "Callback vazio", {}, function() end)
         local function detectWeapons()
-            local weapons = {}
+            local list = {}
             for _, obj in ipairs(Workspace:GetDescendants()) do
-                if obj:IsA("Tool") and obj.Name ~= "" then table.insert(weapons, obj.Name) end
+                if obj:IsA("Tool") and obj.Name ~= "" then table.insert(list, obj.Name) end
             end
-            for _, container in ipairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
-                if container then
-                    for _, child in ipairs(container:GetChildren()) do
-                        if child:IsA("Tool") and child.Name ~= "" then table.insert(weapons, child.Name) end
-                    end
-                end
+            for _, c in ipairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
+                if c then for _, obj in ipairs(c:GetChildren()) do if obj:IsA("Tool") then table.insert(list, obj.Name) end end end
             end
             local unique = {}
             local result = {}
-            for _, name in ipairs(weapons) do
-                if not unique[name] then unique[name] = true; table.insert(result, name) end
-            end
+            for _, n in ipairs(list) do if not unique[n] then unique[n]=true; table.insert(result,n) end end
             return result
         end
-
-        local function rebuildDynamicWeapons()
-            for _, child in ipairs(fakeContainer:GetChildren()) do
-                if child:IsA("TextButton") or child:IsA("Frame") then child:Destroy() end
-            end
-            local weapons = detectWeapons()
-            if #weapons == 0 then
-                addLabel(fakeContainer, "Nenhuma arma encontrada.", THEME.Muted)
-            else
-                for _, name in ipairs(weapons) do
-                    addButton(fakeContainer, "🔫 " .. name .. " (Fake)", function()
-                        local tool = Instance.new("Tool")
-                        tool.Name = name .. "_Fake"
-                        tool.RequiresHandle = true
-                        tool.CanBeDropped = false
-                        tool.Parent = LocalPlayer.Backpack
-                        local handle = Instance.new("Part")
-                        handle.Name = "Handle"
-                        handle.Size = Vector3.new(0.5, 0.1, 0.2)
-                        handle.Color = Color3.fromRGB(200,200,200)
-                        handle.Material = Enum.Material.SmoothPlastic
-                        handle.Anchored = false
-                        handle.CanCollide = false
-                        handle.Locked = true
-                        handle.Transparency = 0.2
-                        handle.Parent = tool
-                        local glow = Instance.new("SelectionBox")
-                        glow.Adornee = handle
-                        glow.Color3 = Color3.fromRGB(0,255,255)
-                        glow.LineThickness = 0.1
-                        glow.Transparency = 0.5
-                        glow.Parent = handle
-                        tool.Parent = LocalPlayer.Character
-                    end)
-                end
-            end
+        function updateFakeWeapons()
+            local weps = detectWeapons()
+            fakeWeaponDd:Refresh(weps)
+            if #weps > 0 then fakeWeaponDd:Set(weps[1]) end
         end
-
-        addButton(s, "🔄 Atualizar Armas Detectadas", rebuildDynamicWeapons)
-        task.wait(0.5)
-        rebuildDynamicWeapons()
+        updateFakeWeapons()
+        FakeWeapons:NewButton("Criar Fake", "Callback vazio", function()
+            local name = fakeWeaponDd:Get()
+            if not name then return end
+            local tool = Instance.new("Tool")
+            tool.Name = name .. "_Fake"
+            tool.RequiresHandle = true
+            tool.CanBeDropped = false
+            tool.Parent = LocalPlayer.Backpack
+            local handle = Instance.new("Part")
+            handle.Name = "Handle"
+            handle.Size = Vector3.new(0.5,0.1,0.2)
+            handle.Color = Color3.fromRGB(200,200,200)
+            handle.Material = Enum.Material.SmoothPlastic
+            handle.Anchored = false
+            handle.CanCollide = false
+            handle.Locked = true
+            handle.Transparency = 0.2
+            handle.Parent = tool
+            local glow = Instance.new("SelectionBox")
+            glow.Adornee = handle
+            glow.Color3 = Color3.fromRGB(0,255,255)
+            glow.LineThickness = 0.1
+            glow.Transparency = 0.5
+            glow.Parent = handle
+            tool.Parent = LocalPlayer.Character
+        end)
     end
 
-    -- ==================== ABA CARRO ====================
+    -- 🏎️ CARRO
     do
-        local page = makeTab("🏎️ Carro")
-        local s = section(page, "Carro")
-        addToggle(s, "Fly Car", false, function(v) state.flyCar = v end)
-        addSlider(s, "Velocidade Fly Car", 20, 200, 70, function(v) state.flyCarSpeed = v end)
+        local Tab = Window:NewTab("🏎️ Carro")
+        local Car = Tab:NewSection("Carro")
+        Car:NewToggle("Fly Car", "Callback vazio", function(v) state.flyCar = v end)
+        Car:NewSlider("Velocidade Fly Car", "Callback vazio", 200, 20, 70, function(v) state.flyCarSpeed = v end)
     end
 
-    -- ==================== ABA EXTRAS ====================
+    -- 🛠️ EXTRAS
     do
-        local page = makeTab("🛠️ Extras")
-        local s = section(page, "Extras")
-        addToggle(s, "Anti AFK", false, function(v) state.antiAfk = v end)
-        addToggle(s, "Anti Stun", false, function(v) state.antiStun = v end)
-        addToggle(s, "Anti Fire", false, function(v) state.antiFire = v end)
-        addToggle(s, "Auto Respawn", false, function(v) state.autoRespawn = v end)
-        addToggle(s, "God Mode", false, function(v) state.godMode = v end)
-        addToggle(s, "🎙️ Microfone Global", false, function(v)
+        local Tab = Window:NewTab("🛠️ Extras")
+        local Extras = Tab:NewSection("Extras")
+        Extras:NewToggle("Anti AFK", "Callback vazio", function(v) state.antiAfk = v end)
+        Extras:NewToggle("Anti Stun", "Callback vazio", function(v) state.antiStun = v end)
+        Extras:NewToggle("Anti Fire", "Callback vazio", function(v) state.antiFire = v end)
+        Extras:NewToggle("Auto Respawn", "Callback vazio", function(v) state.autoRespawn = v end)
+        Extras:NewToggle("God Mode", "Callback vazio", function(v) state.godMode = v end)
+        Extras:NewToggle("🎙️ Microfone Global", "Callback vazio", function(v)
             state.micGlobal = v
             if v then
                 if VoiceChatService and VoiceChatService:IsEnabled() then
@@ -1208,13 +683,13 @@ function carregarHub()
                 end
             end
         end)
-        addToggle(s, "Money Hack (Auto)", false, function(v)
+        Extras:NewToggle("Money Hack (Auto)", "Callback vazio", function(v)
             state.moneyHack = v
             if v then
                 state.moneyLoop = task.spawn(function()
                     while state.moneyHack do
                         task.wait(0.5)
-                        local args = {[1] = "GiveCash", [2] = state.moneyValue}
+                        local args = {[1]="GiveCash",[2]=state.moneyValue}
                         pcall(function() game:GetService("ReplicatedStorage"):FindFirstChild("Remotes"):FireServer(unpack(args)) end)
                     end
                 end)
@@ -1222,77 +697,58 @@ function carregarHub()
                 if state.moneyLoop then task.cancel(state.moneyLoop) end
             end
         end)
-        addSlider(s, "Valor do Dinheiro", 1000, 9999999, 100000, function(v) state.moneyValue = v end)
+        Extras:NewSlider("Valor do Dinheiro", "Callback vazio", 9999999, 1000, 100000, function(v) state.moneyValue = v end)
 
-        -- Empregos
-        local jobs = section(page, "💼 Empregos Detectados")
-        local jobsContainer = Instance.new("Frame")
-        jobsContainer.Size = UDim2.new(1, 0, 0, 0)
-        jobsContainer.BackgroundTransparency = 1
-        jobsContainer.AutomaticSize = Enum.AutomaticSize.Y
-        jobsContainer.Parent = jobs
-        local jobsLayout = Instance.new("UIListLayout", jobsContainer)
-        jobsLayout.Padding = UDim.new(0, 3)
-
+        local Jobs = Tab:NewSection("💼 Empregos Detectados")
+        local jobsDd = Jobs:NewDropdown("Emprego", "Callback vazio", {}, function() end)
         local function detectJobs()
-            local jList = {}
+            local list = {}
             for _, obj in ipairs(Workspace:GetDescendants()) do
                 if obj:IsA("ProximityPrompt") and obj.Enabled then
                     local name = obj.Parent and obj.Parent.Name
-                    if name and name ~= "" then table.insert(jList, name) end
+                    if name and name ~= "" then table.insert(list, name) end
                 end
             end
             local unique = {}
             local result = {}
-            for _, n in ipairs(jList) do
-                if not unique[n] then unique[n] = true; table.insert(result, n) end
-            end
+            for _, n in ipairs(list) do if not unique[n] then unique[n]=true; table.insert(result,n) end end
             return result
         end
-
-        local function rebuildJobsUI()
-            for _, child in ipairs(jobsContainer:GetChildren()) do
-                if child:IsA("TextButton") or child:IsA("Frame") then child:Destroy() end
-            end
-            local jList = detectJobs()
-            if #jList == 0 then
-                addLabel(jobsContainer, "Nenhum emprego encontrado.", THEME.Muted)
-            else
-                for _, name in ipairs(jList) do
-                    addButton(jobsContainer, "💼 " .. name, function()
-                        state.autoJob = true
-                        state.selectedJob = name
-                        if state.jobLoop then task.cancel(state.jobLoop) end
-                        state.jobLoop = task.spawn(function()
-                            while state.autoJob do
-                                task.wait(0.1)
-                                local char = LocalPlayer.Character
-                                if not char then break end
-                                local root = char:FindFirstChild("HumanoidRootPart")
-                                if not root then break end
-                                for _, obj in ipairs(Workspace:GetDescendants()) do
-                                    if obj:IsA("ProximityPrompt") and obj.Enabled and obj.Parent and obj.Parent.Name == state.selectedJob then
-                                        local pos = obj.Parent:GetPivot().Position
-                                        root.CFrame = CFrame.new(pos + Vector3.new(0,2,0))
-                                        task.wait(0.2)
-                                        pcall(function() fireproximityprompt(obj) end)
-                                        break
-                                    end
-                                end
-                            end
-                        end)
-                    end)
-                end
-            end
+        local function updateJobs()
+            local j = detectJobs()
+            jobsDd:Refresh(j)
+            if #j > 0 then jobsDd:Set(j[1]) end
         end
+        updateJobs()
+        Jobs:NewButton("🔄 Atualizar Empregos", "Callback vazio", updateJobs)
+        Jobs:NewButton("Pegar Emprego", "Callback vazio", function()
+            local nome = jobsDd:Get()
+            if not nome then return end
+            state.autoJob = true
+            state.selectedJob = nome
+            if state.jobLoop then task.cancel(state.jobLoop) end
+            state.jobLoop = task.spawn(function()
+                while state.autoJob do
+                    task.wait(0.1)
+                    local char = LocalPlayer.Character
+                    if not char then break end
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if not root then break end
+                    for _, obj in ipairs(Workspace:GetDescendants()) do
+                        if obj:IsA("ProximityPrompt") and obj.Enabled and obj.Parent and obj.Parent.Name == state.selectedJob then
+                            local pos = obj.Parent:GetPivot().Position
+                            root.CFrame = CFrame.new(pos + Vector3.new(0,2,0))
+                            task.wait(0.2)
+                            pcall(function() fireproximityprompt(obj) end)
+                            break
+                        end
+                    end
+                end
+            end)
+        end)
 
-        addButton(jobs, "🔄 Atualizar Empregos", rebuildJobsUI)
-        task.wait(1)
-        rebuildJobsUI()
-
-        -- Pegar/Tacar veículo
-        local veh = section(page, "Veículo")
-        addButton(veh, "🖐️ PEGAR Veículo (Raycast)", function()
+        local VehicleActions = Tab:NewSection("Veículo")
+        VehicleActions:NewButton("🖐️ PEGAR Veículo (Raycast)", "Callback vazio", function()
             local rayParams = RaycastParams.new()
             rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
             rayParams.FilterType = Enum.RaycastFilterType.Blacklist
@@ -1338,7 +794,7 @@ function carregarHub()
                 end
             end
         end)
-        addButton(veh, "💥 TACAR Veículo Segurado", function()
+        VehicleActions:NewButton("💥 TACAR Veículo Segurado", "Callback vazio", function()
             if not state.grabbedVehicle then return end
             local primary = state.grabbedVehicle:FindFirstChild("PrimaryPart") or state.grabbedVehicle:FindFirstChildWhichIsA("BasePart")
             if primary then
@@ -1358,37 +814,39 @@ function carregarHub()
         end)
     end
 
-    -- ==================== ABA CONFIG ====================
+    -- ⚙️ CONFIG
     do
-        local page = makeTab("⚙️ Config")
-        local s = section(page, "Configurações")
-        addToggle(s, "Modo Streamer", false, function(v)
+        local Tab = Window:NewTab("⚙️ Config")
+        local Config = Tab:NewSection("Configurações")
+        Config:NewToggle("Modo Streamer", "Callback vazio", function(v)
             state.streamerMode = v
-            gui.Enabled = not v
+            if v then
+                Library:ToggleUI()  -- esconde a UI
+            end
         end)
-        addToggle(s, "Anti Live", false, function(v) state.antiLive = v end)
-        addToggle(s, "Atalhos Rápidos (CTRL+1 a 0)", true, function(v) state.shortcutsEnabled = v end)
-        addKeybind(s, "Atalho de Ocultar Menu (PC)", Enum.KeyCode.RightShift, function(key) state.menuKey = key end)
+        Config:NewToggle("Anti Live", "Callback vazio", function(v) state.antiLive = v end)
+        Config:NewToggle("Atalhos Rápidos (CTRL+1 a 0)", "Callback vazio", function(v) state.shortcutsEnabled = v end)
+        Config:NewKeybind("Atalho de Ocultar Menu (PC)", "Padrão: RightShift", Enum.KeyCode.RightShift, function()
+            Library:ToggleUI()
+        end)
     end
 
-    -- ==================== ABA SEGURANÇA ====================
+    -- 🔒 SEGURANÇA
     do
-        local page = makeTab("🔒 Segurança")
-        local s = section(page, "Status")
-        addLabel(s, "🔑 Status Key: AUTENTICADO", THEME.Success)
-        addLabel(s, "🚫 Blacklist: LIMPO", THEME.Success)
-        addLabel(s, "💻 HWID Verificado: OK", THEME.Success)
-        addLabel(s, "🛡️ Anti-Adulteração: ATIVO", THEME.Success)
-        addLabel(s, "🔄 Checagem Remota: ONLINE (5m)", THEME.Success)
+        local Tab = Window:NewTab("🔒 Segurança")
+        local Security = Tab:NewSection("Status")
+        Security:NewLabel("🔑 Status Key: AUTENTICADO")
+        Security:NewLabel("🚫 Blacklist: LIMPO")
+        Security:NewLabel("💻 HWID Verificado: OK")
+        Security:NewLabel("🛡️ Anti-Adulteração: ATIVO")
+        Security:NewLabel("🔄 Checagem Remota: ONLINE (5m)")
     end
-
-    selectTab("🎯 Aimbot", firstButton)
 
     -- ============================================================
     -- CONTADOR DE STAFF
     -- ============================================================
     task.delay(1, function()
-        local staffGui = Instance.new("ScreenGui", CoreGui)
+        local staffGui = Instance.new("ScreenGui", game.CoreGui)
         staffGui.Name = "StaffCounter"
         staffGui.ResetOnSpawn = false
         local staffFrame = Instance.new("TextLabel", staffGui)
@@ -1401,7 +859,6 @@ function carregarHub()
         staffFrame.Font = Enum.Font.GothamBold
         staffFrame.TextSize = 14
         Instance.new("UICorner", staffFrame).CornerRadius = UDim.new(0,4)
-
         task.spawn(function()
             while true do
                 task.wait(1)
@@ -1420,9 +877,6 @@ function carregarHub()
     UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then return end
         if input.UserInputType == Enum.UserInputType.Keyboard then
-            if input.KeyCode == state.menuKey then
-                gui.Enabled = not gui.Enabled
-            end
             if state.shortcutsEnabled and input.KeyCode >= Enum.KeyCode.One and input.KeyCode <= Enum.KeyCode.Zero then
                 local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
                 if ctrl then
@@ -1445,7 +899,7 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- ESP
+    -- ESP (Drawing)
     -- ============================================================
     local useDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
     local espObjects = {}
@@ -1467,41 +921,19 @@ function carregarHub()
             table.insert(espObjects, obj)
             return obj
         else
-            if kind == "Square" then
-                obj = Instance.new("Frame")
-                obj.BackgroundTransparency = 0.5; obj.BorderSizePixel = 1
-                obj.BorderColor3 = props.Color or Color3.new(1,1,1)
-                obj.BackgroundColor3 = Color3.new(0,0,0); obj.BackgroundTransparency = 0.7
-                obj.Size = UDim2.new(0, props.Size.X, 0, props.Size.Y)
-                obj.Position = UDim2.new(0, props.Position.X, 0, props.Position.Y)
-            elseif kind == "Line" then
-                obj = Instance.new("Frame")
-                obj.BackgroundColor3 = props.Color or Color3.new(1,1,1); obj.BackgroundTransparency = 0.5
-                local from, to = props.From, props.To
-                local dx, dy = to.X - from.X, to.Y - from.Y
-                obj.Size = UDim2.new(0, math.sqrt(dx*dx+dy*dy), 0, 2)
-                obj.Position = UDim2.new(0, from.X, 0, from.Y)
-                obj.Rotation = math.deg(math.atan2(dy, dx))
-            elseif kind == "Text" then
-                obj = Instance.new("TextLabel")
-                obj.BackgroundTransparency = 1; obj.Text = props.Text or ""
-                obj.TextColor3 = props.Color or Color3.new(1,1,1)
-                obj.TextSize = props.Size or 14; obj.Font = Enum.Font.Gotham
-                obj.Position = UDim2.new(0, props.Position.X, 0, props.Position.Y)
-                obj.Size = UDim2.new(0, 200, 0, 20)
-            end
-            if obj then
-                obj.Parent = gui; obj.ZIndex = 999
-                table.insert(espObjects, obj)
-            end
-            return obj
+            -- fallback básico não será usado na Kavo UI, mas mantemos para compatibilidade
+            return nil
         end
     end
 
     task.spawn(function()
         while true do
             task.wait(0.05)
-            if not state.espEnabled then clearESPObjects(); if fovCircleObj then fovCircleObj.Visible = false end; continue end
+            if not state.espEnabled then
+                clearESPObjects()
+                if fovCircleObj then fovCircleObj.Visible = false end
+                continue
+            end
 
             clearESPObjects()
             local screenSize = Camera.ViewportSize
@@ -1532,7 +964,7 @@ function carregarHub()
                     if not t.isNPC and isAdmin(t.player) then table.insert(adminNames, t.player.Name) end
                 end
                 if #adminNames > 0 then
-                    createESPObject("Text", { Position = Vector2.new(10, 10), Text = "Admins: " .. table.concat(adminNames, ", "), Color = Color3.new(1,0,0), Size = 16 })
+                    createESPObject("Text", { Position = Vector2.new(10, 10), Text = "Admins: " .. table.concat(adminNames, ", "), Color = Color3.new(1,0,0), Size = 16, Center = false })
                 end
             end
 
@@ -1544,6 +976,7 @@ function carregarHub()
                 if not root or not head or not hum or hum.Health <= 0 then continue end
 
                 local isAdminTarget = (not target.isNPC and state.espAdmin and isAdmin(target.player))
+
                 local headPos2D, headOn = worldToScreen(head.Position + Vector3.new(0, 1.5, 0))
                 local rootPos2D, rootOn = worldToScreen(root.Position)
                 local feetPos2D, feetOn = worldToScreen(root.Position - Vector3.new(0, 3, 0))
@@ -1585,10 +1018,14 @@ function carregarHub()
                         {"UpperTorso","RightUpperArm"}, {"RightUpperArm","RightLowerArm"}, {"RightLowerArm","RightHand"}
                     }
                     for _, pair in ipairs(boneConnections) do
-                        local a = char:FindFirstChild(pair[1]); local b = char:FindFirstChild(pair[2])
+                        local a = char:FindFirstChild(pair[1])
+                        local b = char:FindFirstChild(pair[2])
                         if a and b then
-                            local aPos, aOn = worldToScreen(a.Position); local bPos, bOn = worldToScreen(b.Position)
-                            if aOn and bOn then createESPObject("Line", { From = aPos, To = bPos, Color = state.skeletonColor, Thickness = 2 }) end
+                            local aPos, aOn = worldToScreen(a.Position)
+                            local bPos, bOn = worldToScreen(b.Position)
+                            if aOn and bOn then
+                                createESPObject("Line", { From = aPos, To = bPos, Color = state.skeletonColor, Thickness = 2 })
+                            end
                         end
                     end
                 end
@@ -1628,10 +1065,19 @@ function carregarHub()
 
             if state.fovCircle then
                 if not fovCircleObj then
-                    fovCircleObj = Drawing.new("Circle"); fovCircleObj.Visible = true; fovCircleObj.Thickness = 2; fovCircleObj.Filled = false
+                    fovCircleObj = Drawing.new("Circle")
+                    fovCircleObj.Visible = true
+                    fovCircleObj.Thickness = 2
+                    fovCircleObj.Filled = false
                 end
-                fovCircleObj.Position = screenSize / 2; fovCircleObj.Radius = state.fovRadius; fovCircleObj.Visible = true
-                fovCircleObj.Color = state.fovRainbow and Color3.fromHSV(tick() % 1, 1, 1) or Color3.new(1,1,1)
+                fovCircleObj.Position = screenSize / 2
+                fovCircleObj.Radius = state.fovRadius
+                fovCircleObj.Visible = true
+                if state.fovRainbow then
+                    fovCircleObj.Color = Color3.fromHSV(tick() % 1, 1, 1)
+                else
+                    fovCircleObj.Color = Color3.new(1,1,1)
+                end
             elseif fovCircleObj then
                 fovCircleObj.Visible = false
             end
@@ -1646,7 +1092,7 @@ function carregarHub()
         while true do
             task.wait(0.03)
             if not state.linhaDeMira then
-                if laserLine then if useDrawing then laserLine:Remove() else laserLine:Destroy() end; laserLine = nil end
+                if laserLine then if useDrawing then laserLine:Remove() else laserLine:Destroy() end laserLine = nil end
                 continue
             end
             local char = LocalPlayer.Character
@@ -1659,24 +1105,43 @@ function carregarHub()
             local origin = handle.Position
             local direction = Camera.CFrame.LookVector * 500
             local params = RaycastParams.new()
-            params.FilterDescendantsInstances = {char}; params.FilterType = Enum.RaycastFilterType.Blacklist
+            params.FilterDescendantsInstances = {char}
+            params.FilterType = Enum.RaycastFilterType.Blacklist
             local result = Workspace:Raycast(origin, direction, params)
             local targetPos = result and result.Position or (origin + direction)
 
             if useDrawing then
-                if not laserLine then laserLine = Drawing.new("Line"); laserLine.Thickness = 2; laserLine.Color = Color3.fromRGB(255,255,255); laserLine.Transparency = 0.8; laserLine.Visible = true end
-                local oS, oO = worldToScreen(origin); local tS, tO = worldToScreen(targetPos)
-                if oO and tO then laserLine.From = oS; laserLine.To = tS; laserLine.Visible = true else laserLine.Visible = false end
+                if not laserLine then
+                    laserLine = Drawing.new("Line")
+                    laserLine.Thickness = 2
+                    laserLine.Color = Color3.fromRGB(255,255,255)
+                    laserLine.Transparency = 0.8
+                    laserLine.Visible = true
+                end
+                local oS, oO = worldToScreen(origin)
+                local tS, tO = worldToScreen(targetPos)
+                if oO and tO then
+                    laserLine.From = oS
+                    laserLine.To = tS
+                    laserLine.Visible = true
+                else
+                    laserLine.Visible = false
+                end
             end
         end
     end)
 
     -- ============================================================
-    -- AIMBOT + LEAD
+    -- AIMBOT
     -- ============================================================
     local function getAimPart(char, partName)
-        local mapping = { Head = "Head", ["Cabeça"] = "Head", ["Peito"] = "UpperTorso", ["Perna"] = "LeftLowerLeg", ["Braço"] = "RightLowerArm" }
-        return char:FindFirstChild(mapping[partName] or partName or "Head")
+        local mapping = {
+            Cabeça = "Head",
+            Peito = "UpperTorso",
+            Perna = "LeftLowerLeg",
+            Braço = "RightLowerArm"
+        }
+        return char:FindFirstChild(mapping[partName] or "Head")
     end
 
     task.spawn(function()
@@ -1687,25 +1152,31 @@ function carregarHub()
                 local center = Camera.ViewportSize / 2
                 for _, p in ipairs(Players:GetPlayers()) do
                     if p == LocalPlayer then continue end
-                    local chr = p.Character; if not chr then continue end
-                    local hum = chr:FindFirstChild("Humanoid"); if not hum or hum.Health <= 0 then continue end
+                    local chr = p.Character
+                    if not chr then continue end
+                    local hum = chr:FindFirstChild("Humanoid")
+                    if not hum or hum.Health <= 0 then continue end
                     if state.wallCheck then
                         local head = chr:FindFirstChild("Head")
                         if head then
-                            local params = RaycastParams.new(); params.FilterDescendantsInstances = {LocalPlayer.Character}; params.FilterType = Enum.RaycastFilterType.Blacklist
+                            local params = RaycastParams.new()
+                            params.FilterDescendantsInstances = {LocalPlayer.Character}
+                            params.FilterType = Enum.RaycastFilterType.Blacklist
                             local result = Workspace:Raycast(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * 1000, params)
                             if result and not result.Instance:IsDescendantOf(chr) then continue end
                         end
                     end
-                    local aimPart = getAimPart(chr, state.aimPart); if not aimPart then continue end
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position); if not onScreen then continue end
+                    local aimPart = getAimPart(chr, state.aimPart)
+                    if not aimPart then continue end
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
+                    if not onScreen then continue end
 
                     local score = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                    if state.aimPriority == "Health" then score = hum.Health
-                    elseif state.aimPriority == "Visibility" then
+                    if state.aimPriority == "Saúde" then score = hum.Health
+                    elseif state.aimPriority == "Visibilidade" then
                         local head = chr:FindFirstChild("Head")
                         score = (head and #Camera:GetPartsObscuringTarget({head.Position, LocalPlayer.Character}, {LocalPlayer.Character}) > 0) and 1 or 0
-                    elseif state.aimPriority == "SpecificName" and state.priorityName ~= "" then
+                    elseif state.aimPriority == "Nome Específico" and state.priorityName ~= "" then
                         score = p.Name:lower():find(state.priorityName:lower()) and 0 or 1
                     end
 
@@ -1715,7 +1186,9 @@ function carregarHub()
                     local aimPart = getAimPart(best, state.aimPart)
                     if aimPart then
                         local targetPos = aimPart.Position
-                        if state.aimbotLead and aimPart.Velocity then targetPos = targetPos + aimPart.Velocity * state.leadMultiplier * 0.05 end
+                        if state.aimbotLead and aimPart.Velocity then
+                            targetPos = targetPos + aimPart.Velocity * state.leadMultiplier * 0.05
+                        end
                         local alpha = 0.02 + (state.aimForce-1)*0.245
                         local newCF = CFrame.new(Camera.CFrame.Position, targetPos)
                         Camera.CFrame = alpha >= 1 and newCF or Camera.CFrame:Lerp(newCF, alpha)
@@ -1726,12 +1199,14 @@ function carregarHub()
     end)
 
     -- ============================================================
-    -- SILENT AIM UNIVERSAL
+    -- SILENT AIM
     -- ============================================================
     local ValidTargetParts = {"Head", "HumanoidRootPart"}
     local function isPlayerVisibleSA(player)
-        local char = player.Character; if not char then return false end
-        local root = char:FindFirstChild("HumanoidRootPart"); if not root then return false end
+        local char = player.Character
+        if not char then return false end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return false end
         return #Camera:GetPartsObscuringTarget({root.Position, LocalPlayer.Character, char}, {LocalPlayer.Character, char}) == 0
     end
 
@@ -1741,13 +1216,16 @@ function carregarHub()
         for _, player in ipairs(Players:GetPlayers()) do
             if player == LocalPlayer then continue end
             if state.saTeamCheck and player.Team == LocalPlayer.Team then continue end
-            local char = player.Character; if not char then continue end
-            local hum = char:FindFirstChild("Humanoid"); if not hum or hum.Health <= 0 then continue end
+            local char = player.Character
+            if not char then continue end
+            local hum = char:FindFirstChild("Humanoid")
+            if not hum or hum.Health <= 0 then continue end
             if state.saVisibleCheck and not isPlayerVisibleSA(player) then continue end
 
             local part = state.saTargetPart == "Random" and char[ValidTargetParts[math.random(#ValidTargetParts)]] or char:FindFirstChild(state.saTargetPart)
             if not part then continue end
-            local screenPos, onScreen = worldToScreen(part.Position); if not onScreen then continue end
+            local screenPos, onScreen = worldToScreen(part.Position)
+            if not onScreen then continue end
             local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
             if dist < closestDist then closestDist = dist; closest = part end
         end
@@ -1756,28 +1234,35 @@ function carregarHub()
 
     -- Visual SA
     if useDrawing then
-        local mouse_box = Drawing.new("Square"); mouse_box.Visible = false; mouse_box.ZIndex = 999; mouse_box.Thickness = 20; mouse_box.Size = Vector2.new(20,20); mouse_box.Filled = true
-        local sa_fov_circle = Drawing.new("Circle"); sa_fov_circle.Thickness = 1; sa_fov_circle.NumSides = 100; sa_fov_circle.Filled = false; sa_fov_circle.Visible = false; sa_fov_circle.ZIndex = 999
+        local mouse_box = Drawing.new("Square")
+        mouse_box.Visible = false; mouse_box.ZIndex = 999; mouse_box.Thickness = 20; mouse_box.Size = Vector2.new(20,20); mouse_box.Filled = true
+        local sa_fov_circle = Drawing.new("Circle")
+        sa_fov_circle.Thickness = 1; sa_fov_circle.NumSides = 100; sa_fov_circle.Filled = false; sa_fov_circle.Visible = false; sa_fov_circle.ZIndex = 999
         task.spawn(function()
             while true do
                 task.wait()
                 if state.silentAim then
-                    sa_fov_circle.Visible = state.saFovVisible; sa_fov_circle.Radius = state.saFovRadius; sa_fov_circle.Position = UserInputService:GetMouseLocation()
+                    sa_fov_circle.Visible = state.saFovVisible
+                    sa_fov_circle.Radius = state.saFovRadius
+                    sa_fov_circle.Position = UserInputService:GetMouseLocation()
                     if state.saShowTarget then
                         local target = getClosestPlayerSA()
                         if target then
-                            local pos = target.Position; local screenPos, onScreen = worldToScreen(pos)
+                            local screenPos, onScreen = worldToScreen(target.Position)
                             if onScreen then mouse_box.Visible = true; mouse_box.Position = Vector2.new(screenPos.X, screenPos.Y) else mouse_box.Visible = false end
                         else mouse_box.Visible = false end
                     else mouse_box.Visible = false end
-                else sa_fov_circle.Visible = false; mouse_box.Visible = false end
+                else
+                    sa_fov_circle.Visible = false; mouse_box.Visible = false
+                end
             end
         end)
     end
 
-    -- Hooks
     local oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
-        local method = getnamecallmethod(); local args = {...}; local self = args[1]
+        local method = getnamecallmethod()
+        local args = {...}
+        local self = args[1]
         if state.silentAim and self == workspace and not checkcaller() and math.random(1,100) <= state.saHitChance then
             local hitPart = getClosestPlayerSA()
             if hitPart then
@@ -1800,24 +1285,25 @@ function carregarHub()
             local hitPart = getClosestPlayerSA()
             if hitPart then
                 if index == "Target" or index == "target" then return hitPart
-                elseif index == "Hit" or index == "hit" then return state.saMousePrediction and hitPart.CFrame + hitPart.Velocity * state.saPredictionAmount or hitPart.CFrame
-                elseif index == "UnitRay" then return Ray.new(self.Origin, (self.Hit - self.Origin).Unit) end
+                elseif index == "Hit" or index == "hit" then
+                    return state.saMousePrediction and hitPart.CFrame + hitPart.Velocity * state.saPredictionAmount or hitPart.CFrame
+                elseif index == "UnitRay" then
+                    return Ray.new(self.Origin, (self.Hit - self.Origin).Unit)
+                end
             end
         end
         return oldIndex(self, index)
     end))
 
     -- ============================================================
-    -- LÓGICAS DE MOVIMENTO, FARM, CARRO, ETC
+    -- LÓGICAS DE MOVIMENTO, FARM, CARRO
     -- ============================================================
-    -- Pulo Infinito
     UserInputService.JumpRequest:Connect(function()
         if state.infJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end)
 
-    -- Fly
     task.spawn(function()
         while true do
             task.wait()
@@ -1839,7 +1325,6 @@ function carregarHub()
         end
     end)
 
-    -- Speed Hack
     task.spawn(function()
         while true do
             task.wait()
@@ -1853,7 +1338,6 @@ function carregarHub()
         end
     end)
 
-    -- Ghost Mode
     task.spawn(function()
         while true do
             task.wait(0.3)
@@ -1865,7 +1349,6 @@ function carregarHub()
         end
     end)
 
-    -- Derrubar Player
     task.spawn(function()
         while true do
             task.wait(0.1)
@@ -1879,7 +1362,6 @@ function carregarHub()
         end
     end)
 
-    -- Auto Farm
     task.spawn(function()
         while true do
             task.wait(0.1)
@@ -1905,7 +1387,6 @@ function carregarHub()
         end
     end)
 
-    -- Auto Essência
     task.spawn(function()
         while true do
             task.wait(0.5)
@@ -1921,7 +1402,6 @@ function carregarHub()
         end
     end)
 
-    -- Auto Micha
     task.spawn(function()
         while true do
             task.wait(0.5)
@@ -1937,7 +1417,6 @@ function carregarHub()
         end
     end)
 
-    -- Fly Car
     task.spawn(function()
         while true do
             task.wait(0.05)
@@ -1976,7 +1455,6 @@ function carregarHub()
         end
     end)
 
-    -- Super Velocidade Carro
     task.spawn(function()
         while true do
             task.wait(0.1)
@@ -1996,7 +1474,7 @@ function carregarHub()
         end
     end)
 
-    -- Armas (Reach, etc.)
+    -- Armas
     task.spawn(function()
         while true do
             task.wait(0.5)
